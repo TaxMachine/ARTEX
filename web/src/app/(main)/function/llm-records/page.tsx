@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import { DataTableShell } from "@/components/data-table-shell";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -382,8 +383,7 @@ export default function LLMRecordsPage() {
 
       {/* History table + inline detail (Burp-style split) */}
       <div className="flex h-[calc(100vh-13rem)] min-h-0 flex-col gap-3">
-        <Card className="flex min-h-0 flex-1 flex-col overflow-hidden py-0">
-          <div className="min-h-0 flex-1 overflow-auto">
+      <DataTableShell className="min-h-0 flex-1">
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-card">
                 <TableRow>
@@ -461,8 +461,7 @@ export default function LLMRecordsPage() {
                 )}
               </TableBody>
             </Table>
-          </div>
-        </Card>
+      </DataTableShell>
 
         {/* Inline detail panel */}
         {selected && (

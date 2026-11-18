@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTableShell } from "@/components/data-table-shell";
 import { api, ApiError } from "@/lib/api";
 import type { MachineCapture, MachineEvent } from "@/lib/types";
 
@@ -88,10 +89,11 @@ export default function MachineTrafficPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row flex-wrap items-end justify-between gap-2 pb-2">
-          <CardTitle className="text-base">Recorded activity</CardTitle>
-          <div className="flex flex-wrap gap-2">
+      <DataTableShell
+        fill
+        toolbar={
+          <>
+            <CardTitle className="text-base">Recorded activity</CardTitle>
             <Input
               className="h-8 w-40"
               placeholder="machine"
@@ -113,66 +115,65 @@ export default function MachineTrafficPage() {
             <Button size="sm" variant="outline" onClick={() => void load()}>
               Search
             </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+          </>
+        }
+      >
+        <Table>
+          <TableHeader className="sticky top-0 z-10 bg-card">
+            <TableRow>
+              <TableHead>When</TableHead>
+              <TableHead>Machine</TableHead>
+              <TableHead>Kind</TableHead>
+              <TableHead>Action</TableHead>
+              <TableHead>User</TableHead>
+              <TableHead>Command / detail</TableHead>
+              <TableHead>Exit</TableHead>
+              <TableHead>Size</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
               <TableRow>
-                <TableHead>When</TableHead>
-                <TableHead>Machine</TableHead>
-                <TableHead>Kind</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Command / detail</TableHead>
-                <TableHead>Exit</TableHead>
-                <TableHead>Size</TableHead>
+                <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                  <Loader2Icon className="mx-auto size-5 animate-spin" />
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
-                    <Loader2Icon className="mx-auto size-5 animate-spin" />
+            ) : events.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
+                  No machine activity recorded yet. Run an ssh_exec or start a VM.
+                </TableCell>
+              </TableRow>
+            ) : (
+              events.map((e) => (
+                <TableRow
+                  key={e.id}
+                  className="cursor-pointer"
+                  onClick={() => void api.machineEvent(e.id).then(setDetail).catch((x) => toast.error(errText(x)))}
+                >
+                  <TableCell className="whitespace-nowrap text-xs">{fmtTime(e.created_at)}</TableCell>
+                  <TableCell className="text-xs">{e.machine}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{e.protocol}</Badge>
                   </TableCell>
-                </TableRow>
-              ) : events.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="py-10 text-center text-muted-foreground">
-                    No machine activity recorded yet. Run an ssh_exec or start a VM.
+                  <TableCell>
+                    <Badge variant={e.action === "exec" ? "outline" : "secondary"}>{e.action}</Badge>
                   </TableCell>
+                  <TableCell className="text-xs">{e.username || "—"}</TableCell>
+                  <TableCell className="max-w-[420px] truncate font-mono text-xs">{e.command || "—"}</TableCell>
+                  <TableCell className="text-xs">{e.exit_code ?? "—"}</TableCell>
+                  <TableCell className="text-xs">{fmtBytes(e.bytes)}</TableCell>
                 </TableRow>
-              ) : (
-                events.map((e) => (
-                  <TableRow
-                    key={e.id}
-                    className="cursor-pointer"
-                    onClick={() => void api.machineEvent(e.id).then(setDetail).catch((x) => toast.error(errText(x)))}
-                  >
-                    <TableCell className="whitespace-nowrap text-xs">{fmtTime(e.created_at)}</TableCell>
-                    <TableCell className="text-xs">{e.machine}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{e.protocol}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={e.action === "exec" ? "outline" : "secondary"}>{e.action}</Badge>
-                    </TableCell>
-                    <TableCell className="text-xs">{e.username || "—"}</TableCell>
-                    <TableCell className="max-w-[420px] truncate font-mono text-xs">{e.command || "—"}</TableCell>
-                    <TableCell className="text-xs">{e.exit_code ?? "—"}</TableCell>
-                    <TableCell className="text-xs">{fmtBytes(e.bytes)}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </DataTableShell>
 
-      <Card>
-        <CardHeader className="flex flex-row flex-wrap items-end justify-between gap-2 pb-2">
-          <CardTitle className="text-base">Packet captures</CardTitle>
-          <div className="flex gap-2">
+      <DataTableShell
+        toolbar={
+          <>
+            <CardTitle className="text-base">Packet captures</CardTitle>
             <Input
               className="h-8 w-40"
               placeholder="machine"
@@ -182,45 +183,44 @@ export default function MachineTrafficPage() {
             <Button size="sm" variant="outline" onClick={() => void loadCaptures()}>
               Load
             </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+          </>
+        }
+      >
+        <Table>
+          <TableHeader className="sticky top-0 z-10 bg-card">
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>Interface</TableHead>
+              <TableHead>Filter</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Bytes</TableHead>
+              <TableHead>Local pcap</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {captures.length === 0 ? (
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Interface</TableHead>
-                <TableHead>Filter</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Bytes</TableHead>
-                <TableHead>Local pcap</TableHead>
+                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                  Enter a machine name and Load. Captures are created by capture_start (Linux targets).
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {captures.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                    Enter a machine name and Load. Captures are created by capture_start (Linux targets).
+            ) : (
+              captures.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="text-xs">#{c.id}</TableCell>
+                  <TableCell className="text-xs">{c.iface}</TableCell>
+                  <TableCell className="max-w-[320px] truncate font-mono text-xs">{c.bpf_filter || "—"}</TableCell>
+                  <TableCell>
+                    <Badge variant={c.status === "running" ? "default" : "secondary"}>{c.status}</Badge>
                   </TableCell>
+                  <TableCell className="text-xs">{fmtBytes(c.bytes)}</TableCell>
+                  <TableCell className="max-w-[360px] truncate font-mono text-xs">{c.local_path || c.remote_path}</TableCell>
                 </TableRow>
-              ) : (
-                captures.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="text-xs">#{c.id}</TableCell>
-                    <TableCell className="text-xs">{c.iface}</TableCell>
-                    <TableCell className="max-w-[320px] truncate font-mono text-xs">{c.bpf_filter || "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant={c.status === "running" ? "default" : "secondary"}>{c.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-xs">{fmtBytes(c.bytes)}</TableCell>
-                    <TableCell className="max-w-[360px] truncate font-mono text-xs">{c.local_path || c.remote_path}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </DataTableShell>
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-w-4xl">

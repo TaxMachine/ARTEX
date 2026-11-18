@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { DataTableShell } from "@/components/data-table-shell";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -613,22 +613,22 @@ export default function TrafficPage() {
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted-foreground">{selectedFlows.size} flows selected</span>
-        <Button variant="outline" size="sm" disabled={selectedFlows.size === 0} onClick={() => setLinking(true)}>
-          Link to finding
-        </Button>
-        {selectedFlows.size > 0 ? (
-          <Button variant="ghost" size="sm" onClick={() => setSelectedFlows(new Set())}>
-            Clear selection
-          </Button>
-        ) : null}
-      </div>
-      {/* History table */}
-      <div className="flex h-[calc(100vh-15rem)] min-h-0 flex-col">
-        <Card className="flex min-h-0 flex-1 flex-col overflow-hidden py-0">
-          <div className="min-h-0 flex-1 overflow-auto">
-            <Table>
+      <DataTableShell
+        toolbar={
+          <>
+            <span className="text-sm text-muted-foreground">{selectedFlows.size} flows selected</span>
+            <Button variant="outline" size="sm" disabled={selectedFlows.size === 0} onClick={() => setLinking(true)}>
+              Link to finding
+            </Button>
+            {selectedFlows.size > 0 ? (
+              <Button variant="ghost" size="sm" onClick={() => setSelectedFlows(new Set())}>
+                Clear selection
+              </Button>
+            ) : null}
+          </>
+        }
+      >
+        <Table>
               <TableHeader className="sticky top-0 z-10 bg-card">
                 <TableRow>
                   <TableHead className="w-10">
@@ -724,11 +724,9 @@ export default function TrafficPage() {
                     </TableCell>
                   </TableRow>
                 )}
-              </TableBody>
-            </Table>
-          </div>
-        </Card>
-      </div>
+        </TableBody>
+      </Table>
+      </DataTableShell>
 
       {linking ? (
         <LinkTrafficDialog

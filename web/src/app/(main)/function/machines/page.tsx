@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DataTableShell } from "@/components/data-table-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api, ApiError } from "@/lib/api";
 import type { Machine, MachineInput, MachineKind, MachineStatus } from "@/lib/types";
@@ -221,13 +222,9 @@ export default function MachinesPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Registered machines</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
+        <DataTableShell fill toolbar={<CardTitle className="text-base">Registered machines</CardTitle>}>
+<Table>
+              <TableHeader className="sticky top-0 z-10 bg-card">
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Kind</TableHead>
@@ -332,8 +329,7 @@ export default function MachinesPage() {
                 )}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+        </DataTableShell>
 
         <Card>
           <CardHeader className="pb-2">
