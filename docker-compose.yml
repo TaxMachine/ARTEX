@@ -42,6 +42,8 @@ services:
       # disables it. Cost: about 154 bytes per tool result plus one system note.
       ARTEX_UNTRUSTED_BOUNDARY: ${ARTEX_UNTRUSTED_BOUNDARY:-}
       ARTEX_UPDATE_CHECK: ${ARTEX_UPDATE_CHECK:-}
+      # Cross-binary function map (labkit/apps/crossmap) for project graphs.
+      ARTEX_CROSSMAP_URL: ${ARTEX_CROSSMAP_URL:-http://172.17.0.1:13060}
       # Noise profile for target requests: off (default) | quiet | balanced | aggressive.
       ARTEX_NOISE_PROFILE: ${ARTEX_NOISE_PROFILE:-}
       ARTEX_TARGET_USER_AGENT: ${ARTEX_TARGET_USER_AGENT:-}

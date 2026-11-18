@@ -69,6 +69,7 @@ import type {
   MachineBootResult,
   Project,
   ProjectDetail,
+  ProjectGraphData,
   ProjectSummary,
   MachineCapture,
   MachineEvent,
@@ -328,6 +329,7 @@ export const api = {
   machines: () => get<Machine[]>("/machines").then((r) => arr(r)),
   projects: () => get<ProjectSummary[]>("/projects").then((r) => arr(r)),
   project: (key: string) => get<ProjectDetail>(`/projects/${encodeURIComponent(key)}`),
+  projectGraph: (key: string) => get<ProjectGraphData>(`/projects/${encodeURIComponent(key)}/graph`),
   createProject: (p: { name: string; key?: string; kind?: string; description?: string; binaries?: string[] }) =>
     post<Project>("/projects", p),
   createMachine: (m: MachineInput) => post<Machine>("/machines", m),

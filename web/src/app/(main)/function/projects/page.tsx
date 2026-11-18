@@ -57,17 +57,8 @@ export default function ProjectsPage() {
     void load();
   }, [load]);
 
-  async function openDetail(key: string) {
-    setDetailKey(key);
-    setDetailLoading(true);
-    setDetail(null);
-    try {
-      setDetail(await api.project(key));
-    } catch (e) {
-      toast.error(errText(e));
-    } finally {
-      setDetailLoading(false);
-    }
+  function openDetail(key: string, name: string) {
+    window.location.href = `/function/projects/graph?key=${encodeURIComponent(key)}&name=${encodeURIComponent(name)}`;
   }
 
   async function create() {
@@ -142,7 +133,7 @@ export default function ProjectsPage() {
               </TableRow>
             ) : (
               projects.map((p) => (
-                <TableRow key={p.id} className="cursor-pointer" onClick={() => void openDetail(p.key)}>
+                <TableRow key={p.id} className="cursor-pointer" onClick={() => openDetail(p.key, p.name)}>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <BoxesIcon className="size-4 text-muted-foreground" />

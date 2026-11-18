@@ -1452,6 +1452,22 @@ export type ProjectSummary = Project & {
   binary_count: number;
 };
 
+export type ProjectGraphNode = {
+  id: string;
+  group: string;
+  label: string;
+  sub?: string;
+  color?: string;
+  extra?: Record<string, unknown>;
+};
+
+export type ProjectGraphData = {
+  project: Project;
+  nodes: ProjectGraphNode[];
+  edges: { from: string; to: string; kind: string }[];
+  crossmap: { function_nodes: number; function_edges: number };
+};
+
 export type ProjectDetail = {
   project: Project;
   tasks: { id: number; name: string; status: string }[];
