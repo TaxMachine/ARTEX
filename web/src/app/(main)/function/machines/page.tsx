@@ -222,7 +222,7 @@ export default function MachinesPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <DataTableShell fill toolbar={<CardTitle className="text-base">Registered machines</CardTitle>}>
+        <DataTableShell toolbar={<CardTitle className="text-base">Registered machines</CardTitle>}>
 <Table>
               <TableHeader className="sticky top-0 z-10 bg-card">
                 <TableRow>

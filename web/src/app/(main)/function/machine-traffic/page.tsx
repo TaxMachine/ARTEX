@@ -90,7 +90,6 @@ export default function MachineTrafficPage() {
       </div>
 
       <DataTableShell
-        fill
         toolbar={
           <>
             <CardTitle className="text-base">Recorded activity</CardTitle>
