@@ -30,7 +30,7 @@ export default function ProjectGraphPage() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
+    <div className="flex h-[calc(100vh-4.5rem)] min-h-0 flex-col gap-2 p-4">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="icon" aria-label="Back to projects" asChild>
           <Link href="/function/projects">

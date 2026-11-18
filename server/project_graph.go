@@ -124,10 +124,30 @@ FROM findings WHERE project_id=$1 ORDER BY id`, p.ID)
 			resp.Body.Close()
 		}
 	}
+	lower := func(x string) string { return strings.ToLower(x) }
+	// Version generation flags: latest version per app_name is the node the
+	// initial view shows; older generations stay reachable via the toggle.
+	latest := map[string]string{}
+	for i := range nodes {
+		if nodes[i].Group != "binary" {
+			continue
+		}
+		name := nodes[i].Label
+		if sp := strings.Fields(name); len(sp) > 0 {
+			name = sp[0]
+		}
+		ver := ""
+		if sp := strings.Fields(nodes[i].Label); len(sp) > 1 {
+			ver = sp[1]
+		}
+		if prev, ok := latest[lower(name)]; !ok || ver > prev {
+			latest[lower(name)] = ver
+		}
+	}
+
 	// Decorate binary nodes with map stats + finding counts. crossmap binary
 	// keys carry whatever case the .i64 filename had (CLFS.sys vs clfs.sys):
 	// match case-insensitively.
-	lower := func(x string) string { return strings.ToLower(x) }
 	summaryByLower := map[string]map[string]any{}
 	for b, st := range crossmapSummaries {
 		// several .i64 names can differ only by case (clfs.sys vs CLFS.sys);
@@ -161,6 +181,10 @@ FROM findings WHERE project_id=$1 ORDER BY id`, p.ID)
 			nodes[i].Extra["name"] = st["name"]
 		}
 		nodes[i].Extra["findings"] = findingCountByLower[lower(name)]
+		if sp := strings.Fields(nodes[i].Label); len(sp) > 1 {
+			nodes[i].Extra["version"] = sp[1]
+			nodes[i].Extra["is_latest"] = sp[1] == latest[lower(name)]
+		}
 	}
 
 	totalFns := 0
