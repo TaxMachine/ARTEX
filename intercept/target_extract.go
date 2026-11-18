@@ -40,6 +40,20 @@ var noTargetTools = toolSet(
 	"ask_operator",
 	// recorded traffic
 	"traffic_search", "traffic_get", "traffic_blob", "traffic_messages",
+	// native machines: read-only observation and the recorded evidence (the
+	// machines themselves live in the platform's registry; their SSH endpoints
+	// are gated through machineTools below when the gate has a resolver).
+	"list_machines", "machine_status", "machine_events", "machine_event_get",
+	"capture_list",
+)
+
+// machineTools are the native machine tools whose call reaches a registered
+// machine's network endpoint (SSH exec/transfer, packet capture). Their input
+// names a machine, not a host, so the declared form is resolved through the
+// injected machine registry before the gate compares it with pins.
+var machineTools = toolSet(
+	"ssh_exec", "ssh_upload", "ssh_download",
+	"capture_start", "capture_stop",
 )
 
 func toolSet(names ...string) map[string]bool {
@@ -82,6 +96,20 @@ func extractDeclared(toolName string, input []byte) targetList {
 		return targetList{}
 	}
 	var out targetList
+	if machineTools[toolName] {
+		var in struct {
+			Machine string `json:"machine"`
+		}
+		if json.Unmarshal(input, &in) == nil && in.Machine != "" {
+			for _, ep := range machineEndpointsOf(toolName, in.Machine) {
+				if t, ok := NormalizeTarget(ep); ok {
+					out.add(t)
+				}
+			}
+			return out
+		}
+		return out
+	}
 	switch toolName {
 	case "WebFetch":
 		u := declaredFields(input).URL
@@ -331,4 +359,26 @@ func validPort(s string) int {
 		return 0
 	}
 	return n
+}
+
+// machineEndpointsOf reads the endpoint a machine tool's call reaches, through
+// the registry the server injected. A machine that resolves to nothing (not
+// registered) declares no target: the tool itself fails with its own error.
+func machineEndpointsOf(toolName, machine string) []string {
+	if ep := machineEndpointResolver; ep != nil {
+		return ep(machine)
+	}
+	return nil
+}
+
+// machineEndpointResolver is set by the intercept package's wiring test seam and
+// the server (Interceptor.SetMachineResolver keeps its own copy for the gate
+// path; this one serves extraction, which runs before an Interceptor exists in
+// some call paths).
+var machineEndpointResolver func(machine string) []string
+
+// SetMachineEndpointResolver installs the package-level machine endpoint
+// resolver used by target extraction.
+func SetMachineEndpointResolver(f func(machine string) []string) {
+	machineEndpointResolver = f
 }

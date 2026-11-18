@@ -147,6 +147,17 @@ ARTEX now has first-class machine access instead of delegating it to an MCP:
   action is a `machine_events` row (command, stdout/stderr, exit, duration,
   credential id, task id). `machine_events` searches by machine/action/substring;
   `finding_machine_bindings` is ready for reporter binding (UI next).
+- **Target-gate pinning (VM/pcap)**: with the task's target gate on, the machine
+  tools that reach a network endpoint (`ssh_exec`, `ssh_upload`, `ssh_download`,
+  `capture_start`, `capture_stop`) declare the registered machine's endpoint
+  (host + SSH port) to the same approval gate as web traffic. An unpinned
+  machine blocks with a target approval request; the operator's approval pins
+  host:port for the task, and later calls on the same machine pass. The SSH
+  dial itself goes through the pinned dialer, so the connection only opens to a
+  pinned address. Read-only tools (`list_machines`, `machine_status`,
+  `machine_events`, `machine_event_get`, `capture_list`) and lifecycle tools
+  stay ungated; machine names resolve through the operator registry, so a
+  machine row is the single source of the endpoint.
 - **PCAP**: `capture_start/stop` run `tcpdump` on a Linux machine over SSH and
   download the pcap to `data/machine_captures/<machine>/<id>.pcap`. Windows
   guests have no tcpdump; use the transcript evidence or install a capture agent.

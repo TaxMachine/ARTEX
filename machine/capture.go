@@ -20,7 +20,7 @@ var safeBPFRE = regexp.MustCompile(`^[A-Za-z0-9_.:()!<>= /-]{0,256}$`)
 // captureCommand runs a command for capture management without adding an
 // "exec" event (the capture action itself is the event).
 func (s *Service) captureCommand(ctx context.Context, m db.Machine, c db.TaskCredential, command string, timeout time.Duration) (string, string, int, error) {
-	client, err := s.dialSSH(m, c, 20*time.Second)
+	client, err := s.dialSSH(ctx, m, c, 20*time.Second)
 	if err != nil {
 		return "", "", -1, err
 	}

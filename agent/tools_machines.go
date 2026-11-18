@@ -123,7 +123,7 @@ func (t *ToolSet) machineSnapshot() actool.CoreTool {
 
 func (t *ToolSet) sshExec() actool.CoreTool {
 	return writeTool("ssh_exec",
-		"Run one command on a registered machine over native SSH and record it as machine evidence (command, stdout/stderr, exit code, duration, event id). The credential is resolved from this task's machine credentials (protocol=ssh, domain=machine host/name); pass credential_id to choose one explicitly, or username to disambiguate. A non-zero exit code is returned normally, not as a tool error.",
+		"Run one command on a registered machine over native SSH and record it as machine evidence. With the task's target gate on, the machine's SSH endpoint must be pinned (approved) first; an unpinned machine blocks with a target approval request, and the operator's approval pins it for the task. (command, stdout/stderr, exit code, duration, event id). The credential is resolved from this task's machine credentials (protocol=ssh, domain=machine host/name); pass credential_id to choose one explicitly, or username to disambiguate. A non-zero exit code is returned normally, not as a tool error.",
 		obj(map[string]any{
 			"machine":         str("registered machine name"),
 			"command":         str("shell command to run on the target (runs through the target's shell)"),
@@ -155,7 +155,7 @@ func (t *ToolSet) sshExec() actool.CoreTool {
 
 func (t *ToolSet) sshUpload() actool.CoreTool {
 	return writeTool("ssh_upload",
-		"Copy one local file to a registered machine over SFTP and record the transfer as machine evidence. Per-file cap 256 MiB. Use for dropping a PoC/harness on the target.",
+		"Copy one local file to a registered machine over SFTP and record the transfer as machine evidence. Target-gated like ssh_exec: the machine's SSH endpoint needs a pin. Per-file cap 256 MiB. Use for dropping a PoC/harness on the target.",
 		obj(map[string]any{
 			"machine":       str("registered machine name"),
 			"local_path":    str("path in this task's workspace/container"),
@@ -179,7 +179,7 @@ func (t *ToolSet) sshUpload() actool.CoreTool {
 
 func (t *ToolSet) sshDownload() actool.CoreTool {
 	return writeTool("ssh_download",
-		"Copy one remote file from a registered machine over SFTP and record it as machine evidence. Defaults to data/machine_transfers/<machine>/<name>. Per-file cap 256 MiB.",
+		"Copy one remote file from a registered machine over SFTP and record it as machine evidence. Target-gated like ssh_exec: the machine's SSH endpoint needs a pin. Defaults to data/machine_transfers/<machine>/<name>. Per-file cap 256 MiB.",
 		obj(map[string]any{
 			"machine":       str("registered machine name"),
 			"remote_path":   str("file path on the target"),
@@ -258,7 +258,7 @@ func (t *ToolSet) machineEventGet() actool.CoreTool {
 
 func (t *ToolSet) captureStart() actool.CoreTool {
 	return writeTool("capture_start",
-		"Start a tcpdump packet capture on a Linux machine over SSH (requires tcpdump and permission on the target; set config.capture_sudo or use a root credential). The pcap stays on the guest until capture_stop, which downloads and records it. iface defaults to any; bpf_filter is a tcpdump expression.",
+		"Start a tcpdump packet capture on a Linux machine over SSH (target-gated: the machine's SSH endpoint needs a pin, (requires tcpdump and permission on the target; set config.capture_sudo or use a root credential). The pcap stays on the guest until capture_stop, which downloads and records it. iface defaults to any; bpf_filter is a tcpdump expression.",
 		obj(map[string]any{
 			"machine":       str("registered Linux machine name"),
 			"iface":         str("interface, default any"),
@@ -285,7 +285,7 @@ func (t *ToolSet) captureStart() actool.CoreTool {
 
 func (t *ToolSet) captureStop() actool.CoreTool {
 	return writeTool("capture_stop",
-		"Stop one packet capture, download the pcap into data/machine_captures/<machine>/<id>.pcap and record the result as machine evidence. Returns the local path for further analysis.",
+		"Stop one packet capture, download the pcap (target-gated: the machine's SSH endpoint needs a pin) into data/machine_captures/<machine>/<id>.pcap and record the result as machine evidence. Returns the local path for further analysis.",
 		obj(map[string]any{
 			"machine":       str("registered machine name"),
 			"capture_id":    idp("capture id returned by capture_start"),

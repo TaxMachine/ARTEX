@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Autumn-27/artex/db"
+	"github.com/Autumn-27/artex/intercept"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 )
@@ -37,7 +38,7 @@ type TransferResult struct {
 	Duration  int64  `json:"duration_ms"`
 }
 
-func (s *Service) dialSSH(m db.Machine, c db.TaskCredential, timeout time.Duration) (*ssh.Client, error) {
+func (s *Service) dialSSH(ctx context.Context, m db.Machine, c db.TaskCredential, timeout time.Duration) (*ssh.Client, error) {
 	var auth []ssh.AuthMethod
 	switch {
 	case c.SecretType == "key":
@@ -67,7 +68,19 @@ func (s *Service) dialSSH(m db.Machine, c db.TaskCredential, timeout time.Durati
 		Timeout:         timeout,
 	}
 	addr := net.JoinHostPort(m.Host, strconv.Itoa(port))
-	return ssh.Dial("tcp", addr, cfg)
+	// Target gate: dial through the pinned dialer so an approved pin is enforced
+	// on the address actually opened (same contract as WebFetch/HTTP clients).
+	// Ungated scopes (gate off, no scope) dial directly.
+	conn, err := intercept.PinnedDialer("ssh", true)(ctx, "tcp", addr)
+	if err != nil {
+		return nil, err
+	}
+	sshConn, chans, reqs, err := ssh.NewClientConn(conn, addr, cfg)
+	if err != nil {
+		_ = conn.Close()
+		return nil, err
+	}
+	return ssh.NewClient(sshConn, chans, reqs), nil
 }
 
 // capBuffer keeps at most n bytes and tracks truncation.
@@ -115,7 +128,7 @@ func (s *Service) Exec(ctx context.Context, taskID int64, machineName, username 
 		return ExecResult{}, err
 	}
 	s.link(taskID, m)
-	client, err := s.dialSSH(m, c, 20*time.Second)
+	client, err := s.dialSSH(ctx, m, c, 20*time.Second)
 	if err != nil {
 		return ExecResult{}, fmt.Errorf("ssh %s@%s:%d: %w", c.Username, m.Host, m.SSHPort, err)
 	}
@@ -217,7 +230,7 @@ func (s *Service) Upload(ctx context.Context, taskID int64, machineName, usernam
 		return TransferResult{}, err
 	}
 	s.link(taskID, m)
-	client, err := s.dialSSH(m, c, 20*time.Second)
+	client, err := s.dialSSH(ctx, m, c, 20*time.Second)
 	if err != nil {
 		return TransferResult{}, fmt.Errorf("ssh %s@%s:%d: %w", c.Username, m.Host, m.SSHPort, err)
 	}
@@ -276,7 +289,7 @@ func (s *Service) Download(ctx context.Context, taskID int64, machineName, usern
 		return TransferResult{}, err
 	}
 	s.link(taskID, m)
-	client, err := s.dialSSH(m, c, 20*time.Second)
+	client, err := s.dialSSH(ctx, m, c, 20*time.Second)
 	if err != nil {
 		return TransferResult{}, fmt.Errorf("ssh %s@%s:%d: %w", c.Username, m.Host, m.SSHPort, err)
 	}

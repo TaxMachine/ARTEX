@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"sort"
@@ -438,6 +439,11 @@ func NewManager(dir, proxyAddr string) (*Manager, error) {
 	m.interceptor.SetUpstreamProxyCheck(func() bool { return m.GlobalProxy() != "" })
 	// The platform's own endpoints need no target approval.
 	m.interceptor.SetDerivedExemptions(m.targetGateEndpoints)
+	// Native machine tools name a machine; the gate checks the registered
+	// endpoint the call reaches (host + ssh port), so a machine pin covers what
+	// SSH will actually dial. Lifecycle/read tools stay ungated.
+	m.interceptor.SetMachineResolver(m.machineEndpointList)
+	intercept.SetMachineEndpointResolver(m.machineEndpointList)
 	if proxyAddr != "" {
 		tr, err := traffic.Open(filepath.Join(dir, "traffic"), proxyAddr)
 		if err != nil {
@@ -966,6 +972,25 @@ func (m *Manager) targetGateEndpoints() []string {
 		out = append(out, searchBackendEndpoints[backend])
 	}
 	return append(out, searchProxy, m.ProxyAddr(), m.GlobalProxy())
+}
+
+// machineEndpointList returns the network endpoint(s) of a registered machine
+// for the target gate: the machine row's host with its SSH port (the port every
+// native machine tool connects to). Empty when the machine is unknown or has no
+// host: such a call declares no target and the tool reports its own error.
+func (m *Manager) machineEndpointList(name string) []string {
+	if m.machines == nil || strings.TrimSpace(name) == "" {
+		return nil
+	}
+	mach, err := m.machines.Machine(name)
+	if err != nil || strings.TrimSpace(mach.Host) == "" {
+		return nil
+	}
+	port := mach.SSHPort
+	if port == 0 {
+		port = 22
+	}
+	return []string{net.JoinHostPort(mach.Host, strconv.Itoa(port))}
 }
 
 // UpdateTaskMetadata changes list-only task metadata without interrupting any

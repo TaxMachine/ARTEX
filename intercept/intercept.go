@@ -223,6 +223,10 @@ type Interceptor struct {
 	// dial is the base dialer of PinnedDialer: every connection it lets through
 	// is opened here. See SetBaseDialer.
 	dial func(ctx context.Context, network, addr string) (net.Conn, error)
+	// machineEndpoints resolves a native machine tool's "machine" argument to the
+	// registered endpoint(s) the call actually reaches (host[:port]). Injected by
+	// the server layer; nil = machine tools declare no target.
+	machineEndpoints func(machine string) []string
 }
 
 // SetUpstreamProxyCheck installs the function that reports whether an upstream
@@ -261,6 +265,17 @@ var defaultEnabledTools = []string{
 func New(d *db.DB) *Interceptor {
 	return &Interceptor{db: d, pending: newPendingManager(),
 		targets: dbTargetStore{d}, resolve: newResolveCache(systemResolver{}), dial: baseDial}
+}
+
+// SetMachineResolver installs the resolver the target gate uses to read what a
+// native machine tool (ssh_exec, transfers, captures) actually connects to: the
+// registered machine row's host and SSH port. The registry is operator-owned,
+// so the gate checks the endpoint the tool will dial, not the name the model
+// wrote. nil disables machine-target extraction.
+func (i *Interceptor) SetMachineResolver(f func(machine string) []string) {
+	i.mu.Lock()
+	i.machineEndpoints = f
+	i.mu.Unlock()
 }
 
 // Invalidate clears the in-memory rule cache and the enabled-tools cache.
