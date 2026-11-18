@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/Autumn-27/artex/db"
+	"github.com/Autumn-27/artex/machine"
 	acperm "github.com/Autumn-27/norma/permission"
 	actool "github.com/Autumn-27/norma/tool"
 )
@@ -141,6 +142,7 @@ type ToolSet struct {
 	as              *db.AssetStore   // asset store (optional; nil = asset tools not available)
 	cs              *db.CompanyStore // company store (optional)
 	ts              *db.ExplorationStore
+	machines        *machine.Service // native VM/SSH backend (nil = machine tools unavailable)
 	worker          string
 	taskID          int64 // PG tasks.id; 0 when unknown (tests / orchestrator cross-task reads)
 	// coverageDisabled mirrors tasks.coverage_enabled=false. Stored inverted so the
@@ -249,8 +251,12 @@ func (w WriteCounts) String() string {
 func (t *ToolSet) Writes() WriteCounts { return t.writes }
 
 func NewToolSet(ts *db.ExplorationStore, worker string) *ToolSet {
-	return &ToolSet{ts: ts, worker: worker}
+	return &ToolSet{ts: ts, worker: worker, machines: machine.Default()}
 }
+
+// SetMachines installs the native VM/SSH backend on this tool set. Agent tools
+// refuse with a clear message when it is nil (task-less catalog shells, tests).
+func (t *ToolSet) SetMachines(m *machine.Service) { t.machines = m }
 
 // SetTaskID sets the PG task id on this ToolSet so that report_finding can
 // dual-write to the standalone findings table (which survives task deletion).
@@ -1405,7 +1411,7 @@ func (t *ToolSet) goalMet() actool.CoreTool {
 func (t *ToolSet) addFinding() actool.CoreTool {
 	return writeTool("report_finding", "Record a confirmed finding, with evidence providing verifiable proof such as command output and logs. In a task context, pass the current intent_id. The returned finding_id is the standalone finding record ID; finding_node_id is the exploration node ID (the first line keeps that node number).", obj(map[string]any{
 		"vulnclass": str("vulnerability class"), "name": str("vulnerability name"), "severity": str("critical|high|medium|low"), "summary": str("finding summary"),
-		"category": str("one of: operating-systems | hypervisors | web | applications | others (default others)"),
+		"category":  str("one of: operating-systems | hypervisors | web | applications | others (default others)"),
 		"intent_id": idp("the current task's intent id"), "asset_ids": map[string]any{"type": "array", "items": map[string]any{"type": "integer"}, "description": "affected asset ids"},
 		"evidence":         str("evidence/PoC text"),
 		"evidence_hint_id": idp("optional: the hint node ID in this task corresponding to this finding; automatically carries its structured traffic_refs; cannot reference an inherited hint or another finding's hint"),
@@ -2303,5 +2309,8 @@ func (t *ToolSet) PlannerTools() []actool.CoreTool {
 		// list_untested_assets: query untested assets in this task's scope on demand
 		// (by type + paginated), and decide on supplementary testing yourself.
 		t.listUntestedAssets(),
+		// Native machines: VM lifecycle + machine evidence.
+		t.listMachines(), t.machineStatus(), t.machineStart(), t.machineStop(),
+		t.machineReset(), t.machineSnapshot(), t.machineEvents(),
 	}
 }

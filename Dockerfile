@@ -180,8 +180,16 @@ RUN npm install -g "@playwright/mcp@${PLAYWRIGHT_MCP_VERSION}" "@playwright/cli@
     && playwright-cli --help \
     && playwright install --with-deps chromium \
     && rm -rf /var/lib/apt/lists/*
+
+# Native machine tooling: SSH client (native ssh_exec/transfer), libvirt client
+# (virsh lifecycle/snapshots), and QEMU/swtpm/OVMF so operator script machines
+# (the raw-QEMU lab VMs) can be started from inside the container. Host devices
+# and image directories are bind-mounted by docker-compose.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      openssh-client libvirt-clients qemu-system-x86 qemu-utils swtpm ovmf \
+      psmisc iproute2 \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-# Binary compiled from source in the build stage above.
 COPY --from=build /out/artex /app/artex
 # Daemon startup script: relaunches the process after a crash and forwards SIGTERM
 # to artex — docker stop only signals PID 1; without forwarding, artex never receives it,

@@ -23,6 +23,7 @@ import (
 	"github.com/Autumn-27/artex/enrich"
 	"github.com/Autumn-27/artex/guard"
 	"github.com/Autumn-27/artex/intercept"
+	"github.com/Autumn-27/artex/machine"
 	"github.com/Autumn-27/artex/traffic"
 	"github.com/Autumn-27/artex/traffic/rewrite"
 	actool "github.com/Autumn-27/norma/tool"
@@ -258,6 +259,7 @@ type Manager struct {
 	pg          *pgdb.DB
 	assets      *pgdb.AssetStore
 	traffic     *traffic.Traffic       // process-wide recording proxy (may be nil)
+	machines    *machine.Service       // native VM/SSH backend (never nil after startup)
 	enrich      *enrich.Engine         // engine-side asset auto-completion (DNS/HTTP)
 	interceptor *intercept.Interceptor // user-configured tool-call interception rules
 
@@ -422,6 +424,8 @@ func NewManager(dir, proxyAddr string) (*Manager, error) {
 		pg.Close()
 		return nil, fmt.Errorf("recover finding retests: %w", err)
 	}
+	mach := machine.New(pg, dir)
+	machine.SetDefault(mach)
 	egress.SetProfile(startupNoiseProfile(pg))
 	if err := pg.EnsureLLMRecordsTable(); err != nil {
 		log.Printf("[llmrec] create table: %v", err)
@@ -429,7 +433,7 @@ func NewManager(dir, proxyAddr string) (*Manager, error) {
 	if err := pg.EnsureLLMUsageTable(); err != nil {
 		log.Printf("[llmusage] create table: %v", err)
 	}
-	m := &Manager{dir: dir, pg: pg, assets: pg.Assets(), tasks: map[string]*Task{}, interceptor: intercept.New(pg)}
+	m := &Manager{dir: dir, pg: pg, assets: pg.Assets(), machines: mach, tasks: map[string]*Task{}, interceptor: intercept.New(pg)}
 	// Behind the global egress proxy a target approval is name-only.
 	m.interceptor.SetUpstreamProxyCheck(func() bool { return m.GlobalProxy() != "" })
 	// The platform's own endpoints need no target approval.
@@ -807,9 +811,10 @@ func (m *Manager) HostTools() []actool.CoreTool {
 	return m.traffic.Tools()
 }
 
-func (m *Manager) Assets() *pgdb.AssetStore  { return m.assets }
-func (m *Manager) PG() *pgdb.DB              { return m.pg }
-func (m *Manager) Traffic() *traffic.Traffic { return m.traffic }
+func (m *Manager) Assets() *pgdb.AssetStore   { return m.assets }
+func (m *Manager) Machines() *machine.Service { return m.machines }
+func (m *Manager) PG() *pgdb.DB               { return m.pg }
+func (m *Manager) Traffic() *traffic.Traffic  { return m.traffic }
 
 // ProxyAddr returns the egress proxy address agents route target traffic through:
 //   - capture ON  → the recording MITM proxy (which itself exits via the global

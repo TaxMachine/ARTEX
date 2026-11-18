@@ -13,16 +13,31 @@ import (
 // save_task_credential tool; these routes serve the UI (task detail tab) and the
 // creation dialog.
 
-// taskCredentialDTO masks the password server-side; an empty password stays
-// empty (the "agent generates" mode). Agent tools read the stored value directly.
+// taskCredentialDTO masks the password and private key server-side; an empty
+// value stays empty (the "agent generates" mode). Agent tools read the stored
+// value directly.
 func taskCredentialDTO(c db.TaskCredential) map[string]any {
 	pass := c.Password
 	if pass != "" {
 		pass = notify.MaskedPrefix
 	}
+	key := c.PrivateKey
+	if key != "" {
+		key = notify.MaskedPrefix
+	}
+	protocol := c.Protocol
+	if protocol == "" {
+		protocol = "web"
+	}
+	secretType := c.SecretType
+	if secretType == "" {
+		secretType = "password"
+	}
 	return map[string]any{
-		"id": c.ID, "task_id": c.TaskID, "domain": c.Domain, "username": c.Username,
-		"password": pass, "source": c.Source, "note": c.Note,
+		"id": c.ID, "task_id": c.TaskID, "protocol": protocol, "domain": c.Domain,
+		"port": c.Port, "username": c.Username, "password": pass,
+		"secret_type": secretType, "private_key": key,
+		"source": c.Source, "note": c.Note,
 		"created_at": c.CreatedAt, "updated_at": c.UpdatedAt,
 	}
 }
@@ -72,10 +87,16 @@ func (s *Server) addTaskCredential(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, "password is a masked placeholder; enter the real password")
 		return
 	}
+	if notify.IsMasked(req.PrivateKey) {
+		writeErr(w, 400, "private_key is a masked placeholder; enter the real key")
+		return
+	}
 	// source=user: manual adds from the UI (e.g. relaying an OTP-verified account).
-	// An empty password stays allowed here — the "agent generates" mode.
+	// An empty password/key stays allowed here — the "agent generates" mode.
 	c, err := s.m.PG().UpsertTaskCredential(id, db.TaskCredentialInput{
-		Domain: req.Domain, Username: req.Username, Password: req.Password,
+		Protocol: req.Protocol, Domain: req.Domain, Port: req.Port,
+		Username: req.Username, Password: req.Password,
+		SecretType: req.SecretType, PrivateKey: req.PrivateKey,
 		Source: "user", Note: req.Note,
 	})
 	if err != nil {

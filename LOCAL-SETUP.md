@@ -118,6 +118,50 @@ into it; ARTEX skills are bind-mounted per-skill from `labkit/skills/`
 nothing else to sync. Secrets (`*.token`, `.env`, `windbg.env`) are gitignored;
 bootstrap from `*.example` files (README has the full fresh-machine procedure).
 
+## Native machines (VM + SSH)
+
+ARTEX now has first-class machine access instead of delegating it to an MCP:
+
+- **UI**: `/function/machines` (sidebar "Machines") lists registered targets,
+  shows lifecycle state, starts/stops/resets and exposes the evidence table.
+- **API**: `/api/machines`, `/api/machines/{name}/{start|stop|reset|status|snapshot}`,
+  `/api/machine-events`, `/api/machines/{name}/captures`.
+- **Agent tools** (seeded and bound to worker/pentest, plus plan/auto):
+  `list_machines`, `machine_status`, `machine_start`, `machine_stop`,
+  `machine_reset`, `machine_snapshot`, `ssh_exec`, `ssh_upload`, `ssh_download`,
+  `machine_events`, `machine_event_get`, `capture_start`, `capture_stop`,
+  `capture_list`.
+- **Credentials**: `task_credentials` now carries `protocol` (web|ssh|winrm),
+  `port`, `secret_type` (password|key) and an encrypted `private_key`; the
+  existing save/list tools and the task Credentials tab expose them. Machine
+  tools resolve the newest task credential for the machine host/name; passwords
+  and keys never leave the server (the list tool redacts keys).
+- **Evidence**: every SSH exec/upload/download, VM lifecycle action and pcap
+  action is a `machine_events` row (command, stdout/stderr, exit, duration,
+  credential id, task id). `machine_events` searches by machine/action/substring;
+  `finding_machine_bindings` is ready for reporter binding (UI next).
+- **PCAP**: `capture_start/stop` run `tcpdump` on a Linux machine over SSH and
+  download the pcap to `data/machine_captures/<machine>/<id>.pcap`. Windows
+  guests have no tcpdump; use the transcript evidence or install a capture agent.
+
+Container privileges (deliberate; `docker-compose.yml`): `/run/libvirt/libvirt-sock`,
+`/dev/kvm`, `/usr/share/edk2`, `~/.ssh` read-only, and the lab trees
+`/var/home/taxmachine/{ntvuln,drvwork}`. The image installs `openssh-client`,
+`libvirt-clients`, `qemu-system-x86`, `qemu-utils`, `swtpm`, `ovmf`, `psmisc`.
+`security_opt: label=disable` is required for the libvirt socket under SELinux.
+
+Caveats:
+
+- Script-backed QEMU (v4xx) runs **inside the ARTEX container**; a container
+  restart/rebuild kills it. libvirt machines keep running. Do not manage the same
+  VM from the host and ARTEX at once (separate PID namespaces).
+- `win11-26h2` is hard-denied for lifecycle in code, and `protected=true` refuses
+  start/stop/reset as well. Read-only status is allowed.
+- The lab start scripts now use `-machine q35` instead of the host-pinned
+  `pc-q35-10.2`, because the container's QEMU is older; q35 is accepted by both.
+- Machine tools only accept a registered `machine` name; host/domain/script paths
+  are operator-owned database fields.
+
 ## LLM profiles
 
 All 21 models from OpenCode's `ikhdev` provider are stored in `llm_profiles`:

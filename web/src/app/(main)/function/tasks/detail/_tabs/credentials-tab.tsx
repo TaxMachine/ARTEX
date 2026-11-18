@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import type { TaskCredential } from "@/lib/types";
 import { setVisibleInterval } from "@/lib/polling";
@@ -20,9 +21,13 @@ import { setVisibleInterval } from "@/lib/polling";
 export function CredentialsTab({ taskId }: { taskId: string }) {
   const [items, setItems] = React.useState<TaskCredential[] | null>(null);
   const [error, setError] = React.useState("");
+  const [protocol, setProtocol] = React.useState<"web" | "ssh" | "winrm">("web");
   const [domain, setDomain] = React.useState("");
+  const [port, setPort] = React.useState("");
   const [username, setUsername] = React.useState("");
+  const [secretType, setSecretType] = React.useState<"password" | "key">("password");
   const [password, setPassword] = React.useState("");
+  const [privateKey, setPrivateKey] = React.useState("");
   const [note, setNote] = React.useState("");
   const [adding, setAdding] = React.useState(false);
 
@@ -48,14 +53,21 @@ export function CredentialsTab({ taskId }: { taskId: string }) {
     setAdding(true);
     try {
       await api.addTaskCredential(taskId, {
+        protocol,
         domain: domain.trim(),
+        port: port.trim() ? Number(port) : 0,
         username: username.trim(),
-        password, // empty = "agent generates and records it"
+        // empty = "agent generates and records it" (web/password mode)
+        password: secretType === "password" ? password : "",
+        secret_type: secretType,
+        private_key: secretType === "key" ? privateKey : "",
         note: note.trim(),
       });
       setDomain("");
+      setPort("");
       setUsername("");
       setPassword("");
+      setPrivateKey("");
       setNote("");
       load();
     } catch (e) {
@@ -99,6 +111,12 @@ export function CredentialsTab({ taskId }: { taskId: string }) {
           <div className="flex flex-col divide-y">
             {items.map((c) => (
               <div key={c.id} className="flex flex-wrap items-center gap-2 py-2.5">
+                {c.protocol && c.protocol !== "web" ? (
+                  <Badge variant="outline">
+                    {c.protocol}
+                    {c.port ? `:${c.port}` : ""}
+                  </Badge>
+                ) : null}
                 <code className="text-sm font-medium">{c.domain}</code>
                 <span className="text-muted-foreground text-sm">{c.username}</span>
                 <Badge variant={c.source === "agent" ? "secondary" : "outline"}>
@@ -106,7 +124,11 @@ export function CredentialsTab({ taskId }: { taskId: string }) {
                 </Badge>
                 <div className="ml-auto flex items-center gap-1">
                   <code className="max-w-40 truncate rounded bg-muted px-2 py-0.5 text-sm">
-                    {c.password === "" ? "— agent generates —" : "stored, hidden"}
+                    {c.secret_type === "key"
+                      ? "key stored, hidden"
+                      : c.password === ""
+                        ? "— agent generates —"
+                        : "stored, hidden"}
                   </code>
                   <Button size="icon" variant="ghost" className="size-7" aria-label="Delete credential" onClick={() => remove(c.id)}>
                     <TrashIcon />
@@ -117,19 +139,49 @@ export function CredentialsTab({ taskId }: { taskId: string }) {
             ))}
           </div>
         )}
-        <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
-          <Input placeholder="domain (e.g. target.example.com)" value={domain} onChange={(e) => setDomain(e.target.value)} />
+        <div className="grid gap-2 sm:grid-cols-[0.8fr_1.4fr_0.5fr_1fr_0.8fr_auto]">
+          <select
+            className="h-9 rounded-md border bg-transparent px-2 text-sm"
+            value={protocol}
+            onChange={(e) => setProtocol(e.target.value as "web" | "ssh" | "winrm")}
+          >
+            <option value="web">web</option>
+            <option value="ssh">ssh</option>
+            <option value="winrm">winrm</option>
+          </select>
+          <Input placeholder="domain / host" value={domain} onChange={(e) => setDomain(e.target.value)} />
+          <Input placeholder="port" type="number" value={port} onChange={(e) => setPort(e.target.value)} disabled={protocol === "web"} />
           <Input placeholder="email or username" value={username} onChange={(e) => setUsername(e.target.value)} />
-          <Input
-            placeholder="password (empty = agent generates)"
-            type="text"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <select
+            className="h-9 rounded-md border bg-transparent px-2 text-sm"
+            value={secretType}
+            onChange={(e) => setSecretType(e.target.value as "password" | "key")}
+            disabled={protocol === "web"}
+          >
+            <option value="password">password</option>
+            <option value="key">ssh key</option>
+          </select>
           <Button variant="outline" disabled={adding || !domain.trim() || !username.trim()} onClick={add}>
             <PlusIcon /> Add
           </Button>
-          <Input className="sm:col-span-4" placeholder="note (optional, e.g. program alias account)" value={note} onChange={(e) => setNote(e.target.value)} />
+          {secretType === "key" && protocol !== "web" ? (
+            <Textarea
+              className="sm:col-span-6 font-mono text-xs"
+              rows={4}
+              placeholder="PEM private key (unencrypted)"
+              value={privateKey}
+              onChange={(e) => setPrivateKey(e.target.value)}
+            />
+          ) : (
+            <Input
+              className="sm:col-span-6"
+              placeholder="password (empty = agent generates)"
+              type="text"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          )}
+          <Input className="sm:col-span-6" placeholder="note (optional, e.g. program alias account)" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
       </CardContent>
     </Card>

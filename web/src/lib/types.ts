@@ -1403,20 +1403,98 @@ export interface AssetInterceptRuleInput {
 // Task credentials (#3): per-task test accounts. An empty password on a user-declared
 // entry means "agent generates": the agent registers that account and records it back.
 export type TaskCredentialInput = {
+  protocol?: "web" | "ssh" | "winrm";
   domain: string;
+  port?: number;
   username: string;
   password: string;
+  secret_type?: "password" | "key";
+  private_key?: string;
   note?: string;
 };
 
 export type TaskCredential = TaskCredentialInput & {
   id: number;
   task_id: number;
+  protocol: "web" | "ssh" | "winrm";
+  port: number;
+  secret_type: "password" | "key";
   source: "user" | "agent";
   note: string;
   created_at: string;
   updated_at: string;
 };
+
+export type MachineKind = "libvirt" | "script" | "ssh";
+
+export interface Machine {
+  id: number;
+  name: string;
+  description: string;
+  os: string;
+  kind: MachineKind;
+  host: string;
+  ssh_port: number;
+  domain: string;
+  start_script?: string;
+  stop_script?: string;
+  workdir?: string;
+  data_dir?: string;
+  protected: boolean;
+  tags: string[];
+  config?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export type MachineInput = Omit<Machine, "id" | "created_at" | "updated_at">;
+
+export interface MachineStatus {
+  machine: string;
+  kind: MachineKind;
+  running: boolean;
+  state: string;
+  host?: string;
+  ssh_port?: number;
+  ssh_reachable: boolean;
+  pid?: number;
+  detail?: string;
+}
+
+export interface MachineEvent {
+  id: number;
+  task_id?: number;
+  machine_id?: number;
+  machine: string;
+  protocol: "ssh" | "vm" | "pcap";
+  action: string;
+  username?: string;
+  credential_id?: number;
+  command?: string;
+  stdout?: string;
+  stderr?: string;
+  exit_code?: number;
+  duration_ms: number;
+  bytes: number;
+  pcap_path?: string;
+  meta?: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface MachineCapture {
+  id: number;
+  machine_id: number;
+  task_id?: number;
+  iface: string;
+  bpf_filter: string;
+  remote_path: string;
+  local_path: string;
+  pid_file: string;
+  status: string;
+  bytes: number;
+  started_at: string;
+  stopped_at?: string;
+}
 
 
 export interface AssetInterceptRule {

@@ -81,6 +81,7 @@ var (
 	colLLMProxy    = secretColumn{"llm_profiles", "proxy", false, ""} // may carry user:pass
 	colMCPEnv      = secretColumn{"mcp_servers", "env", true, ""}
 	colCredPass    = secretColumn{"task_credentials", "password", false, ""}
+	colCredKey     = secretColumn{"task_credentials", "private_key", false, ""}
 	colNotifConfig = secretColumn{"notification_channels", "config", true, ""}
 	colToolExec    = secretColumn{"tools", "exec", true, ""} // system=false rows: headers, proxy, body, code, command
 	// Evidence head blocks carry the captured Cookie and Authorization headers.
@@ -90,7 +91,7 @@ var (
 	// Capture-proxy rewrite rules: an action may carry a token, a matcher a header value.
 	colRewriteMatchers = secretColumn{"traffic_rewrite_rules", "matchers", true, ""}
 	colRewriteActions  = secretColumn{"traffic_rewrite_rules", "actions", true, ""}
-	secretColumns      = append([]secretColumn{colLLMKey, colLLMProxy, colMCPEnv, colCredPass, colNotifConfig, colToolExec, colEvReqHead, colEvRespHead, colRewriteMatchers, colRewriteActions}, secretSettingColumns()...)
+	secretColumns      = append([]secretColumn{colLLMKey, colLLMProxy, colMCPEnv, colCredPass, colCredKey, colNotifConfig, colToolExec, colEvReqHead, colEvRespHead, colRewriteMatchers, colRewriteActions}, secretSettingColumns()...)
 )
 
 // secretSettingKeys are the settings stored encrypted, AAD "settings.<key>".

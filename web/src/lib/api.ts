@@ -64,6 +64,11 @@ import type {
   LLMRetryOverride,
   LLMRetryPolicy,
   LLMTask,
+  Machine,
+  MachineCapture,
+  MachineEvent,
+  MachineInput,
+  MachineStatus,
   MCPServer,
   MCPTool,
   MissingSkill,
@@ -314,6 +319,25 @@ export const api = {
   pinTask: (id: string, pinned: boolean) => patch<Task>(`/tasks/${id}`, { pinned }),
   createTaskCategory: (name: string) => post<TaskCategory>("/task-categories", { name }),
   taskCredentials: (id: string) => get<TaskCredential[]>(`/tasks/${id}/credentials`).then((r) => arr(r)),
+  machines: () => get<Machine[]>("/machines").then((r) => arr(r)),
+  createMachine: (m: MachineInput) => post<Machine>("/machines", m),
+  updateMachine: (id: number, m: MachineInput) => put<Machine>(`/machines/${id}`, m),
+  deleteMachine: (id: number) => del<{ ok: boolean }>(`/machines/${id}`),
+  machineStatus: (name: string) => get<MachineStatus>(`/machines/${encodeURIComponent(name)}/status`),
+  machineAction: (name: string, action: "start" | "stop" | "reset", force?: boolean) =>
+    post<MachineStatus>(`/machines/${encodeURIComponent(name)}/${action}`, force === undefined ? undefined : { force }),
+  machineSnapshot: (name: string, action: "list" | "create" | "revert", snapshot?: string) =>
+    post<{ output: string }>(`/machines/${encodeURIComponent(name)}/snapshot`, { action, snapshot }),
+  machineCaptures: (name: string) => get<MachineCapture[]>(`/machines/${encodeURIComponent(name)}/captures`).then((r) => arr(r)),
+  machineEvents: (params: { task_id?: string; machine?: string; action?: string; q?: string; limit?: number; offset?: number }) => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== "") qs.set(k, String(v));
+    });
+    return get<MachineEvent[]>(`/machine-events?${qs.toString()}`).then((r) => arr(r));
+  },
+  machineEvent: (id: number, taskId?: string) =>
+    get<MachineEvent>(`/machine-events/${id}${taskId ? `?task_id=${encodeURIComponent(taskId)}` : ""}`),
   addTaskCredential: (id: string, input: TaskCredentialInput) =>
     post<TaskCredential>(`/tasks/${id}/credentials`, input),
   deleteTaskCredential: (id: string, cid: number) => del(`/tasks/${id}/credentials/${cid}`),

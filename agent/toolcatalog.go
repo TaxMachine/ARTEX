@@ -57,11 +57,16 @@ func builtinToolsByAgent() map[string][]actool.CoreTool {
 		// auto binds the finding-reporting + asset-management tools by default; other
 		// domain tools can be checked on demand in the UI.
 		// New databases are seeded from here; old databases are migrated by seedAutoDefaultBindings.
-		"auto": {ts.addFinding(), ts.insertAssets(), ts.addCompanyScope(), ts.listAssets(), ts.listCompanies()},
+		"auto": {ts.addFinding(), ts.insertAssets(), ts.addCompanyScope(), ts.listAssets(), ts.listCompanies(),
+			ts.listMachines(), ts.machineStatus(), ts.machineStart(), ts.machineStop(),
+			ts.machineReset(), ts.machineSnapshot(), ts.machineEvents()},
 		// pentest (solo pentest agent) binds by default: list assets / insert assets /
 		// report finding / list findings / list companies.
 		// New databases are seeded from here; old databases are migrated by seedPentestDefaultBindings.
-		"pentest": {ts.listAssets(), ts.insertAssets(), ts.addFinding(), ts.listFindings(), ts.listCompanies(), ts.saveTaskCredential(), ts.listTaskCredentials()},
+		"pentest": {ts.listAssets(), ts.insertAssets(), ts.addFinding(), ts.listFindings(), ts.listCompanies(), ts.saveTaskCredential(), ts.listTaskCredentials(),
+			ts.listMachines(), ts.machineStatus(), ts.machineStart(), ts.machineStop(),
+			ts.machineReset(), ts.machineSnapshot(), ts.sshExec(), ts.sshUpload(), ts.sshDownload(),
+			ts.machineEvents(), ts.machineEventGet(), ts.captureStart(), ts.captureStop(), ts.captureList()},
 	}
 }
 

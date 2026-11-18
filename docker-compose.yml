@@ -50,6 +50,16 @@ services:
       ARTEX_TASK_BUDGET_TURNS: ${ARTEX_TASK_BUDGET_TURNS:-}
       ARTEX_INTENT_BUDGET_TOKENS: ${ARTEX_INTENT_BUDGET_TOKENS:-}
       ARTEX_INTENT_BUDGET_TURNS: ${ARTEX_INTENT_BUDGET_TURNS:-}
+    # Native machine work needs the libvirt socket (label virt_var_run_t) and the
+    # host SSH keys; SELinux container confinement blocks the socket even for
+    # root. This disables the container label, matching the deliberate host-level
+    # privilege the operator asked for.
+    security_opt:
+      - label=disable
+    # A bind mount alone does not grant the device cgroup permission; `devices`
+    # does. Required for script-backed QEMU lab VMs (accel=kvm).
+    devices:
+      - /dev/kvm:/dev/kvm
     ports:
       - "${ARTEX_BIND_ADDR:-127.0.0.1}:8787:8787"
       - "127.0.0.1:8788:8788"
@@ -74,6 +84,16 @@ services:
       - /home/taxmachine/labkit/skills/windows-lpe-triage:/app/skills/windows-lpe-triage
       - /home/taxmachine/labkit/skills/windbg:/app/skills/windbg
       - /home/taxmachine/labkit/skills/hypervisor-guest-escape:/app/skills/hypervisor-guest-escape
+      - /home/taxmachine/labkit/skills/machine-access:/app/skills/machine-access
+      # Native machines (libvirt/SSH/QEMU). The socket is world-rw on this host;
+      # /dev/kvm and the image dirs are needed for script-backed lab VMs. SSH keys
+      # are read-only. This is deliberate privilege: the operator asked for native
+      # VM/SSH control inside ARTEX. Lifecycle tools only address registered machines.
+      - /run/libvirt/libvirt-sock:/run/libvirt/libvirt-sock
+      - /usr/share/edk2:/usr/share/edk2:ro
+      - /home/taxmachine/.ssh:/root/.ssh:ro
+      - /var/home/taxmachine/ntvuln:/var/home/taxmachine/ntvuln
+      - /var/home/taxmachine/drvwork:/var/home/taxmachine/drvwork
     restart: unless-stopped
 
 volumes:

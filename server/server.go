@@ -774,6 +774,17 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/tasks/{id}/credentials", s.listTaskCredentials)
 	mux.HandleFunc("POST /api/tasks/{id}/credentials", s.addTaskCredential)
 	mux.HandleFunc("DELETE /api/tasks/{id}/credentials/{cid}", s.deleteTaskCredential)
+	// Native machines: operator management, lifecycle, machine evidence and pcaps.
+	mux.HandleFunc("GET /api/machines", s.listMachines)
+	mux.HandleFunc("POST /api/machines", s.createMachine)
+	mux.HandleFunc("PUT /api/machines/{id}", s.updateMachine)
+	mux.HandleFunc("DELETE /api/machines/{id}", s.deleteMachine)
+	mux.HandleFunc("GET /api/machines/{name}/status", s.machineStatus)
+	mux.HandleFunc("POST /api/machines/{name}/snapshot", s.machineSnapshot)
+	mux.HandleFunc("GET /api/machines/{name}/captures", s.listMachineCaptures)
+	mux.HandleFunc("POST /api/machines/{name}/{action}", s.machineLifecycle)
+	mux.HandleFunc("GET /api/machine-events", s.listMachineEvents)
+	mux.HandleFunc("GET /api/machine-events/{id}", s.getMachineEvent)
 	mux.HandleFunc("POST /api/tasks/{id}/archive", s.queueTaskArchive)
 	mux.HandleFunc("POST /api/tasks/archive/batch", s.queueTaskArchivesBatch)
 	mux.HandleFunc("POST /api/task-archives/{id}/restore", s.queueTaskArchiveRestore)
@@ -1685,10 +1696,14 @@ type createTaskReq struct {
 }
 
 type taskCredentialReq struct {
-	Domain   string `json:"domain"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Note     string `json:"note"`
+	Protocol   string `json:"protocol"`
+	Domain     string `json:"domain"`
+	Port       int    `json:"port"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	SecretType string `json:"secret_type"`
+	PrivateKey string `json:"private_key"`
+	Note       string `json:"note"`
 }
 
 func (s *Server) createTask(w http.ResponseWriter, r *http.Request) {

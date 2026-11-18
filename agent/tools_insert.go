@@ -682,6 +682,12 @@ func (t *ToolSet) WorkerTools() []actool.CoreTool {
 		// Task credentials (#3): reuse user-declared test accounts, record
 		// self-registered ones so they are not forgotten.
 		t.saveTaskCredential(), t.listTaskCredentials(),
+		// Native machines: registered VM lifecycle, SSH exec/transfer and machine
+		// evidence (the machine equivalent of traffic). See agent/tools_machines.go.
+		t.listMachines(), t.machineStatus(), t.machineStart(), t.machineStop(),
+		t.sshExec(), t.sshUpload(), t.sshDownload(),
+		t.machineEvents(), t.machineEventGet(),
+		t.captureStart(), t.captureStop(), t.captureList(),
 		// Cross-work review: a worker can also reuse other works' observations to avoid
 		// duplicate work.
 		// search_all_worker_traces: no need to know an intent_id first — fish out matching
@@ -721,6 +727,9 @@ func (t *ToolSet) MainAgentTools() []actool.CoreTool {
 		// list_untested_assets: query untested assets in this task's scope on demand
 		// (by type + paginated), and decide on supplementary testing yourself.
 		t.listUntestedAssets(),
+		// Native machines: plan/boot/snapshot VM work and review machine evidence.
+		t.listMachines(), t.machineStatus(), t.machineStart(), t.machineStop(),
+		t.machineReset(), t.machineSnapshot(), t.machineEvents(), t.machineEventGet(),
 	}
 }
 
