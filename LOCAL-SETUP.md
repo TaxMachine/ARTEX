@@ -69,7 +69,7 @@ Both are remote `http` MCPs on the Docker bridge address, registered in
 | Name | URL | Tools | Backing service |
 |---|---|---|---|
 | `windows-lab` | `http://172.17.0.1:13020/mcp` | 14 | `/home/taxmachine/windows-lab-mcp` (unit `windows-lab-mcp`) |
-| `qtest` | `http://172.17.0.1:13040/mcp` | 16 | QEMU qtest device-model harness (unit `qtest-mcp`) |
+| `qtest` | `http://172.17.0.1:13040/mcp` | 18 | QEMU qtest device-model harness (unit `qtest-mcp`) |
 | `local-hexbrain` | `http://172.17.0.1:13014/mcp` | 9 | local Go container (`local-hexbrain-server-1`), NVD/KEV/EPSS/payloads/templates |
 | `nuclei-runner` | `http://172.17.0.1:13015/mcp` | 6 | scoped nuclei scans of lab targets (detached scans, unit `nuclei-mcp`) |
 | `semgrep` | `http://172.17.0.1:13016/mcp` | 2 | static audit, local rules + any `p/` registry passthrough | static audit of lab source with local semgrep-rules (unit `semgrep-mcp`) |
