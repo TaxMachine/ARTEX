@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -103,60 +102,71 @@ FROM findings WHERE project_id=$1 ORDER BY id`, p.ID)
 	// Project root node.
 	nodes = append(nodes, gnode{ID: "project:" + p.Key, Group: "project", Label: p.Name, Sub: p.Key})
 
-	// Function graph from crossmap for the project's binaries.
-	crossmapNodes := 0
-	crossmapEdges := 0
-	if s.crossmapURL != "" && len(p.Binaries) > 0 {
+	// Crossmap rollup: binary-level stats first (the function layer loads on
+	// expand from the canvas). Binary nodes gain function/hub counts and an
+	// indexed flag; entry counts feed the entry-surface glow.
+	crossmapSummaries := map[string]map[string]int{}
+	if s.crossmapURL != "" {
 		client := &http.Client{Timeout: 20 * time.Second}
-		u := s.crossmapURL + "/map/graph?binaries=" + url.QueryEscape(strings.Join(p.Binaries, ","))
-		resp, err := client.Get(u)
-		if err == nil {
-			var g struct {
-				Nodes []struct {
-					Binary string `json:"binary"`
-					Name   string `json:"name"`
-					Kind   string `json:"kind"`
-				} `json:"nodes"`
-				Edges []struct {
-					From string `json:"from"`
-					To   string `json:"to"`
-					Kind string `json:"kind"`
-				} `json:"edges"`
-			}
-			if json.NewDecoder(resp.Body).Decode(&g) == nil {
-				for _, fn := range g.Nodes {
-					// id: fn:<binary>!<name>
-					fid := "fn:" + fn.Binary + "!" + fn.Name
-					group := "function"
-					switch fn.Kind {
-					case "entry":
-						group = "entry"
-					case "import_thunk":
-						group = "import"
-					case "ioctl":
-						group = "ioctl"
-					}
-					nodes = append(nodes, gnode{ID: fid, Group: group, Label: fn.Name, Sub: fn.Binary})
-					// link the function's binary node to it
-					crossmapNodes++
-				}
-				for _, fe := range g.Edges {
-					edges = append(edges, gedge{From: "fn:" + fe.From, To: "fn:" + fe.To, Kind: fe.Kind})
-					crossmapEdges++
-				}
-			}
+		var sum struct {
+			Binaries map[string]struct {
+				Functions int `json:"functions"`
+				Entries   int `json:"entries"`
+				Hubs      int `json:"hubs"`
+			} `json:"binaries"`
 		}
-		resp.Body.Close()
+		if resp, err := client.Get(s.crossmapURL + "/map/summary"); err == nil {
+			if json.NewDecoder(resp.Body).Decode(&sum) == nil {
+				for b, st := range sum.Binaries {
+					crossmapSummaries[b] = map[string]int{"functions": st.Functions, "entries": st.Entries, "hubs": st.Hubs}
+				}
+			}
+			resp.Body.Close()
+		}
+	}
+	// Decorate binary nodes with map stats + finding counts. crossmap binary
+	// keys carry whatever case the .i64 filename had (CLFS.sys vs clfs.sys):
+	// match case-insensitively.
+	lower := func(x string) string { return strings.ToLower(x) }
+	summaryByLower := map[string]map[string]int{}
+	for b, st := range crossmapSummaries {
+		summaryByLower[lower(b)] = st
+	}
+	findingCountByLower := map[string]int{}
+	for _, n := range nodes {
+		if n.Group == "finding" {
+			continue
+		}
+	}
+	for i := range nodes {
+		if nodes[i].Group != "binary" {
+			continue
+		}
+		name := nodes[i].Label
+		if sp := strings.Fields(name); len(sp) > 0 {
+			name = sp[0]
+		}
+		if st, ok := summaryByLower[lower(name)]; ok {
+			if nodes[i].Extra == nil {
+				nodes[i].Extra = map[string]any{}
+			}
+			nodes[i].Extra["functions"] = st["functions"]
+			nodes[i].Extra["hubs"] = st["hubs"]
+			nodes[i].Extra["indexed"] = true
+			nodes[i].Extra["name"] = name
+		}
+		nodes[i].Extra["findings"] = findingCountByLower[lower(name)]
 	}
 
+	totalFns := 0
+	for _, st := range crossmapSummaries {
+		totalFns += st["functions"]
+	}
 	writeJSON(w, 200, map[string]any{
-		"project": p,
-		"nodes":   nodes,
-		"edges":   edges,
-		"crossmap": map[string]any{
-			"function_nodes": crossmapNodes,
-			"function_edges": crossmapEdges,
-		},
+		"project":  p,
+		"nodes":    nodes,
+		"edges":    edges,
+		"crossmap": map[string]any{"function_total": totalFns, "binaries_indexed": len(crossmapSummaries)},
 	})
 }
 
