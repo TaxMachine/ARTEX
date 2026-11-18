@@ -648,7 +648,7 @@ WHERE key='add_task_scope' AND system AND description=$2`, seed.Desc, oldTaskSco
 // reaches an old DB otherwise. Preserves each tool's agent binding + enabled flag.
 // Bump the flag whenever these tools' schemas/descriptions change in code.
 func (s *Server) refreshBuiltinToolSchemas() {
-	const flag = "tool_schema_refresh_v7_list_facts_paging"
+	const flag = "tool_schema_refresh_v8_save_credential_ssh"
 	if v, _, _ := s.m.pg.GetSetting(flag); v == "true" {
 		return
 	}
@@ -666,7 +666,7 @@ func (s *Server) refreshBuiltinToolSchemas() {
 	//     SeedTool is first-insert-only, so schemas already seeded in old DBs would otherwise miss this new param.
 	//   - list_facts: now paginated with new limit/before/q params; the empty schema already seeded in old DBs would otherwise
 	//     show "no parameters" on the tools page, and the model would never see those param descriptions.
-	refreshBuiltin := map[string]bool{"goal_met": true, "insert_assets": true, "list_facts": true}
+	refreshBuiltin := map[string]bool{"goal_met": true, "insert_assets": true, "list_facts": true, "save_task_credential": true}
 	for _, sd := range agent.BuiltinToolSeeds() {
 		if !refreshBuiltin[sd.Key] {
 			continue
