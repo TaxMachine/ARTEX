@@ -74,7 +74,7 @@ export default function MachineTrafficPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Machine Traffic</h1>
@@ -171,6 +171,7 @@ export default function MachineTrafficPage() {
       </DataTableShell>
 
       <DataTableShell
+        className="h-64 shrink-0"
         toolbar={
           <>
             <CardTitle className="text-base">Packet captures</CardTitle>
