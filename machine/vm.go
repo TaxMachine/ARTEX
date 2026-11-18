@@ -290,6 +290,11 @@ func (s *Service) Snapshot(ctx context.Context, taskID int64, name, action, snap
 	if !safeDomainRE.MatchString(m.Domain) {
 		return "", fmt.Errorf("registered libvirt domain %q is not a safe name", m.Domain)
 	}
+	if action != "list" {
+		if err := s.guardMutation(m); err != nil {
+			return "", err
+		}
+	}
 	started := time.Now()
 	var out string
 	switch action {
