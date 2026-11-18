@@ -78,29 +78,11 @@ FROM findings WHERE project_id=$1 ORDER BY id`, p.ID)
 			nid := fmt.Sprintf("finding:%d", id)
 			nodes = append(nodes, gnode{ID: nid, Group: "finding", Label: name, Sub: severity, Color: severity,
 				Extra: map[string]any{"finding_id": id, "status": status, "vulnclass": vulnclass}})
-			edges = append(edges, gedge{From: "project:" + p.Key, To: nid, Kind: "has_finding"})
 		}
 	}
 
-	// Tasks.
-	tRows, err := s.m.pg.Query(`SELECT id, COALESCE(name,''), status FROM tasks WHERE project_id=$1 AND deleted_at IS NULL ORDER BY id`, p.ID)
-	if err == nil {
-		defer tRows.Close()
-		for tRows.Next() {
-			var id int64
-			var name, status string
-			if tRows.Scan(&id, &name, &status) != nil {
-				continue
-			}
-			nid := fmt.Sprintf("task:%d", id)
-			nodes = append(nodes, gnode{ID: nid, Group: "task", Label: name, Sub: status,
-				Extra: map[string]any{"task_id": id, "status": status}})
-			edges = append(edges, gedge{From: "project:" + p.Key, To: nid, Kind: "produced_by"})
-		}
-	}
-
-	// Project root node.
-	nodes = append(nodes, gnode{ID: "project:" + p.Key, Group: "project", Label: p.Name, Sub: p.Key})
+	// The canvas shows the software's assets only: no project ball, no task
+	// nodes. Findings surface as highlighted functions inside the binaries.
 
 	// Crossmap rollup: binary-level stats first (the function layer loads on
 	// expand from the canvas). Binary nodes gain function/hub counts and an
