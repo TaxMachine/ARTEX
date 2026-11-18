@@ -123,6 +123,7 @@ func (s *Service) Exec(ctx context.Context, taskID int64, machineName, username 
 	if timeout <= 0 || timeout > 30*time.Minute {
 		timeout = 2 * time.Minute
 	}
+	taskID = s.TaskScopeOf(ctx, taskID)
 	m, c, err := s.sshTarget(taskID, machineName, username, credentialID)
 	if err != nil {
 		return ExecResult{}, err
@@ -225,6 +226,7 @@ func (s *Service) Upload(ctx context.Context, taskID int64, machineName, usernam
 	if info.Size() > maxTransferBytes {
 		return TransferResult{}, fmt.Errorf("file is %d bytes; the per-file cap is %d", info.Size(), maxTransferBytes)
 	}
+	taskID = s.TaskScopeOf(ctx, taskID)
 	m, c, err := s.sshTarget(taskID, machineName, username, credentialID)
 	if err != nil {
 		return TransferResult{}, err
@@ -284,6 +286,7 @@ func (s *Service) Download(ctx context.Context, taskID int64, machineName, usern
 	if err := os.MkdirAll(filepath.Dir(localPath), 0o755); err != nil {
 		return TransferResult{}, err
 	}
+	taskID = s.TaskScopeOf(ctx, taskID)
 	m, c, err := s.sshTarget(taskID, machineName, username, credentialID)
 	if err != nil {
 		return TransferResult{}, err

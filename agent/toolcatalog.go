@@ -60,6 +60,14 @@ func builtinToolsByAgent() map[string][]actool.CoreTool {
 		"auto": {ts.addFinding(), ts.insertAssets(), ts.addCompanyScope(), ts.listAssets(), ts.listCompanies(),
 			ts.listMachines(), ts.machineStatus(), ts.machineStart(), ts.machineStop(),
 			ts.machineReset(), ts.machineSnapshot(), ts.machineEvents()},
+		// retester (finding retest conversations) gets the machine surface: a retest
+		// of an OS finding must be able to boot the VM, SSH in and re-run the PoC.
+		// Credential/evidence scoping resolves to the finding's origin task at call
+		// time (machine.Service.TaskScopeOf), so these instances are task-safe here.
+		"retester": {ts.listMachines(), ts.machineStatus(), ts.machineStart(), ts.machineStop(),
+			ts.machineReset(), ts.machineSnapshot(), ts.sshExec(), ts.sshUpload(), ts.sshDownload(),
+			ts.machineEvents(), ts.machineEventGet(),
+			ts.desktopOpen(), ts.desktopScreen(), ts.desktopClick(), ts.desktopType(), ts.desktopKey(), ts.desktopClose()},
 		// pentest (solo pentest agent) binds by default: list assets / insert assets /
 		// report finding / list findings / list companies.
 		// New databases are seeded from here; old databases are migrated by seedPentestDefaultBindings.
@@ -90,7 +98,7 @@ var defaultUnbound = map[string]bool{"goal_met": true}
 // force-bound to empty.
 func BuiltinToolSeeds() []ToolSeed {
 	byAgent := builtinToolsByAgent()
-	order := []string{"mainagent", "goals", "planner", "worker", "auto", "pentest"}
+	order := []string{"mainagent", "goals", "planner", "worker", "auto", "retester", "pentest"}
 
 	type acc struct {
 		tool   actool.CoreTool

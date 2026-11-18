@@ -7,13 +7,19 @@
 package machine
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/Autumn-27/artex/db"
+	"github.com/Autumn-27/artex/intercept"
 )
+
+// ConvIDFromContext is re-exported so the machine layer can read a retest
+// conversation from the call context without importing intercept at call sites.
+var ConvIDFromContext = intercept.ConvIDFromContext
 
 // protectedDomains are never mutated by ARTEX, even if someone registers them:
 // the operator's primary VM must not be disturbed by an agent.
@@ -69,6 +75,25 @@ func (s *Service) guardMutation(m db.Machine) error {
 		return fmt.Errorf("machine %s is on the protected list; lifecycle changes are refused", m.Name)
 	}
 	return nil
+}
+
+// TaskScopeOf resolves the task a machine operation belongs to. A task-bound
+// call uses taskID directly; a task-less caller (retest conversation, chat)
+// that carries a conversation id inherits the retest's origin task, so SSH
+// credentials and machine evidence attribute to the finding's task.
+func (s *Service) TaskScopeOf(ctx context.Context, taskID int64) int64 {
+	if taskID > 0 {
+		return taskID
+	}
+	conv := ConvIDFromContext(ctx)
+	if conv == 0 {
+		return 0
+	}
+	id, err := s.pg.RetestOriginTask(context.Background(), conv)
+	if err != nil {
+		return 0
+	}
+	return id
 }
 
 // Credential resolves the SSH credential for a machine and task. An explicit id

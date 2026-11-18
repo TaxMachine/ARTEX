@@ -555,9 +555,10 @@ func (s *Server) seedOrchestrationTools() {
 	s.seedPlannerDefaultBindings()
 	s.seedPlannerListAssetsBinding()
 	s.seedCompanyScopeRebind()
-	s.seedWorkerReadToolsUnbind()  // list_facts/list_companies/list_worker_traces unbound from worker's defaults (one-time)
-	s.seedWorkerReadbackRebind()   // repairs an old migration's wrong removal: re-binds search_all_worker_traces/get_worker_trace/node_detail back onto worker (one-time)
-	s.seedTaskCredentialBindings() // save/list_task_credential onto worker + pentest (one-time, #3)
+	s.seedWorkerReadToolsUnbind()   // list_facts/list_companies/list_worker_traces unbound from worker's defaults (one-time)
+	s.seedWorkerReadbackRebind()    // repairs an old migration's wrong removal: re-binds search_all_worker_traces/get_worker_trace/node_detail back onto worker (one-time)
+	s.seedTaskCredentialBindings()  // save/list_task_credential onto worker + pentest (one-time, #3)
+	s.seedRetesterMachineBindings() // machine/desktop tools onto retester (one-time): retests must reach the lab VMs
 	s.healListTaskCredentialsSchema()
 	s.seedAutoReportFindingBinding()
 	s.unbindGoalMetDefault()
@@ -1082,4 +1083,29 @@ func (s *Server) seedAutoDefaultBindings() {
 		return
 	}
 	_ = s.m.pg.SetSetting(flag, "true")
+}
+
+// seedRetesterMachineBindings adds the retester agent to the native machine and
+// desktop tool bindings, once. A finding retest of an OS finding needs to boot
+// the VM and re-run the PoC; without these the retester conversation had no
+// machine access. Task scoping resolves at call time (machine.TaskScopeOf), so
+// credentials/evidence attribute to the finding's origin task.
+func (s *Server) seedRetesterMachineBindings() {
+	const flag = "retester_machine_bindings_v1"
+	if v, _, _ := s.m.pg.GetSetting(flag); v == "true" {
+		return
+	}
+	keys := []string{
+		"list_machines", "machine_status", "machine_start", "machine_stop",
+		"machine_reset", "machine_snapshot", "machine_events", "machine_event_get",
+		"ssh_exec", "ssh_upload", "ssh_download",
+		"desktop_open", "desktop_screen", "desktop_click", "desktop_type",
+		"desktop_key", "desktop_close",
+	}
+	if err := s.m.pg.AddAgentToToolBinding("retester", keys); err != nil {
+		log.Printf("[tools] retester machine bindings failed: %v (retried next start)", err)
+		return
+	}
+	_ = s.m.pg.SetSetting(flag, "true")
+	log.Printf("[tools] bound machine/desktop tools to the retester (one-time)")
 }

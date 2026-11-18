@@ -289,3 +289,21 @@ func (d *DB) RecoverFindingRetests() error {
 	_, err := d.Exec(`UPDATE finding_retests SET status='stopped', error='Server restarted; the retest was interrupted, please start it again', finished_at=now() WHERE status IN ('pending','running')`)
 	return err
 }
+
+// RetestOriginTask returns the origin task id of the finding under retest, 0
+// when the finding has none (deleted task / standalone row).
+func (d *DB) RetestOriginTask(ctx context.Context, conversationID int64) (int64, error) {
+	var findingID int64
+	err := d.QueryRowContext(ctx,
+		`SELECT finding_id FROM finding_retests WHERE conversation_id=$1 LIMIT 1`,
+		conversationID).Scan(&findingID)
+	if err != nil {
+		return 0, err // includes sql.ErrNoRows: not a retest conversation
+	}
+	var taskID sql.NullInt64
+	err = d.QueryRowContext(ctx, `SELECT task_id FROM findings WHERE id=$1`, findingID).Scan(&taskID)
+	if err != nil {
+		return 0, err
+	}
+	return taskID.Int64, nil
+}

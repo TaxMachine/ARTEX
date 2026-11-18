@@ -197,6 +197,7 @@ func (s *Service) Start(ctx context.Context, taskID int64, name string) (Status,
 	if err != nil {
 		return Status{}, err
 	}
+	taskID = s.TaskScopeOf(ctx, taskID)
 	if err := s.guardMutation(m); err != nil {
 		return Status{}, err
 	}
