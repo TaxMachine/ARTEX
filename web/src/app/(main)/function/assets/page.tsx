@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import {
+  BinaryIcon,
   BuildingIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -104,6 +105,7 @@ const TABS: { key: string; label: string; icon: LucideIcon }[] = [
   { key: "subdomain", label: "Subdomains", icon: GlobeIcon },
   { key: "app", label: "Apps", icon: SmartphoneIcon },
   { key: "service", label: "Services", icon: LayoutTemplateIcon },
+  { key: "binary", label: "Binaries", icon: BinaryIcon },
   { key: "endpoint", label: "Endpoints", icon: LinkIcon },
 ];
 
@@ -683,6 +685,63 @@ export default function AssetsPage() {
         </TabsContent>
 
         {/* Endpoints */}
+        <TabsContent value="binary" className="mt-0 flex min-h-0 flex-1 flex-col gap-2">
+          {searchBox}
+          <AssetCard
+            cols={["", "Name", "Version", "Kind", "Description", "Arch / OS", "Path", ""]}
+            loaded={loaded}
+            total={total}
+            page={page}
+            size={size}
+            onSize={setSize}
+            onPage={setPage}
+            rows={currentRows}
+            selected={selected}
+            onToggleAll={(ids) => toggleSelectAll(ids)}
+          >
+            {slice(tabData("binary")).map((a) => {
+              const ex = (a.extra ?? {}) as Record<string, unknown>;
+              const archOs = [ex.arch, ex.os_build].filter(Boolean).join(" · ") || "—";
+              const path = typeof ex.path === "string" ? ex.path : "";
+              return (
+                <TableRow key={a.id} className={selected.has(a.id) ? "bg-muted/40" : undefined}>
+                  <TableCell className="w-8 pr-0">
+                    <Checkbox checked={selected.has(a.id)} onCheckedChange={() => toggleSelect(a.id)} />
+                  </TableCell>
+                  <TableCell className="max-w-[12rem] truncate font-mono text-xs font-semibold" title={a.app_name}>
+                    {a.app_name}
+                  </TableCell>
+                  <TableCell className="font-mono text-xs tabular-nums text-muted-foreground">
+                    {a.version || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={a.category === "driver" ? "default" : "secondary"}
+                      className="font-mono text-[10px]"
+                    >
+                      {a.category || "other"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="max-w-[18rem] truncate text-xs" title={a.app_description}>
+                    {a.app_description || "—"}
+                  </TableCell>
+                  <TableCell className="max-w-[14rem] truncate text-xs text-muted-foreground" title={archOs}>
+                    {archOs}
+                  </TableCell>
+                  <TableCell className="max-w-[16rem] truncate font-mono text-[11px] text-muted-foreground" title={path}>
+                    {path || "—"}
+                  </TableCell>
+                  <TableCell className="w-10">
+                    <Button variant="ghost" size="icon-sm" aria-label="Delete binary asset" onClick={() => openDelete([a.id])}>
+                      <Trash2Icon />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </AssetCard>
+        </TabsContent>
+
         <TabsContent value="endpoint" className="mt-0 flex min-h-0 flex-1 flex-col gap-2">
           {searchBox}
           <AssetCard

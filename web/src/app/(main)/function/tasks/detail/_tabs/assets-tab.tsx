@@ -84,6 +84,8 @@ function assetLabel(asset: Asset): string {
       const address = [host, asset.port].filter((value) => value !== undefined && value !== "").join(":");
       return firstText([asset.url, address, asset.service_name], `#${asset.id}`);
     }
+    case "binary":
+      return firstText([[asset.app_name, asset.version].filter(Boolean).join(" ")], `#${asset.id}`);
     case "endpoint":
       return firstText([[asset.method, asset.url].filter(Boolean).join(" ")], `#${asset.id}`);
   }

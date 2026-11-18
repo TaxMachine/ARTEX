@@ -119,6 +119,15 @@ type assetInputItem struct {
 	// ---- endpoint ----
 	Method string           `json:"method"`
 	Params []map[string]any `json:"params"`
+
+	// ---- binary (drivers, DLLs, executables) ----
+	Version string `json:"version"` // the file's own version, e.g. 10.0.26100.9974 ("" = unknown)
+	Kind    string `json:"kind"`    // driver|dll|exe|library|firmware|other
+	Path    string `json:"path"`    // where the copy lives (host path or machine + guest path)
+	SHA256  string `json:"sha256"`  // content hash of the exact copy
+	Arch    string `json:"arch"`    // x64 / arm64 …
+	OSBuild string `json:"os_build"`
+	Signed  string `json:"signed"` // signed|unsigned
 }
 
 // insertAssets is the unified insert_assets agent tool.
@@ -126,7 +135,7 @@ func (t *ToolSet) insertAssets() actool.CoreTool {
 	return writeTool(
 		"insert_assets",
 		"Register newly discovered assets in bulk; multiple types can be mixed in one call (see the type enum).\n"+
-			"Required fields per type: root_domain→domain; ip→ip (must be IPv4/IPv6, not a hostname); subdomain→domain; app→app_name; service(HTTP)→url; service(non-HTTP)→service_name+port (at least one of ip/domain); endpoint→url+method. See each field's own description for the rest.\n"+
+			"Required fields per type: root_domain→domain; ip→ip (must be IPv4/IPv6, not a hostname); subdomain→domain; app→app_name; service(HTTP)→url; service(non-HTTP)→service_name+port (at least one of ip/domain); endpoint→url+method; binary→app_name+kind (a driver/DLL/exe with its own version, e.g. the clfs.sys under audit). See each field's own description for the rest.\n"+
 			"auth/technologies/params are append-merged, not overwritten.\n"+
 			"Returns: {results:[{index,id,type}], errors:[{index,error}]}",
 		obj(map[string]any{
@@ -138,7 +147,7 @@ func (t *ToolSet) insertAssets() actool.CoreTool {
 				"items": obj(map[string]any{
 					"type": map[string]any{
 						"type":        "string",
-						"enum":        []string{"root_domain", "ip", "subdomain", "app", "service", "endpoint"},
+						"enum":        []string{"root_domain", "ip", "subdomain", "app", "service", "endpoint", "binary"},
 						"description": "asset type",
 					},
 					// root_domain / subdomain
@@ -334,6 +343,21 @@ func (t *ToolSet) insertAssets() actool.CoreTool {
 						Params: item.Params,
 						IP:     item.ServiceIP,
 						TaskID: taskID,
+					})
+
+				case "binary":
+					id, err = t.as.UpsertBinary(db.UpsertBinaryReq{
+						Name:        item.AppName,
+						Version:     item.Version,
+						Kind:        item.Kind,
+						Description: item.Description,
+						Path:        item.Path,
+						SHA256:      item.SHA256,
+						Arch:        item.Arch,
+						OSBuild:     item.OSBuild,
+						Signed:      item.Signed,
+						CompanyID:   item.CompanyID,
+						TaskID:      taskID,
 					})
 
 				default:

@@ -41,7 +41,7 @@ CREATE TRIGGER trg_companies_upd BEFORE UPDATE ON companies
 CREATE TABLE IF NOT EXISTS assets (
     id              BIGSERIAL PRIMARY KEY,
     type            TEXT NOT NULL CHECK (type IN (
-                        'root_domain','ip','subdomain','app','service','endpoint'
+                        'root_domain','ip','subdomain','app','service','endpoint','binary'
                     )),
     company_id      BIGINT REFERENCES companies(id) ON DELETE SET NULL,
     -- explicit: caller/user selected the company; scope: derived from company_scope.

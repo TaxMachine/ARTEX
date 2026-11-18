@@ -218,7 +218,7 @@ export interface TaskAssetView {
 }
 
 // ---- New unified asset model (new backend) ----
-export type NewAssetType = "root_domain" | "ip" | "subdomain" | "app" | "service" | "endpoint";
+export type NewAssetType = "root_domain" | "ip" | "subdomain" | "app" | "service" | "endpoint" | "binary";
 
 export interface Asset {
   id: number;
@@ -252,6 +252,7 @@ export interface Asset {
   method?: string;
   params?: Record<string, unknown>[];
   extra?: Record<string, unknown>;
+  version?: string; // binary assets: the file's product version
   last_seen: string;
   task_source?: string;
   task_source_summary?: string;

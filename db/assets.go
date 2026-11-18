@@ -54,6 +54,7 @@ type Asset struct {
 	Params []map[string]any `json:"params,omitempty"`
 	// meta
 	Extra             map[string]any `json:"extra,omitempty"`
+	Version           string         `json:"version,omitempty"` // binary assets: the file's product version
 	LastSeen          string         `json:"last_seen"`
 	TaskSource        string         `json:"task_source,omitempty"`
 	TaskSourceSummary string         `json:"task_source_summary,omitempty"`
@@ -1083,7 +1084,7 @@ SELECT id, type, company_id, array_to_json(task_ids)::text,
        COALESCE(url,''), COALESCE(service_type,''), COALESCE(service_name,''),
        COALESCE(favicon_mmh3,''), status_code, content_length,
        COALESCE(page_title,''), array_to_json(technologies)::text, array_to_json(auth)::text,
-       COALESCE(method,''), array_to_json(params)::text, extra, last_seen::text
+       COALESCE(method,''), array_to_json(params)::text, extra, COALESCE(version,''), last_seen::text
 FROM assets
 WHERE type = $1
 ORDER BY last_seen DESC, id DESC
@@ -1114,7 +1115,7 @@ func (s *AssetStore) QueryByCompany(companyID int64, typ string, limit, offset i
        COALESCE(url,''), COALESCE(service_type,''), COALESCE(service_name,''),
        COALESCE(favicon_mmh3,''), status_code, content_length,
        COALESCE(page_title,''), array_to_json(technologies)::text, array_to_json(auth)::text,
-       COALESCE(method,''), array_to_json(params)::text, extra, last_seen::text
+       COALESCE(method,''), array_to_json(params)::text, extra, COALESCE(version,''), last_seen::text
 FROM assets WHERE company_id = $1`
 	args := []any{companyID}
 	if typ != "" {
@@ -1166,7 +1167,7 @@ func (s *AssetStore) QueryByTask(taskID int64, typ string, limit, offset int) ([
        COALESCE(url,''), COALESCE(service_type,''), COALESCE(service_name,''),
        COALESCE(favicon_mmh3,''), status_code, content_length,
        COALESCE(page_title,''), array_to_json(technologies)::text, array_to_json(auth)::text,
-       COALESCE(method,''), array_to_json(params)::text, extra, last_seen::text
+       COALESCE(method,''), array_to_json(params)::text, extra, COALESCE(version,''), last_seen::text
 FROM assets WHERE $1 = ANY(task_ids)`
 	args := []any{taskID}
 	if typ != "" {
@@ -1364,7 +1365,7 @@ const assetSelectCols = `SELECT id, type, company_id, array_to_json(task_ids)::t
        COALESCE(url,''), COALESCE(service_type,''), COALESCE(service_name,''),
        COALESCE(favicon_mmh3,''), status_code, content_length,
        COALESCE(page_title,''), array_to_json(technologies)::text, array_to_json(auth)::text,
-       COALESCE(method,''), array_to_json(params)::text, extra, last_seen::text
+       COALESCE(method,''), array_to_json(params)::text, extra, COALESCE(version,''), last_seen::text
 FROM assets`
 
 // GetByIDs returns assets with the given ids (order preserved by id array order).
@@ -1487,7 +1488,7 @@ func scanAssets(rows *sql.Rows) ([]*Asset, error) {
 			&a.URL, &a.ServiceType, &a.ServiceName,
 			&a.FaviconMMH3, &statusCode, &contentLength,
 			&a.PageTitle, &techsRaw, &authRaw,
-			&a.Method, &paramsRaw, &extraRaw, &a.LastSeen,
+			&a.Method, &paramsRaw, &extraRaw, &a.Version, &a.LastSeen,
 		); err != nil {
 			return nil, err
 		}
@@ -1535,4 +1536,114 @@ func scanAssets(rows *sql.Rows) ([]*Asset, error) {
 		out = append(out, a)
 	}
 	return out, rows.Err()
+}
+
+// =====================================================================
+// UpsertBinary (native binary assets: drivers, DLLs, executables)
+// =====================================================================
+
+// Binary kinds stored in assets.category for type='binary'.
+const (
+	BinaryKindDriver   = "driver"   // kernel drivers (.sys)
+	BinaryKindDLL      = "dll"      // shared libraries loaded into processes
+	BinaryKindExe      = "exe"      // standalone executables/services
+	BinaryKindLibrary  = "library"  // static/native libs (.a/.so consumers link)
+	BinaryKindFirmware = "firmware" // firmware/UEFI modules
+	BinaryKindOther    = "other"
+)
+
+// ValidBinaryKind reports whether k is a known binary kind slug.
+func ValidBinaryKind(k string) bool {
+	switch k {
+	case BinaryKindDriver, BinaryKindDLL, BinaryKindExe, BinaryKindLibrary, BinaryKindFirmware, BinaryKindOther:
+		return true
+	}
+	return false
+}
+
+// UpsertBinaryReq is the input for UpsertBinary.
+type UpsertBinaryReq struct {
+	Name        string // file name, e.g. clfs.sys (required)
+	Version     string // the file's own version, e.g. 10.0.26100.9974 ("" = unknown)
+	Kind        string // driver | dll | exe | library | firmware | other
+	Description string // product description, e.g. "Common Log File System Driver"
+	Path        string // where the copy lives (host path / machine + guest path)
+	SHA256      string // content hash of the exact copy
+	Arch        string // x64 / arm64 …
+	OSBuild     string // OS/build context, e.g. "Windows 11 26H2 26300.9974"
+	Signed      string // signed | unsigned | ""
+	CompanyID   *int64
+	TaskID      int64
+}
+
+// UpsertBinary inserts or merges a native-binary asset keyed by
+// (app_name, version): a patched driver lands as its own row, which is what
+// patch-diff tasks target. Re-upserting the same version merges metadata.
+func (s *AssetStore) UpsertBinary(req UpsertBinaryReq) (int64, error) {
+	req.Name = strings.TrimSpace(req.Name)
+	req.Version = strings.TrimSpace(req.Version)
+	if req.Name == "" {
+		return 0, fmt.Errorf("binary name is required")
+	}
+	if !ValidBinaryKind(req.Kind) {
+		return 0, fmt.Errorf("binary kind %q must be driver|dll|exe|library|firmware|other", req.Kind)
+	}
+	if s.tx == nil {
+		return s.withCompanyScopeMutation(func(scoped *AssetStore) (int64, error) {
+			return scoped.UpsertBinary(req)
+		})
+	}
+	taskIDs := "{}"
+	if req.TaskID > 0 {
+		taskIDs = fmt.Sprintf("{%d}", req.TaskID)
+	}
+	extra := map[string]any{}
+	if req.Path != "" {
+		extra["path"] = req.Path
+	}
+	if req.SHA256 != "" {
+		extra["sha256"] = req.SHA256
+	}
+	if req.Arch != "" {
+		extra["arch"] = req.Arch
+	}
+	if req.OSBuild != "" {
+		extra["os_build"] = req.OSBuild
+	}
+	if req.Signed != "" {
+		extra["signed"] = req.Signed
+	}
+	extraJSON, err := marshalJSONBMap(extra)
+	if err != nil {
+		return 0, err
+	}
+	var companyIDVal any
+	if req.CompanyID != nil {
+		companyIDVal = *req.CompanyID
+	}
+	var id int64
+	err = s.tx.QueryRow(`
+INSERT INTO assets(type, app_name, version, category, app_description, extra, company_id, company_source, task_ids)
+VALUES ('binary', $1, $2, $3, $4, $5::jsonb, $6::bigint, CASE WHEN $6::bigint IS NULL THEN 'scope' ELSE 'explicit' END, $7::bigint[])
+ON CONFLICT (COALESCE(app_name,''), COALESCE(version,'')) WHERE type = 'binary' DO UPDATE SET
+    category        = EXCLUDED.category,
+    app_description = COALESCE(EXCLUDED.app_description, assets.app_description),
+    extra           = assets.extra || EXCLUDED.extra,
+    company_id      = COALESCE(EXCLUDED.company_id, assets.company_id),
+    company_source  = CASE WHEN EXCLUDED.company_id IS NOT NULL THEN 'explicit' ELSE assets.company_source END,
+    task_ids        = (SELECT ARRAY(SELECT DISTINCT unnest(assets.task_ids || EXCLUDED.task_ids))),
+    last_seen       = now()
+RETURNING id`, req.Name, req.Version, req.Kind, req.Description, extraJSON, companyIDVal, taskIDs).Scan(&id)
+	return id, err
+}
+
+func marshalJSONBMap(m map[string]any) (string, error) {
+	if len(m) == 0 {
+		return "{}", nil
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }

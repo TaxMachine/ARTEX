@@ -2,6 +2,7 @@ import type { NewAssetType } from "@/lib/types";
 
 const ASSET_TYPE_LABELS: Record<NewAssetType, string> = {
   app: "App",
+  binary: "Binary",
   endpoint: "Endpoint",
   ip: "IP",
   root_domain: "Root domain",

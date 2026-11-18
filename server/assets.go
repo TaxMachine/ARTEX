@@ -486,6 +486,14 @@ func (s *Server) insertAssets(w http.ResponseWriter, r *http.Request) {
 			// endpoint
 			Method string           `json:"method"`
 			Params []map[string]any `json:"params"`
+			// binary
+			Version string `json:"version"`
+			Kind    string `json:"kind"`
+			Path    string `json:"path"`
+			SHA256  string `json:"sha256"`
+			Arch    string `json:"arch"`
+			OSBuild string `json:"os_build"`
+			Signed  string `json:"signed"`
 		} `json:"assets"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -533,6 +541,8 @@ func (s *Server) insertAssets(w http.ResponseWriter, r *http.Request) {
 				svcIP = a.IP
 			}
 			id, err = as.UpsertEndpoint(db.UpsertEndpointReq{URL: a.URL, Method: a.Method, Params: a.Params, IP: svcIP, TaskID: req.TaskID})
+		case "binary":
+			id, err = as.UpsertBinary(db.UpsertBinaryReq{Name: a.AppName, Version: a.Version, Kind: a.Kind, Description: a.Description, Path: a.Path, SHA256: a.SHA256, Arch: a.Arch, OSBuild: a.OSBuild, Signed: a.Signed, TaskID: req.TaskID})
 		default:
 			errs = append(errs, errEntry{Index: i, Error: "unknown type: " + a.Type})
 			continue
