@@ -37,7 +37,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { statusMeta, type Tone, toneClasses } from "@/lib/status";
-import type { ActiveFindingRetest, Finding, FindingCategory, FindingStatus, Severity, VerificationStatus } from "@/lib/types";
+import type {
+  ActiveFindingRetest,
+  Finding,
+  FindingCategory,
+  FindingReportState,
+  FindingStatus,
+  Severity,
+  VerificationStatus,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export const SEVERITIES: Severity[] = ["critical", "high", "medium", "low"];
@@ -69,6 +77,37 @@ export const VERIFICATION_STATUSES: VerificationStatus[] = [
   "not_assessed",
   "false_positive",
 ];
+
+export const FINDING_REPORT_STATES: FindingReportState[] = [
+  "none",
+  "submitted",
+  "accepted",
+  "rejected",
+  "duplicate",
+];
+
+export const REPORT_STATE_META: Record<FindingReportState, { label: string; tone: Tone }> = {
+  none: { label: "Not submitted", tone: "slate" },
+  submitted: { label: "Submitted", tone: "amber" },
+  accepted: { label: "Accepted", tone: "green" },
+  rejected: { label: "Rejected", tone: "red" },
+  duplicate: { label: "Duplicate report", tone: "neutral" },
+};
+
+export function ReportStateBadge({ state }: { state?: FindingReportState }) {
+  const value = state ?? "none";
+  const meta = REPORT_STATE_META[value] ?? REPORT_STATE_META.none;
+  return (
+    <span
+      className={cn(
+        "inline-flex w-fit items-center whitespace-nowrap rounded-md border px-2 py-0.5 font-medium text-xs",
+        toneClasses[meta.tone],
+      )}
+    >
+      {meta.label}
+    </span>
+  );
+}
 
 // Verification outcome → label/tone, on the same tone tokens StatusBadge uses.
 export const VERIFICATION_META: Record<VerificationStatus, { label: string; tone: Tone }> = {
@@ -150,6 +189,7 @@ interface FindingsTableProps {
   saving: boolean;
   onSave: (finding: Finding) => void;
   onStatusChange: (finding: Finding, next: FindingStatus) => void;
+  onReportStateChange: (finding: Finding, next: FindingReportState) => void;
   onRetest: (finding: Finding) => void;
   activeRetests: Record<string, ActiveFindingRetest>;
   onDeepen: (finding: Finding) => void;
@@ -173,6 +213,7 @@ export function FindingsTable({
   saving,
   onSave,
   onStatusChange,
+  onReportStateChange,
   onRetest,
   activeRetests,
   onDeepen,
@@ -190,7 +231,7 @@ export function FindingsTable({
 
   return (
     /* Fixed column widths keep expanded content from stretching the table; narrow screens scroll horizontally inside the table only. */
-    <Table className="min-w-[60rem] table-fixed">
+    <Table className="min-w-[68rem] table-fixed">
       <TableHeader>
         <TableRow>
           <TableHead className="w-8">
@@ -206,6 +247,7 @@ export function FindingsTable({
           <TableHead>Vulnerability</TableHead>
           <TableHead className="w-44">Asset</TableHead>
           <TableHead className="w-28">Status</TableHead>
+          <TableHead className="w-36">Report</TableHead>
           <TableHead className="w-32">Task</TableHead>
           <TableHead className="w-24">Time</TableHead>
           <TableHead className="w-48">Actions</TableHead>
@@ -307,6 +349,27 @@ export function FindingsTable({
                     </Select>
                   ) : (
                     <StatusBadge domain="finding" value={f.status} dot />
+                  )}
+                </TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  {f.finding_id ? (
+                    <Select
+                      value={f.report_state ?? "none"}
+                      onValueChange={(v) => onReportStateChange(f, v as FindingReportState)}
+                    >
+                      <SelectTrigger size="sm" className="h-7 w-full border-none px-1 shadow-none focus-visible:ring-0">
+                        <ReportStateBadge state={f.report_state} />
+                      </SelectTrigger>
+                      <SelectContent position="popper" align="end">
+                        {FINDING_REPORT_STATES.map((st) => (
+                          <SelectItem key={st} value={st}>
+                            {REPORT_STATE_META[st].label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <ReportStateBadge state={f.report_state} />
                   )}
                 </TableCell>
                 <TableCell>
