@@ -449,13 +449,16 @@ func (s *Server) toolGetTaskNodeDetail() actool.CoreTool {
 // task-agnostic, so this host tool needs no task_id / exploration store.
 func (s *Server) toolUpdateFindingReport() actool.CoreTool {
 	return wrTool("update_finding_report",
-		"Write/update the [detailed report] of a registered vulnerability (full Markdown text, replaces the old content wholesale). Pass as finding_id the id report_finding returned (the number in \"finding recorded: <id>\"). A report should cover: vulnerability overview, impact and harm, reproduction steps, evidence/PoC, and fix recommendations.",
+		"Write/update the [detailed report] of a registered vulnerability (full Markdown text, replaces the old content wholesale). Pass as finding_id the id report_finding returned (the number in \"finding recorded: <id>\"). A report should cover: vulnerability overview, impact and harm, reproduction steps, evidence/PoC, and fix recommendations.\n"+
+			"Optionally also updates the finding's triage state: status (pending/in_progress/confirmed/resolved/fixed/false_positive/ignored/duplicate/risk_accepted) and category (operating-systems/hypervisors/web/applications/others). A retest that reproduced or fixed a finding should pass status here (reproduced→confirmed stays, fixed→fixed).",
 		objSchema(map[string]any{
 			"finding_id":       map[string]any{"type": "integer", "description": "target vulnerability id (the id returned by report_finding)"},
 			"report":           strParam("full report text, Markdown format"),
 			"evidence_version": map[string]any{"type": "integer", "description": "evidence version returned by get_finding_traffic; prevents the report from overwriting newer evidence changes"},
 			"poe_level":        map[string]any{"type": "integer", "description": "proof-of-exploitation level 0-4: 1 error/timing/response variation, 2 structural manipulation, 3 actual data extracted, 4 critical impact. L3 is the minimum for verified. Omit or 0 when not proven."},
 			"evidence_quotes":  map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "exact lines copied from a bound proof/verification response body (get_finding_traffic). Never from memory; the server checks each one verbatim after whitespace normalization."},
+			"status":           map[string]any{"type": "string", "enum": []string{"pending", "in_progress", "confirmed", "resolved", "fixed", "false_positive", "ignored", "duplicate", "risk_accepted"}, "description": "optional: set the triage status (a retest verdict maps reproduced→confirmed, fixed→fixed)"},
+			"category":         map[string]any{"type": "string", "enum": []string{"operating-systems", "hypervisors", "web", "applications", "others"}, "description": "optional: set the stack category"},
 		}, "finding_id", "report"),
 		func(ctx context.Context, in json.RawMessage) (actool.Result, error) {
 			var a struct {
@@ -464,6 +467,8 @@ func (s *Server) toolUpdateFindingReport() actool.CoreTool {
 				Report          string          `json:"report"`
 				PoELevel        *int            `json:"poe_level"`
 				EvidenceQuotes  []string        `json:"evidence_quotes"`
+				Status          string          `json:"status"`
+				Category        string          `json:"category"`
 			}
 			_ = json.Unmarshal(in, &a)
 			nodeID := parseProfileID(a.FindingID) // reuses the "number or numeric string" parser
@@ -503,6 +508,28 @@ func (s *Server) toolUpdateFindingReport() actool.CoreTool {
 				msg += fmt.Sprintf(" (POE L%d)", poe)
 			} else {
 				msg += " - " + note + "\nwarning: the report is saved but the finding is not verified. To reach verified, declare poe_level 3 or 4 and pass exact quotes copied from a bound proof/verification response body."
+			}
+			// Optional triage-state writes. The report is already saved; these only
+			// widen the same call so deepen/retest runs can settle a finding in one
+			// step instead of leaving status changes to the operator UI.
+			if raw := strings.TrimSpace(a.Category); raw != "" {
+				cat := db.NormalizeFindingCategory(raw)
+				if !db.ValidFindingCategory(cat) {
+					return actool.Errorf(fmt.Sprintf("bad category %q", raw)), nil
+				}
+				if _, err := s.m.pg.SetFindingCategory(findingID, cat); err != nil {
+					return actool.Errorf("report saved, but category not set: " + err.Error()), nil
+				}
+				msg += fmt.Sprintf("\ncategory: %s", cat)
+			}
+			if st := strings.TrimSpace(a.Status); st != "" {
+				if !db.ValidFindingStatus(st) {
+					return actool.Errorf(fmt.Sprintf("bad status %q", st)), nil
+				}
+				if _, _, _, err := s.m.pg.SetFindingStatusWithNotify(ctx, findingID, st); err != nil {
+					return actool.Errorf("report saved, but status not set: " + err.Error()), nil
+				}
+				msg += fmt.Sprintf("\nstatus: %s", st)
 			}
 			return actool.Text(msg), nil
 		})
@@ -555,10 +582,12 @@ func (s *Server) seedOrchestrationTools() {
 	s.seedPlannerDefaultBindings()
 	s.seedPlannerListAssetsBinding()
 	s.seedCompanyScopeRebind()
-	s.seedWorkerReadToolsUnbind()   // list_facts/list_companies/list_worker_traces unbound from worker's defaults (one-time)
-	s.seedWorkerReadbackRebind()    // repairs an old migration's wrong removal: re-binds search_all_worker_traces/get_worker_trace/node_detail back onto worker (one-time)
-	s.seedTaskCredentialBindings()  // save/list_task_credential onto worker + pentest (one-time, #3)
-	s.seedRetesterMachineBindings() // machine/desktop tools onto retester (one-time): retests must reach the lab VMs
+	s.seedWorkerReadToolsUnbind()       // list_facts/list_companies/list_worker_traces unbound from worker's defaults (one-time)
+	s.seedWorkerReadbackRebind()        // repairs an old migration's wrong removal: re-binds search_all_worker_traces/get_worker_trace/node_detail back onto worker (one-time)
+	s.seedTaskCredentialBindings()      // save/list_task_credential onto worker + pentest (one-time, #3)
+	s.seedRetesterMachineBindings()     // machine/desktop tools onto retester (one-time): retests must reach the lab VMs
+	s.seedFindingReportStatusBindings() // update_finding_report (now with status/category) onto worker + retester
+	s.bindUpdateFindingReportRetester()
 	s.healListTaskCredentialsSchema()
 	s.seedAutoReportFindingBinding()
 	s.unbindGoalMetDefault()
@@ -1108,4 +1137,35 @@ func (s *Server) seedRetesterMachineBindings() {
 	}
 	_ = s.m.pg.SetSetting(flag, "true")
 	log.Printf("[tools] bound machine/desktop tools to the retester (one-time)")
+}
+
+// seedFindingReportStatusBindings binds update_finding_report to worker, so a
+// deepen run can settle a finding's status/category itself. One-time flag; the
+// retester binding is separate (bindUpdateFindingReportRetester) because its
+// flag gates two tools.
+func (s *Server) seedFindingReportStatusBindings() {
+	const flag = "finding_report_status_bindings_v1"
+	if v, _, _ := s.m.pg.GetSetting(flag); v == "true" {
+		return
+	}
+	if err := s.m.pg.AddAgentToToolBinding("worker", []string{"update_finding_report"}); err != nil {
+		log.Printf("[tools] worker update_finding_report binding failed: %v (retried next start)", err)
+		return
+	}
+	_ = s.m.pg.SetSetting(flag, "true")
+}
+
+// bindUpdateFindingReportRetester binds the report/status tool onto retester
+// conversations: a completed retest must be able to write its updated report
+// and flip the triage status in the same call. One-time flag.
+func (s *Server) bindUpdateFindingReportRetester() {
+	const flag = "retester_finding_report_binding_v1"
+	if v, _, _ := s.m.pg.GetSetting(flag); v == "true" {
+		return
+	}
+	if err := s.m.pg.AddAgentToToolBinding("retester", []string{"update_finding_report"}); err != nil {
+		log.Printf("[tools] retester update_finding_report binding failed: %v (retried next start)", err)
+		return
+	}
+	_ = s.m.pg.SetSetting(flag, "true")
 }

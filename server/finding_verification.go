@@ -232,7 +232,7 @@ func (s *Server) seedFindingVerificationSchema() {
 	if err := json.Unmarshal(obj["properties"], &properties); err != nil {
 		return
 	}
-	for _, name := range []string{"poe_level", "evidence_quotes"} {
+	for _, name := range []string{"poe_level", "evidence_quotes", "status", "category"} {
 		if len(properties[name]) == 0 {
 			continue
 		}

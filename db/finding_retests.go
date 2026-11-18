@@ -264,6 +264,19 @@ func (d *DB) FinishFindingRetest(id int64, status, reason string) error {
 			return err
 		}
 	}
+	if finalStatus == "completed" && verdict == "reproduced" {
+		// A reproduced retest re-confirms the finding: the human disposition moves
+		// to confirmed unless it already carries a stronger manual decision
+		// (resolved/fixed/false_positive/…). Share the notifying status writer so
+		// on_status_change channels fire exactly like a manual UI change.
+		var cur string
+		err := tx.QueryRow(`SELECT status FROM findings WHERE id=$1`, findingID).Scan(&cur)
+		if err == nil && (cur == "pending" || cur == "in_progress") {
+			if _, _, _, _, serr := SetFindingStatusTx(context.Background(), tx, findingID, "confirmed"); serr != nil {
+				return serr
+			}
+		}
+	}
 	if finalStatus == "completed" && verdict == "fixed" {
 		// Go through the notifying version, sharing the same semantics as a
 		// manual status change on the details page.
