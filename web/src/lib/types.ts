@@ -1435,6 +1435,30 @@ export type TaskCredential = TaskCredentialInput & {
 
 export type MachineKind = "libvirt" | "script" | "ssh";
 
+export interface Project {
+  id: number;
+  key: string;
+  name: string;
+  kind: "software" | "product" | "suite";
+  description: string;
+  binaries: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export type ProjectSummary = Project & {
+  task_count: number;
+  finding_count: number;
+  binary_count: number;
+};
+
+export type ProjectDetail = {
+  project: Project;
+  tasks: { id: number; name: string; status: string }[];
+  findings: { id: number; vulnclass: string; name: string; severity: string; status: string }[];
+  crossmap: { available: boolean; binaries: Record<string, { indexed: boolean }> };
+};
+
 export interface Machine {
   id: number;
   name: string;
