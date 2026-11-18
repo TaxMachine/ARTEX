@@ -661,22 +661,55 @@ function ChatView({
     vp.addEventListener("scroll", onScroll, { passive: true });
     return () => vp.removeEventListener("scroll", onScroll);
   }, [viewport, loadEarlier, approvalFocus.state, focusHistory.ready]);
-  // open/switch a conversation → jump to the latest (bottom)
+  // open/switch a conversation → jump to the latest (bottom). The initial
+  // history page loads async, so the jump must also happen when the first
+  // messages of this conversation actually render (historyLoaded flips after
+  // the fetch resolves); jumping only on conv.id leaves the view at the top of
+  // an empty transcript otherwise. firstPaintRef keeps it to one forced jump
+  // per conversation switch, then stick-to-bottom takes over.
+  const firstPaintRef = React.useRef<number | null>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: changing conversations intentionally retriggers the scroll reset.
   React.useLayoutEffect(() => {
+    firstPaintRef.current = null; // a new conversation resets the first-paint gate
     const vp = viewport();
     if (vp) {
       vp.scrollTop = vp.scrollHeight;
       atBottomRef.current = true;
     }
   }, [conv.id, viewport]);
-  // new activity → stick to bottom only if the user is already pinned there
+  React.useLayoutEffect(() => {
+    if (!historyLoaded || messages.length === 0) return;
+    if (firstPaintRef.current === conv.id) return;
+    firstPaintRef.current = conv.id;
+    const vp = viewport();
+    if (vp) {
+      vp.scrollTop = vp.scrollHeight;
+      atBottomRef.current = true;
+    }
+  }, [conv.id, historyLoaded, messages, viewport]);
+  // new activity → stick to bottom only if the user is already pinned there.
+  // Lazy detail loads (markdown, code blocks, images finishing after the
+  // activity array settles) grow the content without changing the array
+  // reference, so the layout effect alone leaves the last message partly
+  // off-screen. A ResizeObserver re-pins on any height change while the user
+  // is still at the bottom — the same pattern the task sessions tab uses.
   // biome-ignore lint/correctness/useExhaustiveDependencies: message and running changes intentionally retrigger bottom anchoring.
   React.useLayoutEffect(() => {
     if (approvalFocus.state || !atBottomRef.current) return;
     const vp = viewport();
     if (vp) vp.scrollTop = vp.scrollHeight;
   }, [messages, running, viewport, approvalFocus.state]);
+  React.useEffect(() => {
+    const el = contentRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      if (approvalFocus.state || !atBottomRef.current) return;
+      const vp = viewport();
+      if (vp) vp.scrollTop = vp.scrollHeight;
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [viewport, approvalFocus.state]);
 
   // Per-conversation token total, live — same accounting as the main-agent
   // console: completed runs' `result` sum + the in-progress run's latest `usage`.

@@ -1452,15 +1452,27 @@ export function SessionsTab({ taskId, taskPaused = false }: { taskId: string; ta
     vp.addEventListener("scroll", onScroll, { passive: true });
     return () => vp.removeEventListener("scroll", onScroll);
   }, [viewport, activeId, loadEarlier, approvalFocus.state, focusHistory.ready]);
-  // open/switch a session → jump to the latest (bottom)
+  // open/switch a session → jump to the latest (bottom). The session's items
+  // load async (loadSession), so also anchor once when its first page actually
+  // renders; the jump on switch alone lands on the loading skeleton's bottom.
   // biome-ignore lint/correctness/useExhaustiveDependencies: activeId intentionally scrolls a newly selected session.
   React.useLayoutEffect(() => {
+    firstSessionPaintRef.current = false;
     const vp = viewport();
     if (vp && !approvalFocus.state) {
       vp.scrollTop = vp.scrollHeight;
       atBottomRef.current = true;
     }
   }, [activeId, viewport, approvalFocus.state]);
+  const firstSessionPaintRef = React.useRef(false);
+  React.useLayoutEffect(() => {
+    if (firstSessionPaintRef.current || !activity?.length) return;
+    if (approvalFocus.state) return;
+    firstSessionPaintRef.current = true;
+    atBottomRef.current = true;
+    const vp = viewport();
+    if (vp) vp.scrollTop = vp.scrollHeight;
+  }, [activity, viewport, approvalFocus.state]);
   // new activity → stick to bottom only if the user is already pinned there
   // biome-ignore lint/correctness/useExhaustiveDependencies: activity growth intentionally drives live-edge scrolling.
   React.useLayoutEffect(() => {

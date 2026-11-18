@@ -65,6 +65,20 @@ function SidePanel({
   useEffect(() => {
     if (pinned.current && viewport.current) viewport.current.scrollTop = viewport.current.scrollHeight;
   }, [tail?.answer, tail?.id]);
+  // Opening the panel must land on the latest answer, not wherever the list
+  // was scrolled when it last rendered (items load async, so also anchor when
+  // the set first becomes non-empty).
+  useEffect(() => {
+    if (side.items.length === 0) return;
+    if (viewport.current) viewport.current.scrollTop = viewport.current.scrollHeight;
+    pinned.current = true;
+  }, [side.open]); // eslint-disable-line react-hooks/exhaustive-deps
+  const paintedRef = useRef(false);
+  useEffect(() => {
+    if (paintedRef.current || side.items.length === 0) return;
+    paintedRef.current = true;
+    if (viewport.current) viewport.current.scrollTop = viewport.current.scrollHeight;
+  }, [side.items]);
   const status = { running: "Answering", completed: "Completed", failed: "Failed", cancelled: "Stopped", interrupted: "Interrupted" };
   return (
     <section className="flex h-full min-h-0 flex-col bg-background" aria-label="Side question panel">
