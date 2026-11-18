@@ -68,17 +68,23 @@ Both are remote `http` MCPs on the Docker bridge address, registered in
 
 | Name | URL | Tools | Backing service |
 |---|---|---|---|
-| `windows-lab` | `http://172.17.0.1:13020/mcp` | 8 | `/home/taxmachine/windows-lab-mcp` (unit `windows-lab-mcp`) |
+| `windows-lab` | `http://172.17.0.1:13020/mcp` | 14 | `/home/taxmachine/windows-lab-mcp` (unit `windows-lab-mcp`) |
+| `qtest` | `http://172.17.0.1:13040/mcp` | 16 | QEMU qtest device-model harness (unit `qtest-mcp`) |
 | `local-hexbrain` | `http://172.17.0.1:13014/mcp` | 9 | local Go container (`local-hexbrain-server-1`), NVD/KEV/EPSS/payloads/templates |
 | `nuclei-runner` | `http://172.17.0.1:13015/mcp` | 6 | scoped nuclei scans of lab targets (detached scans, unit `nuclei-mcp`) |
 | `semgrep` | `http://172.17.0.1:13016/mcp` | 2 | static audit, local rules + any `p/` registry passthrough | static audit of lab source with local semgrep-rules (unit `semgrep-mcp`) |
 | `ida` | `http://172.17.0.1:13011/mcp` | 33 | IDA flatpak daemon `13010` + auth bridge (`artex-mcp-bridge-ida`) |
 | `hexbrain` | `http://172.17.0.1:13013/mcp` | 11 | hosted MCP at `https://hexbrainai.com/api/mcp` + auth bridge (`artex-mcp-bridge-hexbrain`) |
 
-- `windows-lab` is the allowlisted lab control surface (VMs, campaigns,
-  artifacts). VM/campaign/script names live in
+- `windows-lab` is the allowlisted lab control surface (VM lifecycle, campaigns,
+  dumps, symbols, artifacts). VM/campaign/script/dump paths live in
   `/home/taxmachine/windows-lab-mcp/registry.json`; the agent cannot pass a
-  command or an arbitrary SSH target.
+  command or an arbitrary SSH target. `vm_reset` requires `confirm=true` and
+  only deletes the registry's overlay; `collect_dumps` pulls WER dumps from the
+  guest and `push_dump` copies one to the WinDbg host for `open_dump`.
+- `qtest` drives QEMU device models over the qtest protocol (virtio-net/blk/scsi/
+  console). It is an execution path for hypervisor work, not a campaign runner;
+  see `~/labkit/docs/hypervisor-lab.md`.
 - `ida` is `re-mcp` served from the IDA flatpak. The daemon needs
   `--share=network` (its sandbox has a private network namespace) and requires a
   bearer token; `mcp-bridge/bridge.py` injects it because ARTEX's remote-MCP
@@ -89,16 +95,17 @@ Both are remote `http` MCPs on the Docker bridge address, registered in
   `Authorization: Bearer` header ARTEX cannot send. Call it
   `mcp__hexbrain__*` (e.g. `hexbrain_plan_tests`, `hexbrain_search_reports`,
   `hexbrain_find_cves`).
-- A `windbg` bridge is already listening on `http://172.17.0.1:13012/` but is
-  **not registered**: its upstream (`127.0.0.1:8766` → Windows VM tunnel) is down
-  unless the debug VM is running. Register it in the UI when that tunnel is up.
+- `windbg` is registered at `http://172.17.0.1:13012/` (61 tools) through
+  `mcp-bridge`, upstream `127.0.0.1:8766` → the `win11` VM tunnel. If the VM is
+  down, the bridge and tunnel units retry and the tools stay unavailable until
+  the VM is started; no ARTEX change is needed when it comes back.
 - Host-side details: `/home/taxmachine/mcp-bridge/README.md` and
   `/home/taxmachine/windows-lab-mcp/README.md`.
 
 Units (user scope, enabled):
 
 ```bash
-systemctl --user status artex-ida-mcp artex-mcp-bridge-ida artex-mcp-bridge-windbg windows-lab-mcp
+systemctl --user status artex-ida-mcp artex-mcp-bridge-ida artex-mcp-bridge-windbg windows-lab-mcp qtest-mcp
 ```
 
 ## Lab tooling repo (`~/labkit`)
@@ -134,7 +141,8 @@ Availability checked against the live gateway (2026-11-16):
 
 ### Hypervisor support
 
-- Skill `skills/hypervisor-guest-escape/` (worker/auto/pentest): qtest-driven virtio methodology validated against Fedora QEMU 10.2.2 on this host (`b64read`/`b64write` guest-RAM R/W, PIO/MMIO, IRQ intercept work; `clock_step`, `qom-list`, `device_add` absent). Backed by `windbg` + `ida` MCPs for triage/code. No execution MCP by design - campaigns are operator-run.
+- Skill `skills/hypervisor-guest-escape/` (worker/auto/pentest): qtest-driven virtio methodology, now backed by the `qtest` MCP (harness start/stop, PCI scan + BAR autoconfig, guest-RAM R/W, legacy vring setup + notify, crash check). Host QEMU is 11.1.3, which lacks `-accel qtest`; the harness uses `-accel tcg -S` plus the `-qtest` chardev. Campaigns remain operator-run.
+- Nested Hyper-V is installed and working on the `win11` libvirt VM (`Microsoft-Hyper-V-All` Enabled, `vmms`/`vmcompute` Running, `Get-VM` works; QEMU CPU has `hv-evmcs`/`hv-avic`). See `~/labkit/docs/hypervisor-lab.md`. `win11-26h2` remains off-limits.
 - Template *Hypervisor guest-to-host escape (virtio device)* under Task templates.
 - `artex_task_create.py`: create a task from a seed JSON (used by the Patch-Tuesday pipeline: `artex_task_create.py ntvuln/reports/patchtuesday_DATE.seed.json`). Signs its own short-lived JWT from the instance key.
 
