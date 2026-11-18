@@ -60,6 +60,7 @@ func builtinToolsByAgent() map[string][]actool.CoreTool {
 		"auto": {ts.addFinding(), ts.insertAssets(), ts.addCompanyScope(), ts.listAssets(), ts.listCompanies(),
 			ts.listMachines(), ts.machineStatus(), ts.machineStart(), ts.machineStop(),
 			ts.machineReset(), ts.machineSnapshot(), ts.machineEvents()},
+		// project context (tasks on the same software cross-reference)
 		// retester (finding retest conversations) gets the machine surface: a retest
 		// of an OS finding must be able to boot the VM, SSH in and re-run the PoC.
 		// Credential/evidence scoping resolves to the finding's origin task at call

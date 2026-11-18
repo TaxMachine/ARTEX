@@ -43,9 +43,12 @@ var BuildVersion = "dev"
 // Server exposes the ARTEX backend over a JSON HTTP API for the shadcn/ui
 // frontend.
 type Server struct {
-	m      *Manager
-	engine *Engine
-	ctx    context.Context
+	// crossmapURL is the cross-binary function map server (optional; empty
+	// disables the map queries without affecting anything else).
+	crossmapURL string
+	m           *Manager
+	engine      *Engine
+	ctx         context.Context
 
 	skillDir string // root directory for skill subdirectories
 	jwtKey   []byte // HS256 signing key loaded from / generated into keyDir/jwt.key
@@ -172,11 +175,13 @@ type triggeredRun struct {
 }
 
 func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDir string, opts ...Option) *Server {
+	crossmap := strings.TrimSpace(os.Getenv("ARTEX_CROSSMAP_URL"))
+
 	key, err := loadOrCreateJWTKey(keyDir, dataDir)
 	if err != nil {
 		log.Fatalf("[auth] JWT key: %v", err)
 	}
-	s := &Server{m: m, engine: NewEngine(m), ctx: ctx, skillDir: skillDir, jwtKey: key, chatBusy: map[string]bool{},
+	s := &Server{crossmapURL: crossmap, m: m, engine: NewEngine(m), ctx: ctx, skillDir: skillDir, jwtKey: key, chatBusy: map[string]bool{},
 		chatCancel: map[string]context.CancelCauseFunc{}, triggerQ: map[string][]triggeredRun{},
 		triggerActive: map[string]int{}, triggerCfg: map[string]triggerBehavior{},
 		profChatAgents: map[int64]*agent.ChatAgent{},
@@ -782,6 +787,11 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/tasks/{id}/credentials", s.addTaskCredential)
 	mux.HandleFunc("DELETE /api/tasks/{id}/credentials/{cid}", s.deleteTaskCredential)
 	// Native machines: operator management, lifecycle, machine evidence and pcaps.
+	// Software projects: cross-referencing unit for tasks on the same target.
+	mux.HandleFunc("GET /api/projects", s.listProjects)
+	mux.HandleFunc("POST /api/projects", s.upsertProject)
+	mux.HandleFunc("GET /api/projects/{key}", s.getProject)
+	mux.HandleFunc("POST /api/tasks/{id}/project", s.setTaskProject)
 	mux.HandleFunc("GET /api/machines", s.listMachines)
 	mux.HandleFunc("POST /api/machines", s.createMachine)
 	mux.HandleFunc("POST /api/machines/autostart", s.machineAutostart)

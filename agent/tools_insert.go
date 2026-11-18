@@ -706,6 +706,8 @@ func (t *ToolSet) WorkerTools() []actool.CoreTool {
 		// Task credentials (#3): reuse user-declared test accounts, record
 		// self-registered ones so they are not forgotten.
 		t.saveTaskCredential(), t.listTaskCredentials(),
+		// Project context: tasks on the same software cross-reference.
+		t.listProjects(), t.projectContext(), t.saveProject(), t.setTaskProject(),
 		// Native machines: registered VM lifecycle, SSH exec/transfer and machine
 		// evidence (the machine equivalent of traffic). See agent/tools_machines.go.
 		t.listMachines(), t.machineStatus(), t.machineStart(), t.machineStop(),

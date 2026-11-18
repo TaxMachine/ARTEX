@@ -13,6 +13,8 @@ import (
 type Task struct {
 	ID            int64      `json:"id"`
 	Name          string     `json:"name"` // optional task name; empty=unnamed
+	ProjectID     *int64     `json:"project_id,omitempty"`
+	ProjectKey    string     `json:"project_key,omitempty"`
 	CategoryID    *int64     `json:"category_id,omitempty"`
 	CategoryName  string     `json:"category_name,omitempty"`
 	Pinned        bool       `json:"pinned"`
@@ -282,7 +284,14 @@ RETURNING id, status, paused, created_at`, opts.Name, opts.CategoryID, descripti
 	} else {
 		t.LLMFailoverState = "ready"
 	}
-	return t, tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	// Cross-reference: auto-link to a project when the goal names its software.
+	if k, err := d.AutoLinkProject(t.ID, goal, description); err == nil && k != "" {
+		t.ProjectKey = k
+	}
+	return t, nil
 }
 
 func insertTaskCompanies(tx *sql.Tx, taskID int64, companyIDs []int64) error {
