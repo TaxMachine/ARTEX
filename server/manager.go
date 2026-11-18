@@ -986,11 +986,20 @@ func (m *Manager) machineEndpointList(name string) []string {
 	if err != nil || strings.TrimSpace(mach.Host) == "" {
 		return nil
 	}
-	port := mach.SSHPort
-	if port == 0 {
-		port = 22
+	var out []string
+	if p := mach.SSHPort; p > 0 {
+		out = append(out, net.JoinHostPort(mach.Host, strconv.Itoa(p)))
 	}
-	return []string{net.JoinHostPort(mach.Host, strconv.Itoa(port))}
+	if v, ok := mach.Config["vnc_port"].(float64); ok && v > 0 {
+		out = append(out, net.JoinHostPort(mach.Host, strconv.Itoa(int(v))))
+	}
+	if v, ok := mach.Config["rdp_enabled"].(bool); ok && v {
+		out = append(out, net.JoinHostPort(mach.Host, "3389"))
+	}
+	if len(out) == 0 {
+		out = append(out, net.JoinHostPort(mach.Host, strconv.Itoa(mach.SSHPort)))
+	}
+	return out
 }
 
 // UpdateTaskMetadata changes list-only task metadata without interrupting any

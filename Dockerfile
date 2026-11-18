@@ -185,9 +185,12 @@ RUN npm install -g "@playwright/mcp@${PLAYWRIGHT_MCP_VERSION}" "@playwright/cli@
 # (virsh lifecycle/snapshots), and QEMU/swtpm/OVMF so operator script machines
 # (the raw-QEMU lab VMs) can be started from inside the container. Host devices
 # and image directories are bind-mounted by docker-compose.
+# Desktop interaction: Xvfb + xfreerdp (RDP sessions), xdotool (input injection),
+# tesseract (screen OCR), ImageMagick (X screenshots).
 RUN apt-get update && apt-get install -y --no-install-recommends \
       openssh-client libvirt-clients qemu-system-x86 qemu-utils swtpm ovmf \
       psmisc iproute2 \
+      xvfb xdotool freerdp2-x11 imagemagick tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /out/artex /app/artex

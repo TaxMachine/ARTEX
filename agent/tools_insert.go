@@ -688,6 +688,9 @@ func (t *ToolSet) WorkerTools() []actool.CoreTool {
 		t.sshExec(), t.sshUpload(), t.sshDownload(),
 		t.machineEvents(), t.machineEventGet(),
 		t.captureStart(), t.captureStop(), t.captureList(),
+		// Desktop console (VNC/RDP): screenshot+OCR, click, type, keys.
+		t.desktopOpen(), t.desktopScreen(), t.desktopClick(),
+		t.desktopType(), t.desktopKey(), t.desktopClose(),
 		// Cross-work review: a worker can also reuse other works' observations to avoid
 		// duplicate work.
 		// search_all_worker_traces: no need to know an intent_id first — fish out matching

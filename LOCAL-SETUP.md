@@ -158,6 +158,13 @@ ARTEX now has first-class machine access instead of delegating it to an MCP:
   `machine_events`, `machine_event_get`, `capture_list`) and lifecycle tools
   stay ungated; machine names resolve through the operator registry, so a
   machine row is the single source of the endpoint.
+- **Desktop console (VNC/RDP)**: `desktop_open/screen/click/type/key/close` drive a
+  VM's graphical screen. VNC attaches to the QEMU console (machine config
+  `vnc_port`; works at firmware/logon/UAC with zero guest setup; v424 has 5914).
+  RDP starts a real session via Xvfb + xfreerdp inside the container (needs a
+  password credential and guest RDP). Screenshots OCR through tesseract and are
+  stored as machine evidence under `data/machine_desktop/<machine>/`. Tools are
+  target-gated like SSH (the machine endpoint needs a pin when the gate is on).
 - **PCAP**: `capture_start/stop` run `tcpdump` on a Linux machine over SSH and
   download the pcap to `data/machine_captures/<machine>/<id>.pcap`. Windows
   guests have no tcpdump; use the transcript evidence or install a capture agent.

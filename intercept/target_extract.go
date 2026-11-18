@@ -44,7 +44,7 @@ var noTargetTools = toolSet(
 	// machines themselves live in the platform's registry; their SSH endpoints
 	// are gated through machineTools below when the gate has a resolver).
 	"list_machines", "machine_status", "machine_events", "machine_event_get",
-	"capture_list",
+	"capture_list", "desktop_close",
 )
 
 // machineTools are the native machine tools whose call reaches a registered
@@ -54,6 +54,8 @@ var noTargetTools = toolSet(
 var machineTools = toolSet(
 	"ssh_exec", "ssh_upload", "ssh_download",
 	"capture_start", "capture_stop",
+	// The interactive console reaches the machine's desktop endpoint.
+	"desktop_open", "desktop_screen", "desktop_click", "desktop_type", "desktop_key",
 )
 
 func toolSet(names ...string) map[string]bool {
