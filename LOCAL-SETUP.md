@@ -122,8 +122,11 @@ bootstrap from `*.example` files (README has the full fresh-machine procedure).
 
 ARTEX now has first-class machine access instead of delegating it to an MCP:
 
-- **UI**: `/function/machines` (sidebar "Machines") lists registered targets,
-  shows lifecycle state, starts/stops/resets and exposes the evidence table.
+- **UI**: `/function/machines` (sidebar "Machines") lists registered targets and
+  manages lifecycle. Recording lives on a separate sidebar entry,
+  `/function/machine-traffic` ("Machine Traffic"), distinct from the web HTTP
+  "Web Traffic" page: SSH exec/transfer, VM actions and pcap rows, with search
+  and an event detail view plus a pcap list per machine.
 - **API**: `/api/machines`, `/api/machines/{name}/{start|stop|reset|status|snapshot}`,
   `/api/machine-events`, `/api/machines/{name}/captures`.
 - **Agent tools** (seeded and bound to worker/pentest, plus plan/auto):
@@ -136,6 +139,10 @@ ARTEX now has first-class machine access instead of delegating it to an MCP:
   existing save/list tools and the task Credentials tab expose them. Machine
   tools resolve the newest task credential for the machine host/name; passwords
   and keys never leave the server (the list tool redacts keys).
+  `machines.config.default_username` pins the account used when `username` is
+  omitted: the lab VMs set `lpeuser` (unprivileged, Medium integrity), so LPE
+  work defaults to the correct context; pass `username="taxadmin"` for admin
+  setup.
 - **Evidence**: every SSH exec/upload/download, VM lifecycle action and pcap
   action is a `machine_events` row (command, stdout/stderr, exit, duration,
   credential id, task id). `machine_events` searches by machine/action/substring;

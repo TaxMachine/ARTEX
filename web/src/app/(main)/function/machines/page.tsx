@@ -8,18 +8,11 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api, ApiError } from "@/lib/api";
-import type { Machine, MachineEvent, MachineInput, MachineKind, MachineStatus } from "@/lib/types";
+import type { Machine, MachineInput, MachineKind, MachineStatus } from "@/lib/types";
 
 const EMPTY: MachineInput = {
   name: "",
@@ -42,42 +35,23 @@ function errText(e: unknown) {
   return e instanceof ApiError ? e.message : e instanceof Error ? e.message : String(e);
 }
 
-function fmtTime(s: string) {
-  const d = new Date(s);
-  return Number.isNaN(d.getTime()) ? s : d.toLocaleString();
-}
-
-function fmtBytes(n: number) {
-  if (!n) return "0 B";
-  const u = ["B", "KB", "MB", "GB"];
-  const i = Math.min(Math.floor(Math.log(n) / Math.log(1024)), u.length - 1);
-  return `${(n / 1024 ** i).toFixed(i ? 1 : 0)} ${u[i]}`;
-}
-
 export default function MachinesPage() {
   const [machines, setMachines] = React.useState<Machine[]>([]);
   const [statuses, setStatuses] = React.useState<Record<string, MachineStatus>>({});
-  const [events, setEvents] = React.useState<MachineEvent[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [busy, setBusy] = React.useState<string>("");
   const [form, setForm] = React.useState<MachineInput>(EMPTY);
   const [editing, setEditing] = React.useState<Machine | null>(null);
-  const [detail, setDetail] = React.useState<MachineEvent | null>(null);
-  const [filter, setFilter] = React.useState({ machine: "", action: "", q: "" });
-
   const load = React.useCallback(async () => {
     setLoading(true);
     try {
-      const list = await api.machines();
-      setMachines(list);
-      const ev = await api.machineEvents({ ...filter, limit: 50 });
-      setEvents(ev);
+      setMachines(await api.machines());
     } catch (e) {
       toast.error(errText(e));
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, []);
 
   React.useEffect(() => {
     void load();
@@ -121,8 +95,6 @@ export default function MachinesPage() {
       const st = await api.machineAction(m.name, act, act === "stop" ? false : undefined);
       setStatuses((s) => ({ ...s, [m.name]: st }));
       toast.success(`${m.name}: ${act} ok`);
-      const ev = await api.machineEvents({ ...filter, limit: 50 });
-      setEvents(ev);
     } catch (e) {
       toast.error(`${m.name} ${act}: ${errText(e)}`);
     } finally {
@@ -189,14 +161,6 @@ export default function MachinesPage() {
       toast.error(errText(e));
     } finally {
       setBusy("");
-    }
-  }
-
-  async function reloadEvents() {
-    try {
-      setEvents(await api.machineEvents({ ...filter, limit: 50 }));
-    } catch (e) {
-      toast.error(errText(e));
     }
   }
 
@@ -429,103 +393,9 @@ export default function MachinesPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-base">Machine evidence</CardTitle>
-          <div className="flex gap-2">
-            <Input
-              className="h-8 w-40"
-              placeholder="machine"
-              value={filter.machine}
-              onChange={(e) => setFilter({ ...filter, machine: e.target.value })}
-            />
-            <Input
-              className="h-8 w-40"
-              placeholder="action"
-              value={filter.action}
-              onChange={(e) => setFilter({ ...filter, action: e.target.value })}
-            />
-            <Input
-              className="h-8 w-56"
-              placeholder="search command/output"
-              value={filter.q}
-              onChange={(e) => setFilter({ ...filter, q: e.target.value })}
-            />
-            <Button variant="outline" size="sm" onClick={() => void reloadEvents()}>
-              Search
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>When</TableHead>
-                <TableHead>Machine</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>Command</TableHead>
-                <TableHead>Exit</TableHead>
-                <TableHead>Size</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {events.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                    No machine evidence yet.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                events.map((e) => (
-                  <TableRow key={e.id} className="cursor-pointer" onClick={() => void api.machineEvent(e.id).then(setDetail).catch((x) => toast.error(errText(x)))}>
-                    <TableCell className="whitespace-nowrap text-xs">{fmtTime(e.created_at)}</TableCell>
-                    <TableCell className="text-xs">{e.machine}</TableCell>
-                    <TableCell>
-                      <Badge variant={e.action === "exec" ? "outline" : "secondary"}>{e.action}</Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[420px] truncate font-mono text-xs">{e.command || "—"}</TableCell>
-                    <TableCell className="text-xs">{e.exit_code ?? "—"}</TableCell>
-                    <TableCell className="text-xs">{fmtBytes(e.bytes)}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>
-              {detail?.machine} · {detail?.action} #{detail?.id}
-            </DialogTitle>
-            <DialogDescription>{detail ? fmtTime(detail.created_at) : ""}</DialogDescription>
-          </DialogHeader>
-          {detail && (
-            <div className="space-y-3">
-              <div className="text-xs text-muted-foreground">
-                {detail.protocol} · {detail.username || "—"} · exit {detail.exit_code ?? "—"} · {detail.duration_ms} ms ·{" "}
-                {fmtBytes(detail.bytes)}
-              </div>
-              <div>
-                <div className="mb-1 text-xs font-medium text-muted-foreground">Command</div>
-                <pre className="max-h-40 overflow-auto rounded bg-muted p-2 text-xs">{detail.command}</pre>
-              </div>
-              <div>
-                <div className="mb-1 text-xs font-medium text-muted-foreground">stdout</div>
-                <pre className="max-h-72 overflow-auto rounded bg-muted p-2 text-xs">{detail.stdout || "—"}</pre>
-              </div>
-              {detail.stderr ? (
-                <div>
-                  <div className="mb-1 text-xs font-medium text-muted-foreground">stderr</div>
-                  <pre className="max-h-40 overflow-auto rounded bg-muted p-2 text-xs">{detail.stderr}</pre>
-                </div>
-              ) : null}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <p className="text-sm text-muted-foreground">
+        SSH/VM recording lives on the separate <a className="underline" href="/function/machine-traffic">Machine Traffic</a> page.
+      </p>
     </div>
   );
 }

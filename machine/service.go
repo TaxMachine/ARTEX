@@ -92,6 +92,13 @@ func (s *Service) Credential(taskID int64, m db.Machine, username string, creden
 	if err != nil {
 		return db.TaskCredential{}, err
 	}
+	// The operator can pin the default account per machine (lab VMs use the
+	// unprivileged lpeuser for LPE work; admin actions pass username explicitly).
+	if strings.TrimSpace(username) == "" {
+		if v, ok := m.Config["default_username"].(string); ok {
+			username = v
+		}
+	}
 	host := strings.ToLower(strings.TrimSpace(m.Host))
 	name := strings.ToLower(strings.TrimSpace(m.Name))
 	var best *db.TaskCredential
