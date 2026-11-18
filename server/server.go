@@ -2270,6 +2270,16 @@ func (s *Server) findings(w http.ResponseWriter, r *http.Request) {
 
 // normFilter maps the frontend's "all" sentinel (and empty) to "" so the DB layer
 // treats it as no filter.
+// isExplicitOthers reports whether raw category text is an explicit
+// "everything else" value (as opposed to an unrecognized typo).
+func isExplicitOthers(raw string) bool {
+	switch strings.ToLower(strings.TrimSpace(strings.ReplaceAll(raw, "_", "-"))) {
+	case "others", "other", "uncategorized", "misc", "n/a":
+		return true
+	}
+	return false
+}
+
 func normFilter(v string) string {
 	if v == "all" {
 		return ""
@@ -2533,13 +2543,14 @@ func (s *Server) patchFinding(w http.ResponseWriter, r *http.Request) {
 		Severity  *string `json:"severity"`
 		Name      *string `json:"name"`
 		VulnClass *string `json:"vulnclass"`
+		Category  *string `json:"category"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeErr(w, 400, "bad json: "+err.Error())
 		return
 	}
-	if body.Status == nil && body.Severity == nil && body.Name == nil && body.VulnClass == nil {
-		writeErr(w, 400, "nothing to update: provide status/severity/name/vulnclass")
+	if body.Status == nil && body.Severity == nil && body.Name == nil && body.VulnClass == nil && body.Category == nil {
+		writeErr(w, 400, "nothing to update: provide status/severity/name/vulnclass/category")
 		return
 	}
 	if body.Status != nil {
@@ -2591,6 +2602,23 @@ func (s *Server) patchFinding(w http.ResponseWriter, r *http.Request) {
 	}
 	if body.VulnClass != nil {
 		n, err := s.m.pg.SetFindingVulnClass(id, strings.TrimSpace(*body.VulnClass))
+		if err != nil {
+			writeErr(w, 500, err.Error())
+			return
+		}
+		if n == 0 {
+			writeErr(w, 404, "finding not found")
+			return
+		}
+	}
+	if body.Category != nil {
+		raw := strings.TrimSpace(*body.Category)
+		cat := db.NormalizeFindingCategory(raw)
+		if raw != "" && cat == db.CategoryOthers && !isExplicitOthers(raw) {
+			writeErr(w, 400, "bad category: use operating-systems|hypervisors|web|applications|others")
+			return
+		}
+		n, err := s.m.pg.SetFindingCategory(id, cat)
 		if err != nil {
 			writeErr(w, 500, err.Error())
 			return

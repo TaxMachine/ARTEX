@@ -37,10 +37,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { statusMeta, type Tone, toneClasses } from "@/lib/status";
-import type { ActiveFindingRetest, Finding, FindingStatus, Severity, VerificationStatus } from "@/lib/types";
+import type { ActiveFindingRetest, Finding, FindingCategory, FindingStatus, Severity, VerificationStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export const SEVERITIES: Severity[] = ["critical", "high", "medium", "low"];
+
+export const CATEGORIES: FindingCategory[] = [
+  "operating-systems",
+  "hypervisors",
+  "web",
+  "applications",
+  "others",
+];
 
 export const FINDING_STATUSES: FindingStatus[] = [
   "pending",
@@ -100,6 +108,7 @@ export interface FindingEdit {
   name: string;
   vulnclass: string;
   severity: Severity;
+  category: FindingCategory;
 }
 
 export type FindingReport = { status: "loading" | "done" | "error"; text: string };
@@ -125,7 +134,7 @@ export function fmtTime(ts: string) {
   });
 }
 
-const COLUMN_COUNT = 9;
+const COLUMN_COUNT = 10;
 
 interface FindingsTableProps {
   items: Finding[];
@@ -193,6 +202,7 @@ export function FindingsTable({
           </TableHead>
           <TableHead className="w-8" />
           <TableHead className="w-20">Severity</TableHead>
+          <TableHead className="w-36">Category</TableHead>
           <TableHead>Vulnerability</TableHead>
           <TableHead className="w-44">Asset</TableHead>
           <TableHead className="w-28">Status</TableHead>
@@ -236,6 +246,9 @@ export function FindingsTable({
                 </TableCell>
                 <TableCell>
                   <StatusBadge domain="severity" value={f.severity} dot />
+                </TableCell>
+                <TableCell>
+                  <StatusBadge domain="category" value={f.category ?? "others"} />
                 </TableCell>
                 <TableCell className="max-w-md">
                   <div className="flex min-w-0 flex-col gap-0.5">
@@ -385,12 +398,32 @@ export function FindingsTable({
                             />
                           </div>
                           <div className="flex min-w-[10rem] flex-col gap-1">
-                            <Label className="text-xs text-muted-foreground">Category</Label>
+                            <Label className="text-xs text-muted-foreground">Type</Label>
                             <Input
                               value={edit.vulnclass}
                               onChange={(e) => onEditChange((s) => (s ? { ...s, vulnclass: e.target.value } : s))}
                               placeholder="e.g. SQL Injection"
                             />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <Label className="text-xs text-muted-foreground">Category</Label>
+                            <Select
+                              value={edit.category}
+                              onValueChange={(v) =>
+                                onEditChange((s) => (s ? { ...s, category: v as FindingCategory } : s))
+                              }
+                            >
+                              <SelectTrigger size="sm" className="w-44">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {CATEGORIES.map((c) => (
+                                  <SelectItem key={c} value={c}>
+                                    {statusMeta("category", c).label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
                           <div className="flex flex-col gap-1">
                             <Label className="text-xs text-muted-foreground">Severity</Label>

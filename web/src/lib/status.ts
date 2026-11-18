@@ -64,8 +64,7 @@ const severity: Record<string, StatusMeta> = {
 };
 
 const finding: Record<string, StatusMeta> = {
-  pending: { label: "Pending", tone: "amber" },
-  in_progress: { label: "In progress", tone: "blue" },
+  pending: { label: "Pending", tone: "amber" },  in_progress: { label: "In progress", tone: "blue" },
   confirmed: { label: "Confirmed", tone: "red" },
   resolved: { label: "Resolved", tone: "green" },
   fixed: { label: "Fixed", tone: "green" },
@@ -109,6 +108,15 @@ const delivery: Record<string, StatusMeta> = {
   skipped: { label: "Skipped", tone: "neutral" },
 };
 
+// Finding category → human label. Unknown slugs fall back to the raw value.
+const category: Record<string, StatusMeta> = {
+  "operating-systems": { label: "Operating systems", tone: "blue" },
+  hypervisors: { label: "Hypervisors", tone: "violet" },
+  web: { label: "Web", tone: "green" },
+  applications: { label: "Applications", tone: "amber" },
+  others: { label: "Others", tone: "neutral" },
+};
+
 const maps = {
   intent,
   task,
@@ -119,6 +127,7 @@ const maps = {
   audit,
   node,
   delivery,
+  category,
 } as const;
 
 export type StatusDomain = keyof typeof maps;

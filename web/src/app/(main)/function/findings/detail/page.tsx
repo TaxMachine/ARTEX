@@ -315,6 +315,11 @@ function FindingDetailInner() {
                   )}
                 </FieldRow>
 
+                {/* Category */}
+                <FieldRow label="Category">
+                  <StatusBadge domain="category" value={finding.category ?? "others"} />
+                </FieldRow>
+
                 {/* Assets */}
                 <FieldRow label="Assets">
                   {finding.assets && finding.assets.length > 0 ? (

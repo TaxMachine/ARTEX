@@ -63,6 +63,17 @@ services:
       # Mount skills/ from the project root into the container (overriding the image's built-in /app/skills);
       # skill changes require no image rebuild — the container reads the host copy.
       - ./skills:/app/skills
+      # Lab-built skills live in /home/taxmachine/labkit/skills (committed there);
+      # ARTEX/skills holds symlinks to them for host-side paths, and these
+      # explicit mounts shadow the (container-unresolvable) symlinks with the
+      # real directories. Add one line per new lab skill here.
+      - /home/taxmachine/labkit/skills/hexbrain:/app/skills/hexbrain
+      - /home/taxmachine/labkit/skills/local-hexbrain:/app/skills/local-hexbrain
+      - /home/taxmachine/labkit/skills/nuclei-runner:/app/skills/nuclei-runner
+      - /home/taxmachine/labkit/skills/semgrep:/app/skills/semgrep
+      - /home/taxmachine/labkit/skills/windows-lpe-triage:/app/skills/windows-lpe-triage
+      - /home/taxmachine/labkit/skills/windbg:/app/skills/windbg
+      - /home/taxmachine/labkit/skills/hypervisor-guest-escape:/app/skills/hypervisor-guest-escape
     restart: unless-stopped
 
 volumes:

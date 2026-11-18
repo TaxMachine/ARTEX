@@ -40,6 +40,7 @@ type DBFinding struct {
 
 	Counterevidence     string // what was tested and did not work; optional, "" = not given
 	ConfidenceRationale string // why the conclusion holds; optional, "" = not given
+	Category            string // operating-systems | hypervisors | web | applications | others
 }
 
 // Finding triage states (findings.status).
@@ -82,6 +83,46 @@ func ValidSeverity(s string) bool {
 	return false
 }
 
+// Finding categories (findings.category). Canonical slugs; the UI renders
+// human labels. "others" is the default for old rows and uncategorized input.
+const (
+	CategoryOperatingSystems = "operating-systems" // kernels, drivers, OS services/brokers
+	CategoryHypervisors      = "hypervisors"       // VMMs, virtual devices, VM escape surface
+	CategoryWeb              = "web"                // web apps, plugins, APIs, browsers
+	CategoryApplications     = "applications"      // desktop/mobile/CLI apps, libraries, firmware
+	CategoryOthers           = "others"             // anything else / uncategorized
+)
+
+// FindingCategories is the canonical category set, in UI order.
+var FindingCategories = []string{
+	CategoryOperatingSystems, CategoryHypervisors, CategoryWeb, CategoryApplications, CategoryOthers,
+}
+
+// NormalizeFindingCategory maps user/agent input to a canonical slug:
+// case-insensitive, spaces and underscores become hyphens ("Operating Systems"
+// -> "operating-systems"). Unknown or empty input returns "others".
+func NormalizeFindingCategory(s string) string {
+	norm := strings.ToLower(strings.TrimSpace(s))
+	norm = strings.ReplaceAll(norm, "_", "-")
+	norm = strings.Join(strings.Fields(norm), "-")
+	for _, c := range FindingCategories {
+		if norm == c {
+			return c
+		}
+	}
+	return CategoryOthers
+}
+
+// ValidFindingCategory reports whether s is a canonical category slug.
+func ValidFindingCategory(s string) bool {
+	for _, c := range FindingCategories {
+		if s == c {
+			return true
+		}
+	}
+	return false
+}
+
 // AddFinding inserts a finding into the standalone findings table. taskID and
 // nodeID may be 0 (stored as NULL). name may be "" (frontend falls back to
 // vulnclass). Returns the new finding id.
@@ -112,7 +153,7 @@ const findingSelectCols = `f.id, f.task_id, f.node_id, f.vulnclass, COALESCE(f.n
 	       f.evidence, f.worker, f.asset_ids, COALESCE(f.status, 'pending'), f.created_at,
 	       COALESCE(t.description, '') AS task_description, f.evidence_version, f.report_evidence_version,
 	       f.poe_level, COALESCE(f.verification_status, 'unverified'), COALESCE(f.verification_note, ''),
-	       f.counterevidence, f.confidence_rationale,
+	       f.counterevidence, f.confidence_rationale, COALESCE(f.category, 'others'),
  (SELECT count(*) FROM finding_traffic_bindings b WHERE b.finding_id=f.id)`
 
 // scanFindings materializes rows selected via findingSelectCols.
@@ -126,7 +167,7 @@ func scanFindings(rows interface {
 		f := &DBFinding{}
 		var aidsJSON string
 		if err := rows.Scan(&f.ID, &f.TaskID, &f.NodeID, &f.VulnClass, &f.Name, &f.Severity,
-			&f.Summary, &f.Evidence, &f.Worker, &aidsJSON, &f.Status, &f.CreatedAt, &f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.TrafficCount); err != nil {
+			&f.Summary, &f.Evidence, &f.Worker, &aidsJSON, &f.Status, &f.CreatedAt, &f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &f.TrafficCount); err != nil {
 			return nil, err
 		}
 		_ = json.Unmarshal([]byte(aidsJSON), &f.AssetIDs)
@@ -162,6 +203,7 @@ type FindingFilter struct {
 	Status             string // pending | false_positive | ignored | resolved
 	VerificationStatus string // verified | unverified | blocked | not_assessed | false_positive
 	VulnClass          string
+	Category           string // operating-systems | hypervisors | web | applications | others
 	TaskID             string // task id (in string form; empty/invalid = do not filter by task)
 	Query              string // fuzzy search keyword over name/class/summary/evidence/report body
 	Sort               string // "severity" | "time"
@@ -199,6 +241,7 @@ func (f FindingFilter) where() (string, []any) {
 	add("status", f.Status)
 	add("verification_status", f.VerificationStatus)
 	add("vulnclass", f.VulnClass)
+	add("category", f.Category)
 	// task_id is a bigint column, compared as an integer (it cannot go through
 	// the text add above); empty/invalid values are ignored.
 	if f.TaskID == FindingUnassignedTask {
@@ -529,7 +572,7 @@ func (d *DB) ListFindingsForExport(f FindingFilter, ids []int64) ([]*DBFinding, 
 		var aidsJSON string
 		if err := rows.Scan(&f.ID, &f.TaskID, &f.NodeID, &f.VulnClass, &f.Name, &f.Severity,
 			&f.Summary, &f.Evidence, &f.Worker, &aidsJSON, &f.Status, &f.CreatedAt,
-			&f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.TrafficCount, &f.Report); err != nil {
+			&f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &f.TrafficCount, &f.Report); err != nil {
 			return nil, err
 		}
 		_ = json.Unmarshal([]byte(aidsJSON), &f.AssetIDs)
@@ -549,7 +592,9 @@ type FindingStats struct {
 	Medium      int                 `json:"medium"`
 	Low         int                 `json:"low"`
 	VulnClasses []string            `json:"vulnclasses"`
-	Tasks       []FindingTaskOption `json:"tasks"` // tasks that have findings (for the "by task" dropdown)
+	Categories  []string            `json:"categories"` // canonical slugs present in the table, UI order
+	ByCategory  []CategoryCount     `json:"by_category"`  // whole-table counts per category, UI order
+	Tasks       []FindingTaskOption `json:"tasks"`        // tasks that have findings (for the "by task" dropdown)
 }
 
 // FindingTaskOption is one entry in the findings page's task filter: a task that
@@ -563,10 +608,16 @@ type FindingTaskOption struct {
 	Count       int    `json:"count"`
 }
 
+// CategoryCount is one entry of the findings page's per-category stat cards.
+type CategoryCount struct {
+	Category string `json:"category"`
+	Count    int    `json:"count"`
+}
+
 // FindingStats returns whole-table counts (by severity + pending) and the sorted
 // set of distinct vuln classes.
 func (d *DB) FindingStats() (*FindingStats, error) {
-	st := &FindingStats{VulnClasses: []string{}, Tasks: []FindingTaskOption{}}
+	st := &FindingStats{VulnClasses: []string{}, Categories: []string{}, ByCategory: []CategoryCount{}, Tasks: []FindingTaskOption{}}
 	err := d.QueryRow(`SELECT
 		COUNT(*),
 		COUNT(*) FILTER (WHERE status = 'pending'),
@@ -592,6 +643,52 @@ func (d *DB) FindingStats() (*FindingStats, error) {
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+	// Category dropdown: canonical slugs present in the table, in UI order.
+	crows, err := d.Query(`SELECT DISTINCT COALESCE(category, 'others') FROM findings`)
+	if err != nil {
+		return nil, err
+	}
+	present := map[string]bool{}
+	defer crows.Close()
+	for crows.Next() {
+		var c string
+		if err := crows.Scan(&c); err != nil {
+			return nil, err
+		}
+		present[NormalizeFindingCategory(c)] = true
+	}
+	if err := crows.Err(); err != nil {
+		return nil, err
+	}
+	for _, c := range FindingCategories {
+		if present[c] {
+			st.Categories = append(st.Categories, c)
+		}
+	}
+	crows.Close()
+	// Per-category counts for the stat cards (whole table, like severity counts).
+	brows, err := d.Query(`SELECT COALESCE(category, 'others'), COUNT(*) FROM findings GROUP BY 1`)
+	if err != nil {
+		return nil, err
+	}
+	defer brows.Close()
+	counts := map[string]int64{}
+	for brows.Next() {
+		var c string
+		var n int64
+		if err := brows.Scan(&c, &n); err != nil {
+			return nil, err
+		}
+		counts[NormalizeFindingCategory(c)] += n
+	}
+	if err := brows.Err(); err != nil {
+		return nil, err
+	}
+	for _, c := range FindingCategories {
+		if counts[c] > 0 {
+			st.ByCategory = append(st.ByCategory, CategoryCount{Category: c, Count: int(counts[c])})
+		}
 	}
 
 	// Task dropdown: tasks that have findings, with description (empty after the
@@ -659,7 +756,7 @@ func (d *DB) GetFinding(id int64) (*DBFinding, error) {
 		WHERE f.id = $1`, id).Scan(
 		&f.ID, &f.TaskID, &f.NodeID, &f.VulnClass, &f.Name, &f.Severity,
 		&f.Summary, &f.Evidence, &f.Worker, &aidsJSON, &f.Status, &f.CreatedAt,
-		&f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.TrafficCount, &f.Report)
+		&f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &f.TrafficCount, &f.Report)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -769,6 +866,12 @@ func (d *DB) SetFindingName(id int64, name string) (int64, error) {
 // SetFindingVulnClass updates one finding's vulnerability class (+ node payload sync).
 func (d *DB) SetFindingVulnClass(id int64, vulnclass string) (int64, error) {
 	return d.setFindingCol(id, "vulnclass", "vulnclass", vulnclass)
+}
+
+// SetFindingCategory updates one finding's category (+ node payload sync).
+// The value must already be a canonical slug (see NormalizeFindingCategory).
+func (d *DB) SetFindingCategory(id int64, category string) (int64, error) {
+	return d.setFindingCol(id, "category", "category", category)
 }
 
 // FindingMeta is the standalone-row data (id, triage state, anchored assets) the

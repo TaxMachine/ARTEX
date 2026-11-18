@@ -25,6 +25,16 @@ func findingPaginationParam(raw string, fallback, upperBound int) int {
 	return value
 }
 
+// normCategoryFilter normalizes a category query param: empty stays empty
+// (no filter); anything else maps to a canonical slug (unknown -> others).
+func normCategoryFilter(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" || strings.EqualFold(s, "all") {
+		return ""
+	}
+	return db.NormalizeFindingCategory(s)
+}
+
 // findingFilterFromQuery builds the shared findings filter from a request's
 // query string. The list / grouping / asset tree / export all share one parsing path; new filter options only change here.
 func findingFilterFromQuery(q url.Values) db.FindingFilter {
@@ -33,6 +43,7 @@ func findingFilterFromQuery(q url.Values) db.FindingFilter {
 		Status:             normFilter(q.Get("status")),
 		VerificationStatus: normFilter(q.Get("verification_status")),
 		VulnClass:          normFilter(q.Get("vulnclass")),
+		Category:           normCategoryFilter(q.Get("category")),
 		// task_id (independent of the task param, which switches to the per-task-node branch): filters the global table by task.
 		TaskID:     normFilter(q.Get("task_id")),
 		Query:      q.Get("q"),

@@ -331,6 +331,7 @@ type FindingDTO struct {
 	FindingID string `json:"finding_id,omitempty"` // standalone findings-table id — the handle for status updates
 	VulnClass string `json:"vulnclass"`
 	Name      string `json:"name,omitempty"` // vulnerability name; the frontend falls back to displaying vulnclass when empty
+	Category  string `json:"category"`       // operating-systems | hypervisors | web | applications | others
 	Severity  string `json:"severity"`       // critical | high | medium | low
 	Status    string `json:"status"`         // pending | in_progress | confirmed | resolved | fixed | false_positive | ignored | duplicate | risk_accepted
 	Summary   string `json:"summary"`
@@ -391,6 +392,7 @@ type findingPayload struct {
 	VulnClass string          `json:"vulnclass"`
 	Name      string          `json:"name"`
 	Severity  string          `json:"severity"`
+	Category  string          `json:"category"`
 	Summary   string          `json:"summary"`
 	Evidence  json.RawMessage `json:"evidence"`
 }
@@ -403,6 +405,7 @@ func findingDTO(n *db.Node) FindingDTO {
 		VulnClass: p.VulnClass,
 		Name:      p.Name,
 		Severity:  p.Severity,
+		Category:  p.Category,
 		Status:    db.FindingPending,
 		Summary:   p.Summary,
 		Evidence:  rawString(p.Evidence),
@@ -470,6 +473,7 @@ func findingFromDB(f *db.DBFinding, assets map[int64]*db.Asset) FindingDTO {
 		Counterevidence: f.Counterevidence, ConfidenceRationale: f.ConfidenceRationale,
 		VulnClass: f.VulnClass,
 		Name:      f.Name,
+		Category:  f.Category,
 		Severity:  f.Severity,
 		Status:    status,
 		Summary:   f.Summary,

@@ -482,6 +482,10 @@ export type FindingStatus =
   | "duplicate"
   | "risk_accepted";
 
+// Finding category: which part of the stack the vulnerability lives in.
+// Canonical slugs (backend-validated); the UI renders human labels via CATEGORY_META.
+export type FindingCategory = "operating-systems" | "hypervisors" | "web" | "applications" | "others";
+
 // Verification status (S1): the automated proof-of-exploitation outcome, distinct from the
 // human triage status above. "blocked" is produced by no path yet but is displayed when present.
 export type VerificationStatus = "verified" | "unverified" | "blocked" | "not_assessed" | "false_positive";
@@ -508,6 +512,7 @@ export interface Finding {
   vulnclass: string;
   name?: string; // vulnerability name; display falls back to vulnclass when empty
   severity: Severity;
+  category?: FindingCategory; // stack area; absent on rows written before categories existed
   status: FindingStatus;
   summary: string;
   evidence: string;
@@ -567,6 +572,8 @@ export interface FindingStats {
   medium: number;
   low: number;
   vulnclasses: string[];
+  categories: FindingCategory[];
+  by_category: { category: string; count: number }[];
   tasks: FindingTaskOption[];
 }
 
@@ -587,6 +594,7 @@ export interface FindingQuery {
   status?: "all" | FindingStatus;
   verificationStatus?: "all" | VerificationStatus;
   vulnclass?: string;
+  category?: "all" | FindingCategory;
   task?: string; // task id; "all"/empty = no task filter
   query?: string;
   sort?: "severity" | "time";

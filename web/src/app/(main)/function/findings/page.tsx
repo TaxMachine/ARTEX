@@ -5,12 +5,17 @@ import * as React from "react";
 import Link from "next/link";
 
 import {
+  AppWindowIcon,
   ArrowUpRightIcon,
   BugIcon,
   ChevronRightIcon,
   ClockIcon,
+  CpuIcon,
   DownloadIcon,
+  FolderOpenIcon,
+  GlobeIcon,
   InfoIcon,
+  LayersIcon,
   SearchIcon,
   ShieldAlertIcon,
   TriangleAlertIcon,
@@ -45,6 +50,7 @@ import type {
   ActiveFindingRetest,
   Finding,
   FindingAssetNode,
+  FindingCategory,
   FindingGroup,
   FindingStats,
   FindingStatus,
@@ -55,6 +61,7 @@ import { cn } from "@/lib/utils";
 
 import { AssetTree, assetPathOf } from "./_components/asset-tree";
 import {
+  CATEGORIES,
   FINDING_STATUSES,
   type FindingEdit,
   type FindingReport,
@@ -129,6 +136,8 @@ const EMPTY_STATS: FindingStats = {
   medium: 0,
   low: 0,
   vulnclasses: [],
+  categories: [],
+  by_category: [],
   tasks: [],
 };
 
@@ -138,6 +147,7 @@ export default function FindingsPage() {
   const [status, setStatus] = React.useState<"all" | FindingStatus>("all");
   const [verificationStatus, setVerificationStatus] = React.useState<"all" | VerificationStatus>("all");
   const [vulnclass, setVulnclass] = React.useState<string>("all");
+  const [category, setCategory] = React.useState<"all" | FindingCategory>("all");
   const [task, setTask] = React.useState<string>("all");
   const [sort, setSort] = React.useState<"severity" | "time">("severity");
   const [search, setSearch] = React.useState("");
@@ -167,7 +177,7 @@ export default function FindingsPage() {
   const retestRefreshVersion = React.useRef(0);
   const [deepenDescription, setDeepenDescription] = React.useState("");
   const [deepening, setDeepening] = React.useState(false);
-  const filterFingerprint = JSON.stringify([severity, status, verificationStatus, vulnclass, task, sort, query]);
+  const filterFingerprint = JSON.stringify([severity, status, verificationStatus, vulnclass, category, task, sort, query]);
   const activeFilterFingerprint = React.useRef(filterFingerprint);
   activeFilterFingerprint.current = filterFingerprint;
 
@@ -207,6 +217,7 @@ export default function FindingsPage() {
           status?: unknown;
           verificationStatus?: unknown;
           vulnclass?: unknown;
+          category?: unknown;
           task?: unknown;
           sort?: unknown;
         };
@@ -224,6 +235,9 @@ export default function FindingsPage() {
           setVerificationStatus(parsed.verificationStatus as "all" | VerificationStatus);
         }
         if (typeof parsed.vulnclass === "string" && parsed.vulnclass) setVulnclass(parsed.vulnclass);
+        if (parsed.category === "all" || CATEGORIES.includes(parsed.category as FindingCategory)) {
+          setCategory(parsed.category as "all" | FindingCategory);
+        }
         if (typeof parsed.task === "string" && parsed.task) setTask(parsed.task);
         if (parsed.sort === "severity" || parsed.sort === "time") setSort(parsed.sort);
       } catch {
@@ -237,9 +251,9 @@ export default function FindingsPage() {
     if (!preferencesHydrated) return;
     setLocalStorageValue(
       FINDING_LIST_PREFERENCE_KEY,
-      JSON.stringify({ view, severity, status, verificationStatus, vulnclass, task, sort }),
+      JSON.stringify({ view, severity, status, verificationStatus, vulnclass, category, task, sort }),
     );
-  }, [preferencesHydrated, severity, sort, status, task, verificationStatus, view, vulnclass]);
+  }, [preferencesHydrated, severity, sort, status, task, verificationStatus, view, vulnclass, category]);
 
   React.useEffect(() => {
     const timer = window.setTimeout(() => setQuery(search.trim()), 300);
@@ -299,7 +313,7 @@ export default function FindingsPage() {
       await api.exportFindings({
         format: exportFormat,
         scope: exportScope,
-        filters: { severity, status, verificationStatus, vulnclass, task, query, sort },
+        filters: { severity, status, verificationStatus, vulnclass, category, task, query, sort },
         ids: [...selectedIds],
       });
       setExportOpen(false);
@@ -341,6 +355,7 @@ export default function FindingsPage() {
         status,
         verificationStatus,
         vulnclass,
+        category,
         task,
         query,
         sort,
@@ -362,6 +377,7 @@ export default function FindingsPage() {
     status,
     verificationStatus,
     vulnclass,
+    category,
     task,
     query,
     sort,
@@ -375,7 +391,7 @@ export default function FindingsPage() {
     const request = ++assetTreeRequest.current;
     setAssetTree((current) => ({ ...current, loading: true }));
     try {
-      const result = await api.findingAssetTree({ severity, status, verificationStatus, vulnclass, task, query, sort });
+      const result = await api.findingAssetTree({ severity, status, verificationStatus, vulnclass, category, task, query, sort });
       if (request !== assetTreeRequest.current || activeFilterFingerprint.current !== requestFilter) return;
       setAssetTree({
         nodes: result.nodes ?? [],
@@ -404,6 +420,7 @@ export default function FindingsPage() {
         status,
         verificationStatus,
         vulnclass,
+        category,
         task,
         query,
         sort,
@@ -415,7 +432,7 @@ export default function FindingsPage() {
     } catch {
       // Polling keeps the last successful snapshot visible.
     }
-  }, [filterFingerprint, page, pageSize, severity, status, verificationStatus, vulnclass, task, query, sort]);
+  }, [filterFingerprint, page, pageSize, severity, status, verificationStatus, vulnclass, category, task, query, sort]);
 
   const loadGroup = React.useCallback(
     async (key: string, groupPage: number, groupPageSize: number) => {
@@ -442,6 +459,7 @@ export default function FindingsPage() {
           status,
           verificationStatus,
           vulnclass,
+          category,
           task: key,
           query,
           sort,
@@ -475,7 +493,7 @@ export default function FindingsPage() {
         }));
       }
     },
-    [filterFingerprint, severity, status, verificationStatus, vulnclass, query, sort],
+    [filterFingerprint, severity, status, verificationStatus, vulnclass, category, query, sort],
   );
 
   React.useEffect(() => {
@@ -618,6 +636,7 @@ export default function FindingsPage() {
   React.useEffect(() => {
     if (!statsLoaded) return;
     if (vulnclass !== "all" && !stats.vulnclasses.includes(vulnclass)) setVulnclass("all");
+    if (category !== "all" && !(stats.categories ?? []).includes(category)) setCategory("all");
     if (
       task !== "all" &&
       task !== UNASSIGNED_TASK &&
@@ -625,7 +644,7 @@ export default function FindingsPage() {
     ) {
       setTask("all");
     }
-  }, [stats, statsLoaded, task, vulnclass]);
+  }, [stats, statsLoaded, task, vulnclass, category]);
 
   // updateStatus optimistically flips one finding's triage state, reverting on error.
   const updateStatus = React.useCallback(
@@ -706,7 +725,7 @@ export default function FindingsPage() {
         setEdit(null);
         return;
       }
-      setEdit({ name: f.name ?? "", vulnclass: f.vulnclass, severity: f.severity });
+      setEdit({ name: f.name ?? "", vulnclass: f.vulnclass, severity: f.severity, category: f.category ?? "others" });
       if (!f.finding_id || reports[key]) return;
       const fid = f.finding_id;
       setReports((r) => ({ ...r, [key]: { status: "loading", text: "" } }));
@@ -728,11 +747,12 @@ export default function FindingsPage() {
           name: edit.name.trim(),
           vulnclass: edit.vulnclass.trim(),
           severity: edit.severity,
+          category: edit.category,
         });
         setFindings((cur) =>
           cur.map((x) =>
             isSameFinding(x, f)
-              ? { ...x, name: updated.name, vulnclass: updated.vulnclass, severity: updated.severity }
+              ? { ...x, name: updated.name, vulnclass: updated.vulnclass, severity: updated.severity, category: updated.category }
               : x,
           ),
         );
@@ -817,6 +837,22 @@ export default function FindingsPage() {
     { label: "Medium", value: stats.medium, tone: "text-amber-500", icon: TriangleAlertIcon },
     { label: "Low", value: stats.low, tone: "text-slate-500", icon: InfoIcon },
   ];
+
+  const CATEGORY_ICONS = {
+    "operating-systems": CpuIcon,
+    hypervisors: LayersIcon,
+    web: GlobeIcon,
+    applications: AppWindowIcon,
+    others: FolderOpenIcon,
+  } as const;
+
+  const categoryCards = (stats.by_category ?? []).map((entry) => ({
+    key: entry.category,
+    label: statusMeta("category", entry.category).label,
+    value: entry.count,
+    icon: CATEGORY_ICONS[entry.category as keyof typeof CATEGORY_ICONS] ?? FolderOpenIcon,
+    active: category === entry.category,
+  }));
 
   // The "current filter" count in the export dialog: both views share the same filters, only the counting source differs.
   // The flat and asset views share the flat list state; the grouped view's figure comes from the group API's finding_total.
@@ -905,6 +941,40 @@ export default function FindingsPage() {
           })}
         </div>
 
+        {categoryCards.length > 0 && (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            {categoryCards.map((stat) => {
+              const StatIcon = stat.icon;
+              return (
+                <Card
+                  key={stat.key}
+                  className={cn(
+                    "cursor-pointer gap-1 py-4 transition-colors hover:border-primary/50",
+                    stat.active && "border-primary",
+                  )}
+                  role="button"
+                  tabIndex={0}
+                  title={stat.active ? "Clear category filter" : `Filter by ${stat.label}`}
+                  onClick={() => setCategory(stat.active ? "all" : (stat.key as FindingCategory))}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter" && e.key !== " ") return;
+                    e.preventDefault();
+                    setCategory(stat.active ? "all" : (stat.key as FindingCategory));
+                  }}
+                >
+                  <CardHeader className="px-4">
+                    <CardDescription>{stat.label}</CardDescription>
+                    <CardTitle className="flex items-center gap-2 text-2xl tabular-nums">
+                      <StatIcon className="size-5" aria-hidden="true" />
+                      {stat.value}
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center gap-2">
           <InputGroup className="w-full sm:w-72">
             <InputGroupInput
@@ -982,6 +1052,20 @@ export default function FindingsPage() {
               {stats.vulnclasses.map((vc) => (
                 <SelectItem key={vc} value={vc}>
                   {vc}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={category} onValueChange={(v) => setCategory(v as "all" | FindingCategory)}>
+            <SelectTrigger size="sm" className="w-44">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All categories</SelectItem>
+              {(stats.categories?.length ? stats.categories : CATEGORIES).map((c) => (
+                <SelectItem key={c} value={c}>
+                  {statusMeta("category", c).label}
                 </SelectItem>
               ))}
             </SelectContent>

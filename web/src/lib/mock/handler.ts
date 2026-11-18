@@ -468,10 +468,12 @@ function mockFilterFindings(q: URLSearchParams): (typeof mockFindings)[number][]
   const severity = q.get("severity");
   const status = q.get("status");
   const vulnclass = q.get("vulnclass");
+  const category = q.get("category");
   const taskID = q.get("task_id");
   if (severity) list = list.filter((finding) => finding.severity === severity);
   if (status) list = list.filter((finding) => finding.status === status);
   if (vulnclass) list = list.filter((finding) => finding.vulnclass === vulnclass);
+  if (category) list = list.filter((finding) => (finding.category ?? "others") === category);
   if (taskID === "__unassigned__") list = list.filter((finding) => !finding.task_id);
   else if (taskID) list = list.filter((finding) => finding.task_id === taskID);
   return list;
@@ -1849,6 +1851,15 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
   if (path === "/exploration/frontier") return D.frontier;
   if (path === "/exploration/findings/stats") {
     const vulnclasses = Array.from(new Set(mockFindings.map((f) => f.vulnclass))).sort();
+    const categories = Array.from(new Set(mockFindings.map((f) => f.category ?? "others"))).sort();
+    const byCategoryCount = new Map<string, number>();
+    for (const f of mockFindings) {
+      const c = (f.category ?? "others") as string;
+      byCategoryCount.set(c, (byCategoryCount.get(c) ?? 0) + 1);
+    }
+    const by_category = ["operating-systems", "hypervisors", "web", "applications", "others"]
+      .filter((c) => byCategoryCount.has(c))
+      .map((c) => ({ category: c, count: byCategoryCount.get(c) as number }));
     // "By task" dropdown: tasks with findings + description + count (mock task ids are strings, used directly as ids).
     const taskMap = new Map<string, { name: string; description: string; count: number }>();
     for (const f of mockFindings) {
@@ -1871,6 +1882,8 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
       medium: mockFindings.filter((f) => f.severity === "medium").length,
       low: mockFindings.filter((f) => f.severity === "low").length,
       vulnclasses,
+      categories,
+      by_category,
       tasks,
     };
   }
@@ -2084,6 +2097,7 @@ function route(m: string, path: string, seg: string[], q: URLSearchParams, b: Re
       if (typeof b.severity === "string") f.severity = b.severity as typeof f.severity;
       if (typeof b.name === "string") f.name = b.name;
       if (typeof b.vulnclass === "string") f.vulnclass = b.vulnclass;
+      if (typeof b.category === "string") (f as unknown as Record<string, unknown>).category = b.category;
     }
     const contextTaskId = q.get("context_task");
     const contextTask = contextTaskId ? mockTasks.find((item) => item.id === contextTaskId) : undefined;
