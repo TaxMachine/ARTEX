@@ -88,6 +88,23 @@ func run() int {
 	}
 	defer mgr.Close()
 
+	// Boot the machines that active tasks depend on BEFORE the engine resumes
+	// tasks, so the first SSH tool call does not race a cold guest. Sequential
+	// and memory-guarded; disable with ARTEX_MACHINE_AUTOSTART=0.
+	if os.Getenv("ARTEX_MACHINE_AUTOSTART") != "0" {
+		if res, err := mgr.Machines().Autostart(ctx, 0, log.Printf); err != nil {
+			log.Printf("[machines] autostart: %v", err)
+		} else if len(res) > 0 {
+			up := 0
+			for _, r := range res {
+				if r.SSHReady {
+					up++
+				}
+			}
+			log.Printf("[machines] autostart: %d/%d machine(s) with SSH ready", up, len(res))
+		}
+	}
+
 	skillDir, err := config.SkillDir()
 	if err != nil {
 		log.Printf("[config] %v", err)
@@ -146,6 +163,13 @@ func run() int {
 	drainCancel()
 	if drainErr != nil {
 		log.Printf("task drain: %v", drainErr)
+	}
+	// Graceful machine shutdown: ACPI/libvirt before the container gets SIGKILL.
+	// The compose service allows 120s; keep this budget comfortably below it.
+	if os.Getenv("ARTEX_MACHINE_SHUTDOWN") != "0" {
+		vmCtx, vmCancel := context.WithTimeout(context.Background(), 60*time.Second)
+		mgr.Machines().ShutdownAll(vmCtx, 55*time.Second, log.Printf)
+		vmCancel()
 	}
 	// The health writer flushes on ctx.Done(). Wait for it before the deferred
 	// store close, so the last cooling window is not written at a closed database.

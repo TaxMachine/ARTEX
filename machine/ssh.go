@@ -114,6 +114,7 @@ func (s *Service) Exec(ctx context.Context, taskID int64, machineName, username 
 	if err != nil {
 		return ExecResult{}, err
 	}
+	s.link(taskID, m)
 	client, err := s.dialSSH(m, c, 20*time.Second)
 	if err != nil {
 		return ExecResult{}, fmt.Errorf("ssh %s@%s:%d: %w", c.Username, m.Host, m.SSHPort, err)
@@ -215,6 +216,7 @@ func (s *Service) Upload(ctx context.Context, taskID int64, machineName, usernam
 	if err != nil {
 		return TransferResult{}, err
 	}
+	s.link(taskID, m)
 	client, err := s.dialSSH(m, c, 20*time.Second)
 	if err != nil {
 		return TransferResult{}, fmt.Errorf("ssh %s@%s:%d: %w", c.Username, m.Host, m.SSHPort, err)
@@ -273,6 +275,7 @@ func (s *Service) Download(ctx context.Context, taskID int64, machineName, usern
 	if err != nil {
 		return TransferResult{}, err
 	}
+	s.link(taskID, m)
 	client, err := s.dialSSH(m, c, 20*time.Second)
 	if err != nil {
 		return TransferResult{}, fmt.Errorf("ssh %s@%s:%d: %w", c.Username, m.Host, m.SSHPort, err)

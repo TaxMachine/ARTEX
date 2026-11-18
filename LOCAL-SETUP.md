@@ -157,10 +157,40 @@ Container privileges (deliberate; `docker-compose.yml`): `/run/libvirt/libvirt-s
 `libvirt-clients`, `qemu-system-x86`, `qemu-utils`, `swtpm`, `ovmf`, `psmisc`.
 `security_opt: label=disable` is required for the libvirt socket under SELinux.
 
+### Startup / shutdown sequence
+
+A task->machine link (`task_machines`) is written automatically the first time a
+task uses a machine through the native tools (`ssh_exec`, transfers, lifecycle,
+capture). At container startup, **before the engine resumes tasks**, ARTEX:
+
+1. selects machines linked to tasks that are alive (not `done|failed|timeout`),
+   not paused, not archived/deleted, and not `config.autostart=false`;
+2. boots them sequentially, skipping machines already running;
+3. waits for the SSH port (default 180 s, `config.boot_timeout_seconds`);
+4. refuses a boot that would not fit: it needs `config.memory_mb` (default 4096)
+   plus `config.reserve_mb` (default 2048) of `MemAvailable`.
+
+So a host reboot with Docker + libvirt enabled brings the container up, which
+boots only the VMs the interrupted tasks actually used. Terminal tasks are
+ignored, so finished work does not reserve a 16 GB guest. Disable with
+`ARTEX_MACHINE_AUTOSTART=0`.
+
+On `docker stop`/host shutdown, ARTEX gracefully stops running registered
+machines before exiting: `virsh shutdown` for libvirt, ACPI
+`system_powerdown` on the QEMU monitor for script VMs with
+`config.monitor_port` (v424: 55563), then the stop script as a fallback. The
+compose service has `stop_grace_period: 120s`, and the code budget is 55 s.
+Disable with `ARTEX_MACHINE_SHUTDOWN=0`.
+
+The Machines page has **Boot task machines** (same sequence, on demand). The
+same endpoint accepts a task id: `POST /api/machines/autostart {"task_id": 1}`,
+which is useful to pre-boot a paused task's VMs before resuming it.
+
 Caveats:
 
 - Script-backed QEMU (v4xx) runs **inside the ARTEX container**; a container
-  restart/rebuild kills it. libvirt machines keep running. Do not manage the same
+  restart/rebuild kills it, and the startup sequence boots it again. libvirt
+  machines keep running across container restarts. Do not manage the same
   VM from the host and ARTEX at once (separate PID namespaces).
 - `win11-26h2` is hard-denied for lifecycle in code, and `protected=true` refuses
   start/stop/reset as well. Read-only status is allowed.

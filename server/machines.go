@@ -182,3 +182,18 @@ func clip(s string, n int) string {
 	}
 	return s[:n] + "..."
 }
+
+// machineAutostart boots the machines linked to active tasks (or one task when
+// task_id is supplied). This is the same sequence main runs before task resume.
+func (s *Server) machineAutostart(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		TaskID int64 `json:"task_id"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	res, err := s.m.Machines().Autostart(r.Context(), body.TaskID, nil)
+	if err != nil {
+		writeErr(w, 500, err.Error())
+		return
+	}
+	writeJSON(w, 200, map[string]any{"results": res})
+}

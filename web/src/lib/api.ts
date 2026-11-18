@@ -65,6 +65,7 @@ import type {
   LLMRetryPolicy,
   LLMTask,
   Machine,
+  MachineBootResult,
   MachineCapture,
   MachineEvent,
   MachineInput,
@@ -329,6 +330,8 @@ export const api = {
   machineSnapshot: (name: string, action: "list" | "create" | "revert", snapshot?: string) =>
     post<{ output: string }>(`/machines/${encodeURIComponent(name)}/snapshot`, { action, snapshot }),
   machineCaptures: (name: string) => get<MachineCapture[]>(`/machines/${encodeURIComponent(name)}/captures`).then((r) => arr(r)),
+  machineAutostart: (taskId?: number) =>
+    post<{ results: MachineBootResult[] }>("/machines/autostart", taskId ? { task_id: taskId } : undefined).then((r) => r.results),
   machineEvents: (params: { task_id?: string; machine?: string; action?: string; q?: string; limit?: number; offset?: number }) => {
     const qs = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => {

@@ -75,6 +75,7 @@ func (s *Service) CaptureStart(ctx context.Context, taskID int64, name, iface, b
 	if err != nil {
 		return db.MachineCapture{}, err
 	}
+	s.link(taskID, m)
 	iface = strings.TrimSpace(iface)
 	if iface == "" {
 		iface = "any"
@@ -125,6 +126,7 @@ func (s *Service) CaptureStop(ctx context.Context, taskID int64, name string, ca
 	if err != nil {
 		return db.MachineCapture{}, err
 	}
+	s.link(taskID, m)
 	cap, err := s.pg.Machines().Capture(captureID)
 	if err != nil {
 		return db.MachineCapture{}, fmt.Errorf("capture %d: %w", captureID, err)

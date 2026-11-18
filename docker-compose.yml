@@ -54,6 +54,8 @@ services:
     # host SSH keys; SELinux container confinement blocks the socket even for
     # root. This disables the container label, matching the deliberate host-level
     # privilege the operator asked for.
+    # Give the app time to ACPI-shutdown running VMs before Docker SIGKILLs it.
+    stop_grace_period: 120s
     security_opt:
       - label=disable
     # A bind mount alone does not grant the device cgroup permission; `devices`

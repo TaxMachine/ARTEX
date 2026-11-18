@@ -2,7 +2,16 @@
 
 import * as React from "react";
 
-import { Loader2Icon, PlayIcon, PlusIcon, RefreshCwIcon, RotateCcwIcon, SquareIcon, Trash2Icon } from "lucide-react";
+import {
+  Loader2Icon,
+  PlayIcon,
+  PlusIcon,
+  PowerIcon,
+  RefreshCwIcon,
+  RotateCcwIcon,
+  SquareIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +73,22 @@ export default function MachinesPage() {
       setStatuses((s) => ({ ...s, [name]: st }));
     } catch (e) {
       toast.error(`${name}: ${errText(e)}`);
+    }
+  }
+
+  async function bootTaskMachines() {
+    setBusy("autostart");
+    try {
+      const res = await api.machineAutostart();
+      const up = res.filter((r) => r.ssh_ready).length;
+      const failed = res.filter((r) => r.action === "failed");
+      if (failed.length) toast.warning(`${up}/${res.length} ready; ${failed.length} failed: ${failed.map((f) => f.machine).join(", ")}`);
+      else toast.success(`${up}/${res.length} task machine(s) ready`);
+      await checkAll();
+    } catch (e) {
+      toast.error(errText(e));
+    } finally {
+      setBusy("");
     }
   }
 
@@ -181,6 +206,10 @@ export default function MachinesPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => void bootTaskMachines()} disabled={busy === "autostart"}>
+            {busy === "autostart" ? <Loader2Icon className="size-4 animate-spin" /> : <PowerIcon className="size-4" />}
+            Boot task machines
+          </Button>
           <Button variant="outline" onClick={() => void checkAll()} disabled={busy === "status-all"}>
             {busy === "status-all" ? <Loader2Icon className="size-4 animate-spin" /> : <RefreshCwIcon className="size-4" />}
             Check status

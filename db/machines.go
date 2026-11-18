@@ -425,3 +425,75 @@ func (s *MachineStore) Captures(machineID int64, limit int) ([]MachineCapture, e
 	}
 	return out, rows.Err()
 }
+
+// ----------------------------------------------------------- task links ---
+
+// LinkTaskMachine records that a task used a machine. Best-effort callers:
+// a failed link must never fail the tool call.
+func (s *MachineStore) LinkTaskMachine(taskID, machineID int64) error {
+	if taskID <= 0 || machineID <= 0 {
+		return nil
+	}
+	_, err := s.db.Exec(`
+		INSERT INTO task_machines (task_id, machine_id) VALUES ($1, $2)
+		ON CONFLICT (task_id, machine_id) DO UPDATE SET updated_at = now()`,
+		taskID, machineID)
+	return err
+}
+
+// TaskMachines returns the machines linked to one task (autostart-eligible only).
+func (s *MachineStore) TaskMachines(taskID int64) ([]Machine, error) {
+	rows, err := s.db.Query(`
+		SELECT m.id, m.name, m.description, m.os, m.kind, m.host, m.ssh_port, m.domain,
+		       m.start_script, m.stop_script, m.workdir, m.data_dir, m.protected, m.tags,
+		       m.config, m.created_at, m.updated_at
+		FROM machines m
+		JOIN task_machines tm ON tm.machine_id = m.id AND tm.autostart
+		WHERE tm.task_id = $1
+		ORDER BY m.name`, taskID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Machine
+	for rows.Next() {
+		m, err := scanMachine(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}
+
+// AutostartCandidates returns the distinct machines used by tasks that are
+// alive, not paused, already started, and not terminal. A machine can opt out
+// with config.autostart=false.
+func (s *MachineStore) AutostartCandidates() ([]Machine, error) {
+	rows, err := s.db.Query(`
+		SELECT DISTINCT m.id, m.name, m.description, m.os, m.kind, m.host, m.ssh_port, m.domain,
+		       m.start_script, m.stop_script, m.workdir, m.data_dir, m.protected, m.tags,
+		       m.config, m.created_at, m.updated_at
+		FROM machines m
+		JOIN task_machines tm ON tm.machine_id = m.id AND tm.autostart
+		JOIN tasks t ON t.id = tm.task_id
+		WHERE t.archived_at IS NULL
+		  AND t.deleted_at IS NULL
+		  AND t.paused = false
+		  AND t.status NOT IN ('done', 'failed', 'timeout')
+		  AND COALESCE((m.config->>'autostart')::boolean, true)
+		ORDER BY m.name`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []Machine
+	for rows.Next() {
+		m, err := scanMachine(rows)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, m)
+	}
+	return out, rows.Err()
+}

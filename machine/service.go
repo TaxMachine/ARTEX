@@ -142,6 +142,13 @@ func (s *Service) sshTarget(taskID int64, machineName, username string, credenti
 	return m, c, nil
 }
 
+// link records the task->machine dependency used by the startup boot sequence.
+func (s *Service) link(taskID int64, m db.Machine) {
+	if taskID > 0 {
+		_ = s.pg.Machines().LinkTaskMachine(taskID, m.ID)
+	}
+}
+
 // record writes one machine event, capping stored text so a huge transfer cannot
 // bloat the database. The tool result is capped separately.
 func (s *Service) record(e db.MachineEvent) (int64, error) {

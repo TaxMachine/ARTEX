@@ -1481,6 +1481,18 @@ export interface MachineEvent {
   created_at: string;
 }
 
+export interface MachineBootResult {
+  machine: string;
+  kind: string;
+  action: "started" | "already-running" | "skipped" | "failed";
+  state: string;
+  pid?: number;
+  ssh_ready: boolean;
+  duration_ms: number;
+  reason?: string;
+  error?: string;
+}
+
 export interface MachineCapture {
   id: number;
   machine_id: number;

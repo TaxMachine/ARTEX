@@ -777,6 +777,7 @@ func (s *Server) Handler() http.Handler {
 	// Native machines: operator management, lifecycle, machine evidence and pcaps.
 	mux.HandleFunc("GET /api/machines", s.listMachines)
 	mux.HandleFunc("POST /api/machines", s.createMachine)
+	mux.HandleFunc("POST /api/machines/autostart", s.machineAutostart)
 	mux.HandleFunc("PUT /api/machines/{id}", s.updateMachine)
 	mux.HandleFunc("DELETE /api/machines/{id}", s.deleteMachine)
 	mux.HandleFunc("GET /api/machines/{name}/status", s.machineStatus)

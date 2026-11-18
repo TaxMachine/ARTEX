@@ -105,6 +105,20 @@ func scriptPID(m db.Machine) int {
 	return pid
 }
 
+// scriptAlive checks that the pidfile PID is this machine's QEMU, not a reused
+// PID after a reboot.
+func scriptAlive(m db.Machine, pid int) bool {
+	if !pidAlive(pid) {
+		return false
+	}
+	b, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid))
+	if err != nil {
+		return false
+	}
+	cmd := strings.ReplaceAll(string(b), "\x00", " ")
+	return strings.Contains(cmd, "qemu-system") && strings.Contains(cmd, m.Name)
+}
+
 func tcpReachable(host string, port int, timeout time.Duration) bool {
 	if host == "" {
 		return false
@@ -144,7 +158,7 @@ func (s *Service) Status(ctx context.Context, name string) (Status, error) {
 	case "script":
 		pid := scriptPID(m)
 		st.PID = pid
-		st.Running = pidAlive(pid)
+		st.Running = scriptAlive(m, pid)
 		if st.Running {
 			st.State = "running"
 		} else {
@@ -186,6 +200,7 @@ func (s *Service) Start(ctx context.Context, taskID int64, name string) (Status,
 	if err := s.guardMutation(m); err != nil {
 		return Status{}, err
 	}
+	s.link(taskID, m)
 	started := time.Now()
 	var runErr error
 	var detail string
@@ -217,6 +232,7 @@ func (s *Service) Stop(ctx context.Context, taskID int64, name string, force boo
 	if err := s.guardMutation(m); err != nil {
 		return Status{}, err
 	}
+	s.link(taskID, m)
 	started := time.Now()
 	var runErr error
 	var detail string
@@ -252,6 +268,7 @@ func (s *Service) Reset(ctx context.Context, taskID int64, name string) (Status,
 	if err := s.guardMutation(m); err != nil {
 		return Status{}, err
 	}
+	s.link(taskID, m)
 	started := time.Now()
 	var runErr error
 	var detail string
@@ -294,6 +311,7 @@ func (s *Service) Snapshot(ctx context.Context, taskID int64, name, action, snap
 		if err := s.guardMutation(m); err != nil {
 			return "", err
 		}
+		s.link(taskID, m)
 	}
 	started := time.Now()
 	var out string
