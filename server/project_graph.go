@@ -128,9 +128,14 @@ FROM findings WHERE project_id=$1 ORDER BY id`, p.ID)
 	// keys carry whatever case the .i64 filename had (CLFS.sys vs clfs.sys):
 	// match case-insensitively.
 	lower := func(x string) string { return strings.ToLower(x) }
-	summaryByLower := map[string]map[string]int{}
+	summaryByLower := map[string]map[string]any{}
 	for b, st := range crossmapSummaries {
-		summaryByLower[lower(b)] = st
+		// several .i64 names can differ only by case (clfs.sys vs CLFS.sys);
+		// keep the richest one (the fully-analyzed database, not a PE-pass stub).
+		best := map[string]any{"functions": st["functions"], "hubs": st["hubs"], "name": b}
+		if prev, ok := summaryByLower[lower(b)]; !ok || st["functions"] > prev["functions"].(int) {
+			summaryByLower[lower(b)] = best
+		}
 	}
 	findingCountByLower := map[string]int{}
 	for _, n := range nodes {
@@ -153,7 +158,7 @@ FROM findings WHERE project_id=$1 ORDER BY id`, p.ID)
 			nodes[i].Extra["functions"] = st["functions"]
 			nodes[i].Extra["hubs"] = st["hubs"]
 			nodes[i].Extra["indexed"] = true
-			nodes[i].Extra["name"] = name
+			nodes[i].Extra["name"] = st["name"]
 		}
 		nodes[i].Extra["findings"] = findingCountByLower[lower(name)]
 	}

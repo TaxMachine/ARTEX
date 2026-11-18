@@ -1465,7 +1465,7 @@ export type ProjectGraphData = {
   project: Project;
   nodes: ProjectGraphNode[];
   edges: { from: string; to: string; kind: string }[];
-  crossmap: { function_nodes: number; function_edges: number };
+  crossmap: { function_total?: number; binaries_indexed?: number; function_nodes?: number; function_edges?: number };
 };
 
 export type ProjectDetail = {
