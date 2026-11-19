@@ -42,8 +42,10 @@ const SEV_COLORS: Record<string, string> = {
 
 // cluster reveal: at scale <= REVEAL_START the binary is a solid ball; at
 // scale >= REVEAL_END it has fully dissolved into its function balls.
-const REVEAL_START = 1.1;
-const REVEAL_END = 2.3;
+// Tuned so the dissolve begins just past the fit-view scale (~0.6) and
+// completes before the canvas is pixel-peeking.
+const REVEAL_START = 0.75;
+const REVEAL_END = 1.6;
 
 type ClusterFn = { name: string; in: number; out: number };
 type Cluster = { fns: ClusterFn[]; edges: { a: number; b: number }[]; idx: Map<string, number> };
@@ -279,7 +281,9 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
 
       // cluster behind the ball
       if (cluster && t > 0.02) {
-        const CR = R * (1.15 + 0.85 * t);
+        // spread grows with the dissolve so the web stays readable instead of
+        // compressing into a disk at full zoom
+        const CR = R * (1.1 + 2.6 * t);
         // internal edges
         ctx.lineWidth = 0.5;
         for (const e of cluster.edges) {
@@ -310,7 +314,7 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
             ctx.stroke();
           }
           // labels for the biggest hubs when nearly dissolved
-          if (t > 0.75 && deg > 40) {
+          if (t > 0.6 && deg > 30) {
             ctx.font = "2.6px ui-monospace, monospace";
             ctx.textAlign = "center";
             ctx.textBaseline = "top";
