@@ -1190,7 +1190,7 @@ function GroupedProfiles({
               {list.length} profile{list.length > 1 ? "s" : ""}
             </Badge>
             {prov !== "custom" && (
-              <code className="text-muted-foreground text-[11px]">
+              <code className="min-w-0 truncate text-muted-foreground text-[11px]">
                 {PROVIDER_PRESETS.find((x) => x.id === prov)?.baseUrl}
               </code>
             )}

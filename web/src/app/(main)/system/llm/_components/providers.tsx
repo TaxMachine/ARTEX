@@ -23,7 +23,8 @@ export type ProviderPreset = {
   baseUrl: string;
   nameHint: string;
   maxTokensField?: string;
-  note?: string;
+  note?: string; // full note shown in the connect dialog
+  blurb?: string; // one short line for the picker card (no overflow)
 };
 
 export const PROVIDER_PRESETS: ProviderPreset[] = [
@@ -33,6 +34,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     format: "openai",
     baseUrl: "https://opencode.ai/zen/v1",
     nameHint: "opencode zen",
+    blurb: "Gateway: claude, gpt, glm, kimi, qwen…",
     note: "OpenAI-compatible gateway (claude, gpt, glm, kimi, qwen, deepseek…). Key: opencode auth (provider opencode-go) — the same key works here.",
   },
   {
@@ -41,6 +43,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     format: "openai",
     baseUrl: "https://integrate.api.nvidia.com/v1",
     nameHint: "NVIDIA NIM",
+    blurb: "Hosted open models (gemma, mistral…)",
     note: "OpenAI-compatible. Key: build.nvidia.com (also stored by opencode auth as nvidia).",
   },
   {
@@ -50,6 +53,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     baseUrl: "https://api.openai.com/v1",
     nameHint: "OpenAI",
     maxTokensField: "max_completion_tokens",
+    blurb: "GPT / o-series models",
     note: "o-series / GPT-5 reasoning models need max_completion_tokens; classic models keep max_tokens.",
   },
   {
@@ -58,6 +62,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     format: "anthropic",
     baseUrl: "https://api.anthropic.com",
     nameHint: "Anthropic",
+    blurb: "Claude models (Messages API)",
     note: "Messages API. max_tokens is mandatory — set a per-reply cap on the profile.",
   },
   {
@@ -66,6 +71,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     format: "openai",
     baseUrl: "https://api.deepseek.com/v1",
     nameHint: "DeepSeek",
+    blurb: "DeepSeek chat / reasoner",
     note: "OpenAI-compatible; also serves an /anthropic Messages path.",
   },
   {
@@ -74,6 +80,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     format: "openai",
     baseUrl: "https://openrouter.ai/api/v1",
     nameHint: "OpenRouter",
+    blurb: "Aggregator, hundreds of models",
     note: "OpenAI-compatible aggregator; model ids carry vendor/ prefixes.",
   },
   {
@@ -82,6 +89,7 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     format: "ollama",
     baseUrl: "http://127.0.0.1:11434/v1",
     nameHint: "Ollama local",
+    blurb: "Local server, keyless",
     note: "Keyless local server; connect works without a key.",
   },
 ];
@@ -115,20 +123,25 @@ export function ProviderPickerDialog({
               key={p.id}
               type="button"
               onClick={() => onPick(p)}
-              className="flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors hover:border-foreground/30 hover:bg-accent"
+              className="flex min-w-0 flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors hover:border-foreground/30 hover:bg-accent"
             >
               <span className="text-sm font-medium">{p.label}</span>
-              <span className="text-[11px] leading-snug text-muted-foreground line-clamp-2">{p.note}</span>
+              <span className="w-full truncate text-[11px] leading-snug text-muted-foreground" title={p.note}>
+                {p.blurb ?? p.baseUrl}
+              </span>
             </button>
           ))}
           <button
             type="button"
             onClick={onCustom}
-            className="flex flex-col items-start gap-1 rounded-lg border border-dashed p-3 text-left transition-colors hover:border-foreground/30 hover:bg-accent"
+            className="flex min-w-0 flex-col items-start gap-1 rounded-lg border border-dashed p-3 text-left transition-colors hover:border-foreground/30 hover:bg-accent"
           >
             <span className="text-sm font-medium">Custom…</span>
-            <span className="text-[11px] leading-snug text-muted-foreground">
-              Manual base URL / format / headers — any OpenAI- or Anthropic-compatible endpoint
+            <span
+              className="w-full truncate text-[11px] leading-snug text-muted-foreground"
+              title="Manual base URL / format / headers — any OpenAI- or Anthropic-compatible endpoint"
+            >
+              Any OpenAI- or Anthropic-compatible endpoint
             </span>
           </button>
         </div>
@@ -307,7 +320,7 @@ function ConnectInner({
               Connect
             </Button>
           </div>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground break-all">
             Endpoint: <code>{preset.baseUrl}</code> · format <code>{preset.format}</code>
           </p>
         </div>
