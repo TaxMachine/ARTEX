@@ -108,6 +108,16 @@ const delivery: Record<string, StatusMeta> = {
   skipped: { label: "Skipped", tone: "neutral" },
 };
 
+// Binary asset kinds (project binary tables).
+const binaryKind: Record<string, StatusMeta> = {
+  driver: { label: "Driver", tone: "violet" },
+  dll: { label: "DLL", tone: "blue" },
+  exe: { label: "EXE", tone: "blue" },
+  library: { label: "Library", tone: "slate" },
+  firmware: { label: "Firmware", tone: "amber" },
+  other: { label: "Other", tone: "neutral" },
+};
+
 // Finding category → human label. Unknown slugs fall back to the raw value.
 const category: Record<string, StatusMeta> = {
   "operating-systems": { label: "Operating systems", tone: "blue" },
@@ -128,6 +138,7 @@ const maps = {
   node,
   delivery,
   category,
+  "binary-kind": binaryKind,
 } as const;
 
 export type StatusDomain = keyof typeof maps;

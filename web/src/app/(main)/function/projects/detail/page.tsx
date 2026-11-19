@@ -5,28 +5,12 @@ import Link from "next/link";
 
 import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { DataTableShell } from "@/components/data-table-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { api, ApiError } from "@/lib/api";
 import type { ProjectDetail } from "@/lib/types";
-import { cn } from "@/lib/utils";
-
-const sevTone: Record<string, string> = {
-  critical: "text-rose-600 dark:text-rose-400",
-  high: "text-red-600 dark:text-red-400",
-  medium: "text-amber-600 dark:text-amber-400",
-  low: "text-slate-600 dark:text-slate-400",
-};
-
-const statusTone: Record<string, string> = {
-  running: "text-blue-600 dark:text-blue-400",
-  done: "text-emerald-600 dark:text-emerald-400",
-  confirmed: "text-emerald-600 dark:text-emerald-400",
-  failed: "text-red-600 dark:text-red-400",
-  timeout: "text-amber-600 dark:text-amber-400",
-};
 
 export default function ProjectDetailPage() {
   const [key, setKey] = React.useState("");
@@ -43,8 +27,9 @@ export default function ProjectDetailPage() {
     }
     void (async () => {
       try {
-        setDetail(await api.project(k));
-        if (detail) document.title = detail.project.name;
+        const d = await api.project(k);
+        setDetail(d);
+        document.title = d.project.name;
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error(e instanceof ApiError ? e.message : String(e));
@@ -87,7 +72,6 @@ export default function ProjectDetailPage() {
           <h1 className="text-xl font-semibold">{p.name}</h1>
           <div className="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <code>{p.key}</code>
-            {p.kind !== "software" ? <Badge variant="outline">{p.kind}</Badge> : null}
             {p.binaries.length > 0 && <span className="font-mono text-xs">{p.binaries.join(", ")}</span>}
           </div>
           {p.description && <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>}
@@ -136,9 +120,7 @@ export default function ProjectDetailPage() {
                   <TableCell className="font-mono text-xs font-medium">{a.name}</TableCell>
                   <TableCell className="text-center font-mono text-xs tabular-nums">{a.version || "—"}</TableCell>
                   <TableCell className="text-center">
-                    <Badge variant={a.kind === "driver" ? "default" : "secondary"} className="text-[10px]">
-                      {a.kind}
-                    </Badge>
+                    <StatusBadge domain="binary-kind" value={a.kind} />
                   </TableCell>
                   <TableCell className="text-xs">{a.os_build || "—"}</TableCell>
                   <TableCell className="max-w-[20rem] truncate font-mono text-[11px] text-muted-foreground" title={a.path}>
@@ -159,26 +141,25 @@ export default function ProjectDetailPage() {
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow>
-                <TableHead>Finding</TableHead>
-                <TableHead>Vuln class</TableHead>
-                <TableHead className="text-center">Severity</TableHead>
-                <TableHead className="text-center">Status</TableHead>
+                <TableHead>Severity</TableHead>
+                <TableHead className="w-full">Finding</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {detail.findings.map((f) => (
                 <TableRow key={f.id}>
                   <TableCell>
-                    <a className="text-sm hover:underline" href={`/function/findings/detail?id=${f.id}`}>
+                    <StatusBadge domain="severity" value={f.severity} dot />
+                  </TableCell>
+                  <TableCell className="max-w-md">
+                    <Link className="text-sm hover:underline" href={`/function/findings/detail?id=${f.id}`}>
                       {f.name}
-                    </a>
+                    </Link>
+                    <div className="truncate text-xs text-muted-foreground">{f.vulnclass}</div>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{f.vulnclass}</TableCell>
-                  <TableCell className={cn("text-center font-mono text-xs font-semibold", sevTone[f.severity])}>
-                    {f.severity}
-                  </TableCell>
-                  <TableCell className={cn("text-center text-xs", statusTone[f.status] ?? "text-muted-foreground")}>
-                    {f.status}
+                  <TableCell>
+                    <StatusBadge domain="finding" value={f.status} dot />
                   </TableCell>
                 </TableRow>
               ))}
@@ -192,20 +173,20 @@ export default function ProjectDetailPage() {
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow>
-                <TableHead>Task</TableHead>
-                <TableHead className="text-center">Status</TableHead>
+                <TableHead className="w-full">Task</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {detail.tasks.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell>
-                    <a className="text-sm hover:underline" href={`/function/tasks/detail?id=${t.id}`}>
+                    <Link className="text-sm hover:underline" href={`/function/tasks/detail?id=${t.id}`}>
                       {t.name}
-                    </a>
+                    </Link>
                   </TableCell>
-                  <TableCell className={cn("text-center text-xs", statusTone[t.status] ?? "text-muted-foreground")}>
-                    {t.status}
+                  <TableCell>
+                    <StatusBadge domain="task" value={t.status} dot />
                   </TableCell>
                 </TableRow>
               ))}
