@@ -9,6 +9,7 @@ export const KIND_LABEL: Record<string, string> = {
   feishu: "Feishu",
   wecom: "WeCom",
   webhook: "Generic Webhook",
+  discord: "Discord",
   telegram: "Telegram",
   email: "Email",
 };
@@ -86,6 +87,15 @@ export const CHANNEL_FIELDS: Record<string, FieldDef[]> = {
         "Use {{json .Xxx}} instead of {{.Xxx}} to insert strings, or quotes in titles will break the JSON.",
     },
   ],
+  discord: [
+    {
+      key: "url",
+      label: "Webhook URL",
+      kind: "password",
+      placeholder: "https://discord.com/api/webhooks/...",
+      help: "Server Settings → Integrations → Webhooks → New Webhook → Copy URL",
+    },
+  ],
   telegram: [
     { key: "bot_token", label: "Bot Token", kind: "password", placeholder: "123456:ABC-DEF..." },
     { key: "chat_id", label: "Chat ID", kind: "text", placeholder: "-1001234567890" },
@@ -135,6 +145,7 @@ export type ChannelForm = {
   taskIDsText: string;
   assetIDsText: string;
   onStatusChange: boolean;
+  eventKindsText: string;
 };
 
 export const emptyForm = (kind: string): ChannelForm => ({
@@ -150,6 +161,7 @@ export const emptyForm = (kind: string): ChannelForm => ({
   taskIDsText: "",
   assetIDsText: "",
   onStatusChange: false,
+  eventKindsText: "",
 });
 
 // parseKV parses a "KEY=VALUE per line" textarea.

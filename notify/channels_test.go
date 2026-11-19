@@ -483,7 +483,7 @@ func TestEmailSMTPErrorClassification(t *testing.T) {
 func TestRegistryCoversAllKinds(t *testing.T) {
 	// All six channels are required — a missing one would silently vanish from
 	// the UI dropdown.
-	want := []string{KindDingTalk, KindEmail, KindFeishu, KindTelegram, KindWebhook, KindWeCom}
+	want := []string{KindDingTalk, KindDiscord, KindEmail, KindFeishu, KindTelegram, KindWebhook, KindWeCom}
 	got := Kinds()
 	if len(got) != len(want) {
 		t.Fatalf("channel count should be %d, got %d: %v", len(want), len(got), got)

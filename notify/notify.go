@@ -24,6 +24,7 @@ const (
 	KindFeishu   = "feishu"   // Feishu (incl. Lark) custom bot
 	KindWeCom    = "wecom"    // WeCom group bot
 	KindWebhook  = "webhook"  // Generic webhook: custom method/headers/JSON template
+	KindDiscord  = "discord"  // Discord incoming webhook (rich embeds)
 	KindTelegram = "telegram" // Telegram Bot API
 	KindEmail    = "email"    // SMTP email
 )
@@ -32,6 +33,9 @@ const (
 const (
 	EventFindingCreated       = "finding_created"
 	EventFindingStatusChanged = "finding_status_changed"
+	EventPrimitiveFound       = "primitive_found"
+	EventFindingReclassified  = "finding_reclassified"
+	EventTaskActivity         = "task_activity"
 )
 
 // InitKind is the fallback value for an empty kind in config.

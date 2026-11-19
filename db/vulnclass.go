@@ -175,7 +175,7 @@ func NormalizeSlug(s string) string {
 			out = append(out, r+32)
 		case r >= '0' && r <= '9':
 			out = append(out, r)
-		case r == ' ', r == '_', r == '/', r == '.', r == ':':
+		case r == ' ', r == '_', r == '/', r == '.', r == ':', r == '-':
 			out = append(out, '-')
 		case r == '(':
 			return string(out) // drop "(verbose suffixes)"

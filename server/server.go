@@ -28,6 +28,7 @@ import (
 	"github.com/TaxMachine/ARTEX/intercept"
 	"github.com/TaxMachine/ARTEX/llmpool"
 	"github.com/TaxMachine/ARTEX/llmrec"
+	"github.com/TaxMachine/ARTEX/notify"
 	"github.com/TaxMachine/ARTEX/report"
 	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
@@ -1892,6 +1893,10 @@ func (s *Server) createTask(w http.ResponseWriter, r *http.Request) {
 	// Shared post-create flow (seed + seed intent + background goal decomposition + engine.Run), reusing the same launchTask as spawn_task.
 	// launchTask is async internally and never blocks the UI — goal decomposition visibly proceeds in the background.
 	s.launchTask(t, req.Description+" "+req.Goal, req.SeedFirstIntent != nil && *req.SeedFirstIntent)
+	// global-broadcast activity event: task started
+	if num, err := strconv.ParseInt(t.ID, 10, 64); err == nil {
+		s.engine.taskActivity(num, "task started: "+t.Name)
+	}
 	writeJSON(w, 201, taskDTO(t, s.resolvedTaskStatus(t)))
 }
 
@@ -2722,7 +2727,16 @@ func (s *Server) patchFinding(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if body.VulnClass != nil {
-		n, err := s.m.pg.SetFindingVulnClass(id, strings.TrimSpace(*body.VulnClass))
+		vc := strings.TrimSpace(*body.VulnClass)
+		if norm, ok := db.NormalizeVulnClass(vc); ok {
+			vc = norm
+		}
+		if _, ok := db.NormalizeVulnClass(vc); !ok {
+			writeErr(w, 400, "vulnclass "+strconv.Quote(vc)+" is not in the canonical taxonomy")
+			return
+		}
+		before, _ := s.m.pg.GetFinding(id)
+		n, err := s.m.pg.SetFindingVulnClass(id, vc)
 		if err != nil {
 			writeErr(w, 500, err.Error())
 			return
@@ -2730,6 +2744,32 @@ func (s *Server) patchFinding(w http.ResponseWriter, r *http.Request) {
 		if n == 0 {
 			writeErr(w, 404, "finding not found")
 			return
+		}
+		// Reclassification event: the class change is a meaningful signal (RCE
+		// downgraded to logic-flaw after deepening etc).
+		if before != nil && before.VulnClass != vc {
+			chainType := "unset"
+			if len(before.Chain) > 0 {
+				chainType = "hypothesis"
+				if before.ChainConfirmed() {
+					chainType = "exploit-chain"
+				}
+			} else if len(before.Primitives) > 0 {
+				chainType = "primitives"
+			}
+			_, _ = s.m.pg.AddNotificationEvent(r.Context(), notify.EventFindingReclassified, id, notify.Snapshot{
+				Kind:          notify.EventFindingReclassified,
+				FindingID:     id,
+				TaskID:        derefInt64(before.TaskID),
+				VulnClass:     vc,
+				Name:          before.Name,
+				Severity:      before.Severity,
+				Summary:       before.Summary,
+				FromVulnClass: before.VulnClass,
+				ToVulnClass:   vc,
+				ReclassReason: "manual reclassification",
+				ChainType:     chainType,
+			})
 		}
 	}
 	if body.Category != nil {
@@ -4632,4 +4672,11 @@ func atoiDefault(s string, d int) int {
 		return n
 	}
 	return d
+}
+
+func derefInt64(p *int64) int64 {
+	if p == nil {
+		return 0
+	}
+	return *p
 }

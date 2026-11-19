@@ -63,6 +63,7 @@ var registry = map[string]Channel{
 	KindFeishu:   feishuChannel{},
 	KindWeCom:    weComChannel{},
 	KindWebhook:  webhookChannel{},
+	KindDiscord:  discordChannel{},
 	KindTelegram: telegramChannel{},
 	KindEmail:    emailChannel{},
 }

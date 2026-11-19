@@ -39,11 +39,11 @@ type DBFinding struct {
 	CreatedAt          time.Time
 	TaskDescription    string // populated via LEFT JOIN on tasks
 
-	Counterevidence     string // what was tested and did not work; optional, "" = not given
+	Counterevidence     string             // what was tested and did not work; optional, "" = not given
 	Primitives          []FindingPrimitive // single weaknesses the chain builds on (facts, not findings)
 	Chain               []FindingChainStep // composed exploit-chain steps; all confirmed = confirmed finding
-	ConfidenceRationale string // why the conclusion holds; optional, "" = not given
-	Category            string // operating-systems | hypervisors | web | applications | others
+	ConfidenceRationale string             // why the conclusion holds; optional, "" = not given
+	Category            string             // operating-systems | hypervisors | web | applications | others
 }
 
 // Finding triage states (findings.status).
@@ -183,9 +183,9 @@ type FindingPrimitive struct {
 // finding every step carries result evidence; a step whose result is assumed
 // makes the whole chain a hypothesis.
 type FindingChainStep struct {
-	Step    int    `json:"step"`
-	Action  string `json:"action"`
-	Result  string `json:"result,omitempty"`  // empty = assumed/unproven
+	Step     int    `json:"step"`
+	Action   string `json:"action"`
+	Result   string `json:"result,omitempty"` // empty = assumed/unproven
 	Evidence string `json:"evidence,omitempty"`
 }
 
@@ -260,9 +260,9 @@ type FindingFilter struct {
 	// present, every step has a result) | hypothesis (chain with an empty
 	// result) | primitives (primitives, no chain) | unset (neither).
 	ChainType string
-	TaskID             string // task id (in string form; empty/invalid = do not filter by task)
-	Query              string // fuzzy search keyword over name/class/summary/evidence/report body
-	Sort               string // "severity" | "time"
+	TaskID    string // task id (in string form; empty/invalid = do not filter by task)
+	Query     string // fuzzy search keyword over name/class/summary/evidence/report body
+	Sort      string // "severity" | "time"
 	// AssetScope is a node key of the asset tree (a:<id> / c:<id> / r:<domain> /
 	// __none__); selecting a node means selecting its whole subtree.
 	// Empty = do not filter by asset.
@@ -1149,4 +1149,14 @@ func (d *DB) FindingQualityByNodeID(taskID int64) (map[int64]FindingQuality, err
 		out[nid] = q
 	}
 	return out, rows.Err()
+}
+
+// ChainConfirmed reports whether every chain step carries a result.
+func (f *DBFinding) ChainConfirmed() bool {
+	for _, c := range f.Chain {
+		if strings.TrimSpace(c.Result) == "" {
+			return false
+		}
+	}
+	return true
 }

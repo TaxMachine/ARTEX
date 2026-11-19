@@ -1068,6 +1068,7 @@ export interface NotificationFilter {
   vulnclass_include?: string[]; // empty = accept all; non-empty requires the vulnerability type to match any keyword (case-insensitive substring)
   vulnclass_exclude?: string[]; // matching any keyword excludes (exclusion wins over inclusion)
   on_status_change?: boolean; // whether to also receive vulnerability status change events
+  event_kinds?: string[]; // route by event kind: finding_created / finding_status_changed / primitive_found / finding_reclassified / task_activity; empty = findings only
 }
 
 // NotificationChannel is one channel instance. config fields vary by kind, and

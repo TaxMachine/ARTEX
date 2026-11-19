@@ -14,6 +14,7 @@ import (
 	"github.com/TaxMachine/ARTEX/agent"
 	"github.com/TaxMachine/ARTEX/db"
 	"github.com/TaxMachine/ARTEX/intercept"
+	"github.com/TaxMachine/ARTEX/notify"
 	"github.com/TaxMachine/ARTEX/third_party/norma/harness"
 	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -971,6 +972,8 @@ func (e *Engine) plannerLoop(ctx context.Context, t *Task) {
 				if won, err := e.m.SetTaskStatusGuarded(t.ID, "done", ""); err != nil {
 					log.Printf("[goalless] task %s failed to settle into done: %v", t.ID, err)
 				} else if won {
+					e.taskActivity(parseTaskIDSafe(t.ID), "task completed (all goals met)")
+				} else if won {
 					e.emitActivity(t, db.Activity{Worker: "system", Kind: "text",
 						Summary: "All goals have been met, the direct-injected intents have finished executing, and the task is over"})
 				}
@@ -1025,6 +1028,8 @@ func (e *Engine) plannerLoop(ctx context.Context, t *Task) {
 			// All goals met → persist the task state as done (the frontend DTO shows this terminal state first).
 			if err := e.m.SetTaskStatus(t.ID, "done"); err != nil {
 				log.Printf("[planner] task %s failed to persist completion: %v", t.ID, err)
+			} else {
+				e.taskActivity(parseTaskIDSafe(t.ID), "task completed (planner judged all goals met)")
 			}
 			// Task judged complete → cancel the running workers at once: whatever their
 			// in-flight intents produce no longer matters. The next worker-loop pass claims
@@ -1491,4 +1496,28 @@ func (e *Engine) claimNext(t *Task, name string) (*db.Node, string) {
 		}
 	}
 	return nil, ""
+}
+
+// taskActivity records a task_activity notification event for the global
+// broadcast channel (task started/completed). Best effort: a notification
+// failure never affects the task lifecycle.
+func (e *Engine) taskActivity(taskID int64, activity string) {
+	if e.m == nil || e.m.pg == nil || taskID <= 0 {
+		return
+	}
+	name := ""
+	if t, ok := e.m.Task(fmt.Sprintf("%d", taskID)); ok && t != nil {
+		name = t.Name
+	}
+	_, err := e.m.pg.AddNotificationEvent(context.Background(), notify.EventTaskActivity, 0, notify.Snapshot{
+		Kind: notify.EventTaskActivity, TaskID: taskID, Name: name, Activity: activity,
+	})
+	if err != nil {
+		log.Printf("[notify] task_activity event failed: %v", err)
+	}
+}
+
+func parseTaskIDSafe(id string) int64 {
+	n, _ := strconv.ParseInt(id, 10, 64)
+	return n
 }

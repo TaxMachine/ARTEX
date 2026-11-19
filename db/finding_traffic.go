@@ -353,8 +353,8 @@ type RecordFindingInput struct {
 	Category                                             string // canonical slug; "" = others
 	Counterevidence, ConfidenceRationale                 string // optional; "" = not given
 	AssetIDs                                             []int64
-	Primitives                                            []FindingsPrimitiveJSON // single weaknesses the chain builds on
-	Chain                                                 []FindingsChainStepJSON // composed chain steps
+	Primitives                                           []FindingsPrimitiveJSON // single weaknesses the chain builds on
+	Chain                                                []FindingsChainStepJSON // composed chain steps
 }
 
 // FindingsPrimitiveJSON mirrors FindingPrimitive at the record boundary.
@@ -444,16 +444,55 @@ VALUES(NULLIF($1,0),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`, 
 	// message is lost forever.
 	// A failure here is isolated on a savepoint and does not affect the finding
 	// write (see the function comment), so the return value is ignored.
+	// Anatomy on the snapshot so channels render chain-type badges and the
+	// primitive list; chain_type computed the same way the frontend does.
+	chainType := "unset"
+	if len(in.Chain) > 0 {
+		chainType = "hypothesis"
+		for _, c := range in.Chain {
+			if strings.TrimSpace(c.Result) == "" {
+				chainType = "hypothesis"
+				break
+			}
+		}
+		if chainType == "hypothesis" && allChainConfirmed(in.Chain) {
+			chainType = "exploit-chain"
+		}
+	} else if len(in.Primitives) > 0 {
+		chainType = "primitives"
+	}
+	snapPrims := make([]notify.SnapshotPrimitive, 0, len(in.Primitives))
+	for _, pr := range in.Primitives {
+		snapPrims = append(snapPrims, notify.SnapshotPrimitive{Name: pr.Name, Confirmed: pr.Confirmed})
+	}
 	RecordNotificationEventTx(ctx, tx, notify.EventFindingCreated, out.FindingID, notify.Snapshot{
-		Kind:      notify.EventFindingCreated,
-		FindingID: out.FindingID,
-		TaskID:    in.TaskID,
-		VulnClass: in.VulnClass,
-		Name:      in.Name,
-		Severity:  in.Severity,
-		Summary:   in.Summary,
-		AssetIDs:  assets,
+		Kind:       notify.EventFindingCreated,
+		FindingID:  out.FindingID,
+		TaskID:     in.TaskID,
+		VulnClass:  in.VulnClass,
+		Name:       in.Name,
+		Severity:   in.Severity,
+		Summary:    in.Summary,
+		AssetIDs:   assets,
+		ChainType:  chainType,
+		Primitives: snapPrims,
 	})
+	// Primitives-only findings also raise a primitive_found event for the
+	// vulnerability/primitives channel (facts the chain will build on).
+	if len(in.Primitives) > 0 {
+		RecordNotificationEventTx(ctx, tx, notify.EventPrimitiveFound, out.FindingID, notify.Snapshot{
+			Kind:       notify.EventPrimitiveFound,
+			FindingID:  out.FindingID,
+			TaskID:     in.TaskID,
+			VulnClass:  in.VulnClass,
+			Name:       in.Name,
+			Severity:   in.Severity,
+			Summary:    in.Summary,
+			AssetIDs:   assets,
+			ChainType:  chainType,
+			Primitives: snapPrims,
+		})
+	}
 	if err := AddFindingTrafficTx(tx, out.FindingID, prepared); err != nil {
 		return nil, err
 	}
@@ -528,4 +567,14 @@ func (d *DB) SetFindingReportVersionByNodeID(ctx context.Context, nodeID int64, 
 		return err
 	})
 	return
+}
+
+// allChainConfirmed reports whether every chain step carries a result.
+func allChainConfirmed(chain []FindingsChainStepJSON) bool {
+	for _, c := range chain {
+		if strings.TrimSpace(c.Result) == "" {
+			return false
+		}
+	}
+	return true
 }

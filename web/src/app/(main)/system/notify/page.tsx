@@ -125,6 +125,7 @@ export default function NotifyPage() {
       taskIDsText: (f.task_ids ?? []).join(","),
       assetIDsText: (f.asset_ids ?? []).join(","),
       onStatusChange: f.on_status_change ?? false,
+      eventKindsText: (f.event_kinds ?? []).join(","),
     });
     setOpen(true);
   }
@@ -182,6 +183,7 @@ export default function NotifyPage() {
       task_ids: parseIDs(form.taskIDsText),
       asset_ids: parseIDs(form.assetIDsText),
       on_status_change: form.onStatusChange,
+      event_kinds: parseIDs(form.eventKindsText).length > 0 ? form.eventKindsText.split(",").map((x) => x.trim()).filter(Boolean) : undefined,
     };
   }
 
@@ -645,6 +647,20 @@ export default function NotifyPage() {
                       aria-label="Include status changes"
                     />
                     Also push when a finding's status changes (realtime mode only)
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label className="text-xs">Event kinds (comma-separated; empty = findings only)</Label>
+                    <Input
+                      className="h-8 font-mono text-xs"
+                      placeholder="e.g. task_activity (global), primitive_found (primitives), finding_created, finding_reclassified"
+                      value={form.eventKindsText}
+                      onChange={(e) => setF({ eventKindsText: e.target.value })}
+                    />
+                    <p className="text-muted-foreground text-xs">
+                      Routes this channel: task_activity = task started/completed broadcasts · primitive_found = primitives
+                      highlighted · finding_created = classified vulnerability/exploit chain · finding_reclassified = class
+                      changed (e.g. RCE downgraded after deepening) · finding_status_changed = status transitions.
+                    </p>
                   </div>
                 </div>
               </div>

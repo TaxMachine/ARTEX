@@ -501,16 +501,23 @@ func (n *Notifier) itemFor(ctx context.Context, snap notify.Snapshot, baseURL st
 		log.Printf("[notify] failed to resolve asset names finding=%d: %v", snap.FindingID, err)
 	}
 	item := notify.Item{
-		FindingID:  snap.FindingID,
-		Name:       snap.Name,
-		VulnClass:  snap.VulnClass,
-		Severity:   snap.Severity,
-		Summary:    snap.Summary,
-		Assets:     assets,
-		FromStatus: snap.FromStatus,
-		ToStatus:   snap.ToStatus,
+		FindingID:     snap.FindingID,
+		Name:          snap.Name,
+		VulnClass:     snap.VulnClass,
+		Severity:      snap.Severity,
+		Summary:       snap.Summary,
+		Assets:        assets,
+		FromStatus:    snap.FromStatus,
+		ToStatus:      snap.ToStatus,
+		Event:         snap.Kind,
+		ChainType:     snap.ChainType,
+		Primitives:    snap.Primitives,
+		FromVulnClass: snap.FromVulnClass,
+		ToVulnClass:   snap.ToVulnClass,
+		ReclassReason: snap.ReclassReason,
+		Activity:      snap.Activity,
 	}
-	if baseURL != "" {
+	if baseURL != "" && snap.FindingID > 0 {
 		// The detail page route is in web/src/app/(main)/function/findings/detail/page.tsx;
 		// it reads the finding id from the `id` query parameter.
 		item.DetailURL = fmt.Sprintf("%s/function/findings/detail?id=%d", baseURL, snap.FindingID)

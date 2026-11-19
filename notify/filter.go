@@ -30,6 +30,11 @@ type Filter struct {
 	// OnStatusChange decides whether the channel receives vulnerability
 	// status-change events (only meaningful in realtime mode).
 	OnStatusChange bool `json:"on_status_change"`
+	// EventKinds routes by event kind: empty = the default set (finding_created
+	// + status changes when opted in); non-empty = ONLY these kinds are
+	// delivered (finding_created, finding_status_changed, primitive_found,
+	// finding_reclassified, task_activity).
+	EventKinds []string `json:"event_kinds"`
 }
 
 // ParseFilter parses a channel's filter configuration.
@@ -93,6 +98,17 @@ func Match(f Filter, s Snapshot) bool {
 	// in. Default is off, because the vast majority of users expect "push" to
 	// mean "a new vulnerability was found", not a running log of every status
 	// transition.
+	if len(f.EventKinds) > 0 {
+		if !slices.Contains(f.EventKinds, s.Kind) {
+			return false
+		}
+	} else if s.Kind != EventFindingCreated && s.Kind != EventFindingStatusChanged {
+		// default: channels without an explicit event list receive only the
+		// classic vulnerability events; the new kinds (primitive_found,
+		// finding_reclassified, task_activity) need opt-in so existing channels
+		// keep their behavior.
+		return false
+	}
 	if s.Kind == EventFindingStatusChanged && !f.OnStatusChange {
 		return false
 	}

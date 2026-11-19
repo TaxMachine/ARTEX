@@ -13,7 +13,8 @@ package notify
 // low" content. As a bonus, fan-out and rendering do not need to JOIN the
 // findings/tasks/assets tables.
 type Snapshot struct {
-	// Event kind: finding_created / finding_status_changed
+	// Event kind: finding_created / finding_status_changed / primitive_found /
+	// finding_reclassified / task_activity
 	Kind      string  `json:"kind"`
 	FindingID int64   `json:"finding_id"`
 	TaskID    int64   `json:"task_id"`
@@ -25,6 +26,22 @@ type Snapshot struct {
 	// Non-empty only when kind=finding_status_changed.
 	FromStatus string `json:"from_status,omitempty"`
 	ToStatus   string `json:"to_status,omitempty"`
+	// Anatomy (primitive_found / finding_created): chain type + the primitives.
+	ChainType  string              `json:"chain_type,omitempty"`
+	Primitives []SnapshotPrimitive `json:"primitives,omitempty"`
+	// Non-empty only when kind=finding_reclassified.
+	FromVulnClass string `json:"from_vulnclass,omitempty"`
+	ToVulnClass   string `json:"to_vulnclass,omitempty"`
+	ReclassReason string `json:"reclass_reason,omitempty"`
+	// task_activity: a short activity line (task started/completed/intent
+	// milestones) for the global broadcast channel.
+	Activity string `json:"activity,omitempty"`
+}
+
+// SnapshotPrimitive is one primitive in a snapshot.
+type SnapshotPrimitive struct {
+	Name      string `json:"name"`
+	Confirmed bool   `json:"confirmed"`
 }
 
 // Item is a single vulnerability to be pushed, rendered by channels.
@@ -34,6 +51,19 @@ type Item struct {
 	VulnClass string
 	Severity  string
 	Summary   string
+	// Event is the originating event kind (finding_created, primitive_found,
+	// finding_reclassified, task_activity, finding_status_changed); channels
+	// may render differently per kind.
+	Event string
+	// ChainType / Primitives: the anatomy on finding events.
+	ChainType  string
+	Primitives []SnapshotPrimitive
+	// Reclassification fields (finding_reclassified only).
+	FromVulnClass string
+	ToVulnClass   string
+	ReclassReason string
+	// Activity is the short activity line for task_activity events.
+	Activity string
 	// Assets holds the resolved display names of the assets (e.g. domain/IP).
 	// Filled by the server layer — this package never touches the database
 	// and has no way to look up names.
@@ -50,10 +80,16 @@ type Item struct {
 // IsStatusChange reports whether this item is a status-change event.
 func (i Item) IsStatusChange() bool { return i.FromStatus != "" || i.ToStatus != "" }
 
+// IsReclassified reports whether this item is a reclassification event.
+func (i Item) IsReclassified() bool { return i.FromVulnClass != "" || i.ToVulnClass != "" }
+
 // Title returns the display title of the item: prefer the human-assigned name,
 // fall back to the vulnerability class vulnclass, and use a placeholder when both
 // are empty — never emit an empty title.
 func (i Item) Title() string {
+	if i.Event == EventTaskActivity && i.Activity != "" {
+		return i.Activity
+	}
 	if i.Name != "" {
 		return i.Name
 	}
