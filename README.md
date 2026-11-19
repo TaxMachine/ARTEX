@@ -6,13 +6,13 @@
 
 **Autonomous penetration testing that keeps its receipts.**
 
-(upstream: [Autumn-27/ARTEX](https://github.com/Autumn-27), AGPL-3.0)
+(fork lineage: [Autumn-27/ARTEX](https://github.com/Autumn-27) via [BaaRai/ARTEX](https://github.com/BaaRai/ARTEX), AGPL-3.0)
 
 Self-hosted multi-agent offensive security. A planner explores, workers run real tools,
 and every finding stays bound to the assets and HTTP traffic that prove it.
 
-[![Release](https://img.shields.io/github/v/release/BaaRai/ARTEX?label=release&color=6b34db)](https://github.com/BaaRai/ARTEX/releases)
-[![License](https://img.shields.io/github/license/BaaRai/ARTEX?color=6b34db)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/TaxMachine/ARTEX?label=release&color=6b34db)](https://github.com/TaxMachine/ARTEX/releases)
+[![License](https://img.shields.io/github/license/TaxMachine/ARTEX?color=6b34db)](LICENSE)
 [![CI](https://github.com/BaaRai/ARTEX/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/BaaRai/ARTEX/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/github/go-mod/go-version/BaaRai/ARTEX?color=6b34db)](go.mod)
 
@@ -350,7 +350,7 @@ Legacy SSE servers usually establish the event stream with `GET /sse` and receiv
 
 ### Option 3: prebuilt binaries (Releases)
 
-Download the zip for your platform from [Releases](https://github.com/BaaRai/ARTEX/releases). It
+Download the zip for your platform from [Releases](https://github.com/TaxMachine/ARTEX/releases). It
 contains `artex`, `start.sh` (`start.bat` on Windows), `skills/` and `config.example.json`:
 
 ```bash

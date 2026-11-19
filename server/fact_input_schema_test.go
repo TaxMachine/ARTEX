@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/agent"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 func TestRecordFactInputSchemaUpgrade(t *testing.T) {

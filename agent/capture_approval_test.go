@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/guard"
-	"github.com/Autumn-27/artex/intercept"
-	"github.com/Autumn-27/norma/agentcore"
-	"github.com/Autumn-27/norma/llm"
-	"github.com/Autumn-27/norma/permission"
-	"github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/guard"
+	"github.com/TaxMachine/ARTEX/intercept"
+	"github.com/TaxMachine/ARTEX/third_party/norma/agentcore"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
+	"github.com/TaxMachine/ARTEX/third_party/norma/permission"
+	"github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // Exercise the actual SDK event -> hook -> execution -> result path. No real

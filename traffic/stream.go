@@ -15,8 +15,8 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/traffic/rewrite"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/traffic/rewrite"
 	mproxy "github.com/lqqyt2423/go-mitmproxy/proxy"
 )
 

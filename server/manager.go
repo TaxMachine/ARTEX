@@ -17,17 +17,17 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/config"
-	pgdb "github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/egress"
-	"github.com/Autumn-27/artex/enrich"
-	"github.com/Autumn-27/artex/guard"
-	"github.com/Autumn-27/artex/intercept"
-	"github.com/Autumn-27/artex/machine"
-	"github.com/Autumn-27/artex/traffic"
-	"github.com/Autumn-27/artex/traffic/rewrite"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/agent"
+	"github.com/TaxMachine/ARTEX/config"
+	pgdb "github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/egress"
+	"github.com/TaxMachine/ARTEX/enrich"
+	"github.com/TaxMachine/ARTEX/guard"
+	"github.com/TaxMachine/ARTEX/intercept"
+	"github.com/TaxMachine/ARTEX/machine"
+	"github.com/TaxMachine/ARTEX/traffic"
+	"github.com/TaxMachine/ARTEX/traffic/rewrite"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // Task is one engagement: a description + goal + its own exploration store,

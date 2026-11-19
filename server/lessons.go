@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
+	"github.com/TaxMachine/ARTEX/agent"
+	"github.com/TaxMachine/ARTEX/db"
 )
 
 // rsiLessonsMode reads the shadow-mode switch:

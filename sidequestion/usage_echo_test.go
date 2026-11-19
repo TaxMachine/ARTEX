@@ -5,7 +5,7 @@ import (
 	"iter"
 	"testing"
 
-	"github.com/Autumn-27/norma/llm"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 )
 
 // A streamed side answer counts message_delta's echo of the input side once.

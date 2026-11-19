@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"log"
 
-	actool "github.com/Autumn-27/norma/tool"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
+	"github.com/TaxMachine/ARTEX/agent"
+	"github.com/TaxMachine/ARTEX/db"
 )
 
 type toolUsageRecorder interface {

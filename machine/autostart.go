@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
+	"github.com/TaxMachine/ARTEX/db"
 )
 
 // BootResult is one machine handled by the startup sequence.

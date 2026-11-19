@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/Autumn-27/artex/db"
+	"github.com/TaxMachine/ARTEX/db"
 )
 
 func TestInheritedActivityDetailAndRelationDeletion(t *testing.T) {

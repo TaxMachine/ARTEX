@@ -8,8 +8,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/Autumn-27/norma/harness"
-	"github.com/Autumn-27/norma/llm"
+	"github.com/TaxMachine/ARTEX/third_party/norma/harness"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 )
 
 func TestReasonHintCoversEveryTerminalReason(t *testing.T) {

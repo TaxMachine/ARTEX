@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	actool "github.com/Autumn-27/norma/tool"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // bbotMaxLineBytes caps one line of a bbot JSONL file, its newline included. A

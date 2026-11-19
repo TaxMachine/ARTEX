@@ -6,9 +6,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/Autumn-27/artex/egress"
-	"github.com/Autumn-27/artex/intercept"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/egress"
+	"github.com/TaxMachine/ARTEX/intercept"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // pinNoiseOff runs t with the off noise profile, whatever ARTEX_NOISE_PROFILE says.

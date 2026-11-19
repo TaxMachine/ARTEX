@@ -13,11 +13,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/guard"
-	"github.com/Autumn-27/artex/intercept"
-	"github.com/Autumn-27/norma/llm"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/guard"
+	"github.com/TaxMachine/ARTEX/intercept"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // Step 1.9: the WebFetch tool of every agent kind checks each redirect hop

@@ -17,13 +17,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/egress"
-	"github.com/Autumn-27/artex/guard"
-	"github.com/Autumn-27/artex/intercept"
-	"github.com/Autumn-27/artex/notify"
-	"github.com/Autumn-27/norma/permission"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/egress"
+	"github.com/TaxMachine/ARTEX/guard"
+	"github.com/TaxMachine/ARTEX/intercept"
+	"github.com/TaxMachine/ARTEX/notify"
+	"github.com/TaxMachine/ARTEX/third_party/norma/permission"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // This file implements the custom tool executor (docs/custom-tool-design.md). tools rows

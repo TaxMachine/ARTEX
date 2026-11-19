@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/traffic/rewrite"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/traffic/rewrite"
 )
 
 // --- capture-proxy rewrite rules ---

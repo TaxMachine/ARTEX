@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	actool "github.com/Autumn-27/norma/tool"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // Desktop console tools: drive a VM's graphical screen (QEMU VNC console or an

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	actool "github.com/Autumn-27/norma/tool"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // This file turns the "built-in tools" from pure code into an enumerable,

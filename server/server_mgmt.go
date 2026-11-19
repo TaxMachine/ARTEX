@@ -24,11 +24,11 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/notify"
-	"github.com/Autumn-27/norma/llm"
-	"github.com/Autumn-27/norma/skill"
+	"github.com/TaxMachine/ARTEX/agent"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/notify"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
+	"github.com/TaxMachine/ARTEX/third_party/norma/skill"
 )
 
 // validSkillName checks the agentskills.io name constraints, widened so a skill can

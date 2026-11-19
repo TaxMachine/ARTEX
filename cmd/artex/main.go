@@ -16,9 +16,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/config"
-	"github.com/Autumn-27/artex/server"
+	"github.com/TaxMachine/ARTEX/agent"
+	"github.com/TaxMachine/ARTEX/config"
+	"github.com/TaxMachine/ARTEX/server"
 )
 
 // version is the build version, injected at release time via

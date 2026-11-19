@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Autumn-27/artex/db"
+	"github.com/TaxMachine/ARTEX/db"
 )
 
 // Closed-question judge (port of the JEV model): the model answers a fixed,

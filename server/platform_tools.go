@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/db"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // Platform operation tools (for the built-in Auto agent): create/edit skills,

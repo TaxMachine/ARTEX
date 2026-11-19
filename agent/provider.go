@@ -22,12 +22,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Autumn-27/artex/llmrec"
-	"github.com/Autumn-27/norma/agentcore"
-	"github.com/Autumn-27/norma/compaction"
-	"github.com/Autumn-27/norma/llm"
-	acperm "github.com/Autumn-27/norma/permission"
-	"github.com/Autumn-27/norma/transcript"
+	"github.com/TaxMachine/ARTEX/llmrec"
+	"github.com/TaxMachine/ARTEX/third_party/norma/agentcore"
+	"github.com/TaxMachine/ARTEX/third_party/norma/compaction"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
+	acperm "github.com/TaxMachine/ARTEX/third_party/norma/permission"
+	"github.com/TaxMachine/ARTEX/third_party/norma/transcript"
 )
 
 // Config describes the LLM backend resolved from the environment.

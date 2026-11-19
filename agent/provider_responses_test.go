@@ -3,7 +3,7 @@ package agent
 import (
 	"testing"
 
-	"github.com/Autumn-27/norma/llm"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 )
 
 // TestConfigFromOpenAIResponses locks the openai-responses format wiring:

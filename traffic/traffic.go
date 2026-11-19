@@ -31,10 +31,10 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/traffic/rewrite"
-	"github.com/Autumn-27/norma/permission"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/traffic/rewrite"
+	"github.com/TaxMachine/ARTEX/third_party/norma/permission"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 	mproxy "github.com/lqqyt2423/go-mitmproxy/proxy"
 	_ "modernc.org/sqlite"
 )

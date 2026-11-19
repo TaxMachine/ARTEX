@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Autumn-27/norma/llm"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 )
 
 // RecordCall is the policy a provider call applies when no Pool wraps it. A

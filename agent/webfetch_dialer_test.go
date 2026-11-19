@@ -15,10 +15,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/guard"
-	"github.com/Autumn-27/artex/intercept"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/guard"
+	"github.com/TaxMachine/ARTEX/intercept"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // Step 2.1: the WebFetch tool of every agent kind connects through the pinned

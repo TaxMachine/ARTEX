@@ -1,9 +1,9 @@
-module github.com/Autumn-27/artex
+module github.com/TaxMachine/ARTEX
 
 go 1.26.10
 
+
 require (
-	github.com/Autumn-27/norma v0.4.11
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
@@ -62,5 +62,3 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
-
-replace github.com/Autumn-27/norma => github.com/BaaRai/Norma v0.4.11

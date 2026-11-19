@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/machine"
-	acperm "github.com/Autumn-27/norma/permission"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/machine"
+	acperm "github.com/TaxMachine/ARTEX/third_party/norma/permission"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // compactIntents distills intents to {id, summary, state, asset_ids, parents,

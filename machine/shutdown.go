@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
+	"github.com/TaxMachine/ARTEX/db"
 )
 
 // ShutdownAll gracefully stops the running registered machines before the

@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/intercept"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/intercept"
 )
 
 // ConvIDFromContext is re-exported so the machine layer can read a retest

@@ -3,7 +3,7 @@ package agent
 import (
 	"fmt"
 
-	"github.com/Autumn-27/norma/agentcore"
+	"github.com/TaxMachine/ARTEX/third_party/norma/agentcore"
 )
 
 // resumeSession reloads the persisted conversation of session id into s. Norma's

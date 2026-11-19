@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Autumn-27/artex/db"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/db"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // guardTaskStore creates a throwaway task (PG) and returns its exploration store.

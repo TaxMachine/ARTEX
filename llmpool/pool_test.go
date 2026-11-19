@@ -10,7 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/Autumn-27/norma/llm"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 )
 
 // fakeProv is a scripted provider: script[i] is what the i-th call yields —

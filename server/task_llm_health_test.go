@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/llmpool"
-	"github.com/Autumn-27/norma/llm"
+	"github.com/TaxMachine/ARTEX/agent"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/llmpool"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 )
 
 // healthHooks runs one logical call on p and reports every physical attempt to

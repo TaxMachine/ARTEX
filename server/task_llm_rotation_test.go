@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/norma/llm"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 )
 
 func TestLLMProfilePinRoundTrip(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	actool "github.com/Autumn-27/norma/tool"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 func TestRecordFactSummaryContract(t *testing.T) {

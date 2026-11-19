@@ -10,10 +10,10 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/guard"
-	"github.com/Autumn-27/artex/intercept"
-	"github.com/Autumn-27/norma/llm"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/guard"
+	"github.com/TaxMachine/ARTEX/intercept"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 )
 
 // Every agent kind hands its tool calls to the hooks it is given, on the context

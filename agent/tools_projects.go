@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	actool "github.com/Autumn-27/norma/tool"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // Project context tools: tasks on the same target software accumulate under a

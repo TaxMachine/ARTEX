@@ -18,7 +18,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/Autumn-27/artex/config"
+	"github.com/TaxMachine/ARTEX/config"
 )
 
 const (

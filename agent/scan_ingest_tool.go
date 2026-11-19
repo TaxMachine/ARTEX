@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Autumn-27/artex/db"
-	acperm "github.com/Autumn-27/norma/permission"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/db"
+	acperm "github.com/TaxMachine/ARTEX/third_party/norma/permission"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // scanMaxFileBytes caps the scanner output file read by ingest_scan_output.

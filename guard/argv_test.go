@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/intercept"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/intercept"
 )
 
 // An argv allow rule is an allow like any other: a higher-priority deny rule

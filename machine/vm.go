@@ -14,7 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
+	"github.com/TaxMachine/ARTEX/db"
 )
 
 // Status is one machine's observed state.

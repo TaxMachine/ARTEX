@@ -13,10 +13,10 @@ import (
 	"strconv"
 	"unicode/utf8"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/evidence"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/agent"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/evidence"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 func (s *Server) evidenceStore() *evidence.Store {

@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Autumn-27/artex/db"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/db"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // ingest_scan_output (PG): an nmap file writes its assets through insert_assets

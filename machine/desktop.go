@@ -20,8 +20,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/internal/rfb"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/internal/rfb"
 )
 
 // DesktopKind selects the console backend of one desktop session.

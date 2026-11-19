@@ -23,9 +23,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Autumn-27/norma/llm"
-	"github.com/Autumn-27/norma/permission"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
+	"github.com/TaxMachine/ARTEX/third_party/norma/permission"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 const protocolVersion = "2025-11-25"

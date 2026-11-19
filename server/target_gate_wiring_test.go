@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/intercept"
-	"github.com/Autumn-27/artex/traffic"
-	actool "github.com/Autumn-27/norma/tool"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/intercept"
+	"github.com/TaxMachine/ARTEX/traffic"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // The gate wired into the server: the exemption API, the exemptions derived

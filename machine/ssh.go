@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/intercept"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/intercept"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 )

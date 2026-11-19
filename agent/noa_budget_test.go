@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Autumn-27/norma/agentcore"
-	"github.com/Autumn-27/norma/harness"
-	"github.com/Autumn-27/norma/llm"
-	"github.com/Autumn-27/norma/noaadapter"
+	"github.com/TaxMachine/ARTEX/third_party/norma/agentcore"
+	"github.com/TaxMachine/ARTEX/third_party/norma/harness"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
+	"github.com/TaxMachine/ARTEX/third_party/norma/noaadapter"
 )
 
 // A worker whose protected context exceeds a tiny NOA window ends with

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Autumn-27/artex/egress"
+	"github.com/TaxMachine/ARTEX/egress"
 )
 
 func TestNoiseProfileSettingHTTP(t *testing.T) {

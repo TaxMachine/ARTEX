@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/norma/agentcore"
-	"github.com/Autumn-27/norma/llm"
-	acperm "github.com/Autumn-27/norma/permission"
-	actool "github.com/Autumn-27/norma/tool"
-	"github.com/Autumn-27/norma/transcript"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/third_party/norma/agentcore"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
+	acperm "github.com/TaxMachine/ARTEX/third_party/norma/permission"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
+	"github.com/TaxMachine/ARTEX/third_party/norma/transcript"
 )
 
 // goalsDefaultTmpl is the built-in EDITABLE body (section [A]) of the goals-decomposer

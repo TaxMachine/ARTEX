@@ -15,12 +15,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Autumn-27/artex/agent"
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/llmrec"
-	"github.com/Autumn-27/artex/sidequestion"
-	"github.com/Autumn-27/norma/llm"
-	"github.com/Autumn-27/norma/transcript"
+	"github.com/TaxMachine/ARTEX/agent"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/llmrec"
+	"github.com/TaxMachine/ARTEX/sidequestion"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
+	"github.com/TaxMachine/ARTEX/third_party/norma/transcript"
 )
 
 type sideRun struct {

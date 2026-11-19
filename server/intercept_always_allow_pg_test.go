@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Autumn-27/artex/db"
-	"github.com/Autumn-27/artex/intercept"
+	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/intercept"
 )
 
 // PG test: needs a PostgreSQL database (ARTEX_PG_DSN); skipped without one.

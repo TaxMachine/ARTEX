@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Autumn-27/artex/db"
+	"github.com/TaxMachine/ARTEX/db"
 )
 
 // The tests below run the gate against PostgreSQL: the real store, the real

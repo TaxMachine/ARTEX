@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"unicode/utf8"
 
-	"github.com/Autumn-27/norma/llm"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 )
 
 // Member is one LLM profile in the chain, already built into a provider (wrapped

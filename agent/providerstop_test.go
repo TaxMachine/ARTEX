@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Autumn-27/artex/llmrec"
-	"github.com/Autumn-27/norma/harness"
-	"github.com/Autumn-27/norma/llm"
+	"github.com/TaxMachine/ARTEX/llmrec"
+	"github.com/TaxMachine/ARTEX/third_party/norma/harness"
+	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 )
 
 // stopProvider ends every streamed call with the given stop reason and no content,
