@@ -595,6 +595,7 @@ func (s *Server) seedOrchestrationTools() {
 	s.reseedMainAgentPrompt()         // mainagent prompt gains "after goals are met, ask via add_intent whether to register a goal" (one-time)
 	s.reseedPlannerPrompt()           // planner prompt: rewrites the "zero intents" justification rules + adds quantitative acceptance checks (one-time)
 	s.reseedWorkerPrompt()            // worker prompt: adds the evidence bar for negative conclusions (one-time)
+	s.reseedCompressedPrompts()       // all default prompts compressed (token diet) → old DBs append a new default version (one-time)
 	s.seedReporterAgent()             // seeds the "report writer" agent + tool bindings + finding trigger (one-time)
 	s.upgradeReporterTriggerMessage() // backfill migration for old DBs: makes the reporter send evidence_version back (one-time)
 	s.seedFindingTrafficTools()       // adds optional evidence params and read-only evidence tools, preserving user config
@@ -1168,4 +1169,43 @@ func (s *Server) bindUpdateFindingReportRetester() {
 		return
 	}
 	_ = s.m.pg.SetSetting(flag, "true")
+}
+
+// reseedCompressedPrompts pushes the compressed default prompt bodies to every
+// built-in agent role in old DBs: the whole prompt catalog was rewritten for
+// token economy (~25-45% smaller, same rules, same pinned discipline markers).
+// SeedPromptIfEmpty is first-insert-only, so existing rows would otherwise keep
+// the verbose bodies forever. Appends a new version and switches to it
+// (ResetPromptToDefault); previous versions stay in history and are recoverable
+// in the UI. One-time via settings flag. Fresh DBs: seedPrompts already seeded
+// the compressed defaults directly (CurrentPrompt equals the code default →
+// no-op). Same shape as the per-role reseed functions above, applied to all.
+func (s *Server) reseedCompressedPrompts() {
+	const flag = "prompt_compress_v1"
+	if v, _, _ := s.m.pg.GetSetting(flag); v == "true" {
+		return
+	}
+	defer func() { _ = s.m.pg.SetSetting(flag, "true") }() // attempt only once regardless of outcome
+	push := func(key, tmpl string) {
+		if tmpl == "" {
+			return
+		}
+		a, err := s.m.pg.GetAgentByKey(key)
+		if err != nil || a == nil {
+			return // role not present in this DB — its seed path handles fresh installs
+		}
+		if cur, err := s.m.pg.CurrentPrompt(a.ID); err == nil && cur == tmpl {
+			return // already the compressed default
+		}
+		if _, err := s.m.pg.ResetPromptToDefault(a.ID, tmpl); err != nil {
+			log.Printf("[prompts] compress reseed %s failed: %v", key, err)
+			return
+		}
+		log.Printf("[prompts] %s prompt: appended compressed default version (one-time)", key)
+	}
+	for key, tmpl := range agent.BuiltinPromptSeeds() {
+		push(key, tmpl)
+	}
+	push("reporter", agent.ReporterDefaultPrompt) // seeded by seedReporterAgent, first-insert-only
+	push("retester", agent.RetesterDefaultPrompt) // seeded by the finding-retest migration, first-insert-only
 }

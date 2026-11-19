@@ -16,34 +16,26 @@ import (
 
 // goalsDefaultTmpl is the built-in EDITABLE body (section [A]) of the goals-decomposer
 // prompt, seeded into agent_prompts. No template vars are used today.
-const goalsDefaultTmpl = `You are a penetration-testing goal decomposer. Your job is to identify the **final results to achieve** from the user's input, not to plan attack steps.
+const goalsDefaultTmpl = `You decompose penetration-testing goals: extract the **final results to achieve** from the user's input. You do not plan attack steps.
 
-**Step one (before decomposing goals): extract operation constraints**
-From the "task goal / task description", identify the operator's explicit rules about [what may and may not be done], and register them one by one via set_constraints (if the description and goal involve no operation constraints, skip constraint extraction):
-- type=deny: forbidden operations (e.g. "no port scanning", "no write/delete operations on production", "no brute forcing", "do not touch a certain subdomain").
-- type=allow: explicitly allowed/bounded operation scope (e.g. "passive recon only", "only against a certain domain").
-- A constraint is neither a goal nor an attack step: it is a rule about the boundaries of operational behavior.
-- **Constraints must be [self-contained, with concrete targets written in]**: replace **deictic words** like "current target/current port/current IP/current domain/this site" with the **concrete values** from the task goal/description. Constraints are injected separately into the execution-phase prompts; out of context, deictic words cannot be resolved.
-  Example: if the goal is https://abc.example.net → write "only test abc.example.net", not "only test the current target"; "only test port 443 of the target, do not scan other ports", not "only test the current port". If the original text only says "current target" but the target address is clear, fill the address in.
-- **Only register constraints [explicitly written or emphasized] in the goal/description — never invent any**; when unsure of the type, use deny (more conservative).
-- If the goal/description truly contains no operation constraints, do **not** call set_constraints.
-After registering constraints (if any), proceed to goal decomposition below.
+Step one — extract operation constraints (before decomposing):
+From the goal/description, lift the operator's explicit rules on [what may and may not be done] and register each via set_constraints (skip when none exist):
+- type=deny: forbidden operations ("no port scanning", "no writes on production", "no brute forcing", "do not touch host X").
+- type=allow: explicitly allowed/bounded scope ("passive recon only", "only domain X").
+- A constraint is a rule on behavior boundaries — not a goal, not an attack step.
+- Constraints must be self-contained with concrete targets: replace deictic words ("current target/port/IP/domain/site") with the concrete values from the goal/description — they are injected into execution prompts where deictic words cannot be resolved. Goal https://abc.example.net → "only test abc.example.net", not "only test the current target". Original says "current target" but the address is clear → fill the address in.
+- Register only constraints explicitly written or emphasized — never invent any; unsure of type → deny (more conservative).
+- No constraints in the texts → do not call set_constraints.
 
-**A goal = a final deliverable / verifiable result**
+A goal = a final deliverable / verifiable result. NOT goals (forbidden as sub-goals): information gathering or recon, endpoint scanning, vulnerability analysis/verification processes, attack steps, exploitation means, result verification steps.
 
-**What is NOT a goal (forbidden as sub-goals)**:
-- Information gathering, reconnaissance, endpoint scanning
-- Vulnerability analysis and verification processes
-- Attack steps, exploitation means
-- Result verification steps
+Decomposition principles:
+- Single final goal described → output one.
+- Multiple mutually independent deliverables → list separately.
+- vulnclass filled when it maps to a clear vulnerability class; empty for info-gathering / business-logic goals.
+- Never invent goals the user did not mention.
 
-**Decomposition principles**:
-- The user's described final goal is single → output one
-- Multiple **mutually independent** final deliverables → list them separately
-- Annotate vulnclass when it maps to a clear vulnerability class; leave empty for information-gathering / business-logic goals
-- Never invent goals the user did not mention
-
-Call set_goals to submit the results.`
+Submit via set_goals.`
 
 // goalsScopeTail is the code-owned tail appended after the editable goals body
 // WHEN an asset store + task context are available. It teaches the decomposer to

@@ -81,11 +81,11 @@ var wrapupTurnDefaults = map[string]int{
 
 const genericWrapupTurns = 10
 
-const plannerWrapUpDefault = "Your turn budget for THIS planning round is about to run out — note that only [this round] ends; the system will wake you again as the situation changes to keep planning, the task is not terminated, and you don't need to converge the whole plan here. Land the conclusions this round has already figured out — don't let this round go to waste — but [don't force intents just for the wrap-up] (0 intents this round is still a perfectly normal outcome): (1) if you've identified exploration directions [due for dispatch now], submit them with one add_intent batch call (don't sit on ones you've figured out); (2) for goals proven met by some finding/fact, call prove_goal to mark met (don't miss any); (3) if you've identified a serial exploit chain needing steps, record it with TodoWrite so you can continue dispatching at the next wake. Finish the round directly when done; no summary text needed."
+const plannerWrapUpDefault = "Your turn budget for THIS planning round is nearly gone. Only this round ends: the system wakes you again as the situation changes; the task continues, so you need not converge everything here. Land what this round established, but never force intents for the wrap-up (0 intents stays normal): (1) directions due for dispatch now -> submit with ONE add_intent batch call; (2) goals proven met -> prove_goal each (miss none); (3) serial exploit chains identified -> TodoWrite them for the next wake. Done -> finish the round; no summary text needed."
 
-const mainAgentWrapUpDefault = "Your turn budget is about to run out and this interaction is about to end. Do not start any new exploration/operation. Please summarize for the user **in a single standalone sentence of plain text**: current progress, key conclusions, and the suggested next step."
+const mainAgentWrapUpDefault = "Your turn budget is nearly gone and this interaction ends. Start no new exploration or operation. Summarize for the user in a single standalone sentence of plain text: current progress, key conclusions, suggested next step."
 
-const genericWrapUpDefault = "You are about to be terminated because your budget is exhausted. First write back completed-but-unpersisted results, then summarize **in a single standalone sentence of plain text** what you did and which key conclusions you reached (this sentence is shown as this run's result)."
+const genericWrapUpDefault = "Budget exhausted; you are about to be terminated. First write back completed-but-unpersisted results, then summarize in a single standalone sentence of plain text what you did and the key conclusions (shown as this run's result)."
 
 // WrapupDefault returns the built-in default wrap-up prompt for an agent key —
 // used by the admin UI as the "restore default" value and empty-field placeholder.

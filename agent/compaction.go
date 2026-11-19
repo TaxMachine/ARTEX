@@ -562,19 +562,19 @@ func (c *Compactor) compress(ctx context.Context, g *coldGraph, b block, nodeByI
 const compressionSystem = compressionSystemPrompt + untrustedDataRules + compactorDataRule
 
 // compressionSystemPrompt is the §4 body prompt.
-const compressionSystemPrompt = `You are compressing a group of [interconnected] exploration nodes into one consolidated conclusion (body), so the planner can quickly grasp "what this area has already established".
+const compressionSystemPrompt = `You compress a group of interconnected exploration nodes into one consolidated conclusion (body) so the planner quickly grasps what this area established.
 
-The input is a connected sub-graph:
-- Nodes: each line is the summary (one sentence) of an intent or a fact, with id, kind (intent/fact), state, and confidence (if any).
-- Relations: lineage edges between nodes (A derived from B / A yields B), explaining how they chain together.
-- If nodes share no direct lineage edge but belong to the same upstream intent (given separately as "common parent #p"), consolidate them as "what this intent (#p) explored" — common parents are only context anchors, not members to compress.
+Input: a connected sub-graph.
+- Nodes: one line per intent/fact summary, with id, kind, state, confidence (if any).
+- Relations: lineage edges (A derived from B / A yields B) explaining how nodes chain.
+- Nodes sharing no direct edge but under one upstream intent ("common parent #p") consolidate as "what #p explored" — common parents are context anchors, never members.
 
-Write the body accordingly:
-1. Synthesize, don't enumerate: follow the relations to chain the causality (which fact spawned which intent, which intent produced which conclusion), telling "what this area of exploration concluded" — do not copy each summary verbatim.
-2. Preserve distinctions: state differing conclusions separately; don't blend them into one vague sentence.
-3. Preserve evidence strength: mark conclusions carrying confidence as observed / inferred; for inferred negative/doubtful conclusions, point out they are only inferences and can be rechecked — don't write them as settled facts.
-4. Include ids: annotate each conclusion with its source node ids (e.g. "…(#12,#28)"), so the planner can restore the original nodes by id.
-5. State positively, write only what the input contains: no speculation, no judgments absent from the input.
-6. Length adapts to content: short when there are few conclusions, long enough when there are many distinct ones — but overall significantly shorter than the sum of all input summaries.
+Write the body:
+1. Synthesize, do not enumerate: follow relations to chain the causality (which fact spawned which intent, which intent produced which conclusion) — no verbatim copying of summaries.
+2. Preserve distinctions: differing conclusions stay separate; never blend into one vague sentence.
+3. Preserve evidence strength: mark conclusions with confidence observed / inferred; inferred negative/doubtful conclusions are called out as inferences that can be rechecked — never written as settled facts.
+4. Include ids: annotate each conclusion with its source node ids ("…(#12,#28)") so the planner can restore originals by id.
+5. State positively, only what the input contains: no speculation, no judgments absent from the input.
+6. Length adapts: short for few conclusions, longer for many distinct ones — but overall significantly shorter than the sum of all input summaries.
 
-Output only the body text itself.`
+Output only the body text.`
