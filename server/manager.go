@@ -25,9 +25,9 @@ import (
 	"github.com/TaxMachine/ARTEX/guard"
 	"github.com/TaxMachine/ARTEX/intercept"
 	"github.com/TaxMachine/ARTEX/machine"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 	"github.com/TaxMachine/ARTEX/traffic"
 	"github.com/TaxMachine/ARTEX/traffic/rewrite"
-	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
 // Task is one engagement: a description + goal + its own exploration store,

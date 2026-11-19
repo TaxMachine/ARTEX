@@ -443,6 +443,9 @@ func (s *Server) pgSaveAgentConfig(w http.ResponseWriter, r *http.Request) {
 		RunSeconds       *int  `json:"run_seconds"`
 		WebSearch        *bool `json:"web_search"`
 		InteractiveShell *bool `json:"interactive_shell"`
+		// ReasoningEffort: "" = inherit the LLM profile; low/medium/high/xhigh/max
+		// (none/minimal for providers using those) = force for every request.
+		ReasoningEffort *string `json:"reasoning_effort"`
 		// llm_profile_id is tri-state: field omitted = leave unchanged; explicit null = unbind (follow task/global); number = bind that profile.
 		LLMProfileID json.RawMessage `json:"llm_profile_id"`
 		// P3 post-trigger handling policy (the three are optional as a group; providing any one writes the whole set; none provided = leave unchanged).
@@ -502,6 +505,12 @@ func (s *Server) pgSaveAgentConfig(w http.ResponseWriter, r *http.Request) {
 	if req.InteractiveShell != nil {
 		if err := pg.SetAgentInteractiveShell(a.Key, *req.InteractiveShell); err != nil {
 			writeErr(w, 500, err.Error())
+			return
+		}
+	}
+	if req.ReasoningEffort != nil {
+		if err := pg.SetAgentReasoningEffort(a.Key, strings.TrimSpace(*req.ReasoningEffort)); err != nil {
+			writeErr(w, 400, err.Error())
 			return
 		}
 	}

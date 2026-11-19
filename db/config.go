@@ -503,6 +503,7 @@ type Agent struct {
 	RunSecs          int    `json:"run_seconds"`       // worker per-run wall-clock limit (seconds); 0 = unlimited
 	WebSearch        bool   `json:"web_search"`        // whether web search is enabled (gated by the system-wide switch)
 	InteractiveShell bool   `json:"interactive_shell"` // whether the interactive shell is enabled (persistent PTY session tool family)
+	ReasoningEffort  string `json:"reasoning_effort"`  // per-agent effort override: '' = inherit the LLM profile; low/medium/high/... = force
 	WrapupPrompt     string `json:"wrapup_prompt"`     // wrap-up prompt (settlement prompt on timeout/step exhaustion); empty = use the built-in code default
 	WrapupMaxTurns   int    `json:"wrapup_max_turns"`  // the wrap-up phase's own turn budget; 0 = use the built-in code default (per agent)
 	// Task-level timeout wrap-up prompt (a separate set from per-run; only used by
@@ -518,12 +519,12 @@ type Agent struct {
 	TriggerMaxParallel int    `json:"trigger_max_parallel"`
 }
 
-const agentCols = `id,key,name,COALESCE(description,''),role,builtin,enabled,COALESCE(max_turns,0),COALESCE(run_seconds,600),COALESCE(web_search,false),COALESCE(interactive_shell,false),COALESCE(wrapup_prompt,''),COALESCE(wrapup_max_turns,0),COALESCE(task_timeout_wrapup_prompt,''),COALESCE(task_timeout_wrapup_max_turns,0),COALESCE(trigger_run_mode,'serial'),COALESCE(trigger_merge_mode,'all'),COALESCE(trigger_max_parallel,5),llm_profile_id`
+const agentCols = `id,key,name,COALESCE(description,''),role,builtin,enabled,COALESCE(max_turns,0),COALESCE(run_seconds,600),COALESCE(web_search,false),COALESCE(interactive_shell,false),COALESCE(wrapup_prompt,''),COALESCE(wrapup_max_turns,0),COALESCE(task_timeout_wrapup_prompt,''),COALESCE(task_timeout_wrapup_max_turns,0),COALESCE(trigger_run_mode,'serial'),COALESCE(trigger_merge_mode,'all'),COALESCE(trigger_max_parallel,5),llm_profile_id,COALESCE(reasoning_effort,'')`
 
 func scanAgent(sc interface{ Scan(...any) error }) (*Agent, error) {
 	var a Agent
 	var prof sql.NullInt64 // llm_profile_id is nullable: NULL when unbound
-	err := sc.Scan(&a.ID, &a.Key, &a.Name, &a.Description, &a.Role, &a.Builtin, &a.Enabled, &a.MaxTurns, &a.RunSecs, &a.WebSearch, &a.InteractiveShell, &a.WrapupPrompt, &a.WrapupMaxTurns, &a.TaskTimeoutWrapupPrompt, &a.TaskTimeoutWrapupMaxTurns, &a.TriggerRunMode, &a.TriggerMergeMode, &a.TriggerMaxParallel, &prof)
+	err := sc.Scan(&a.ID, &a.Key, &a.Name, &a.Description, &a.Role, &a.Builtin, &a.Enabled, &a.MaxTurns, &a.RunSecs, &a.WebSearch, &a.InteractiveShell, &a.WrapupPrompt, &a.WrapupMaxTurns, &a.TaskTimeoutWrapupPrompt, &a.TaskTimeoutWrapupMaxTurns, &a.TriggerRunMode, &a.TriggerMergeMode, &a.TriggerMaxParallel, &prof, &a.ReasoningEffort)
 	if err == nil && prof.Valid {
 		v := prof.Int64
 		a.LLMProfileID = &v
@@ -636,6 +637,18 @@ func (d *DB) DeleteAgent(key string) error {
 }
 
 // SetAgentMaxTurns updates an agent's max_turns (0 = unlimited).
+// SetAgentReasoningEffort sets the agent's per-request effort override
+// ("" = inherit the LLM profile's).
+func (d *DB) SetAgentReasoningEffort(key, effort string) error {
+	switch effort {
+	case "", "low", "medium", "high", "xhigh", "max", "none", "minimal":
+	default:
+		return fmt.Errorf("effort must be empty or one of low/medium/high/xhigh/max/none/minimal")
+	}
+	_, err := d.Exec(`UPDATE agents SET reasoning_effort=$1 WHERE key=$2`, effort, key)
+	return err
+}
+
 func (d *DB) SetAgentMaxTurns(key string, maxTurns int) error {
 	if maxTurns < 0 {
 		maxTurns = 0

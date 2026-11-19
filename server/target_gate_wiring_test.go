@@ -12,8 +12,8 @@ import (
 
 	"github.com/TaxMachine/ARTEX/db"
 	"github.com/TaxMachine/ARTEX/intercept"
-	"github.com/TaxMachine/ARTEX/traffic"
 	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
+	"github.com/TaxMachine/ARTEX/traffic"
 )
 
 // The gate wired into the server: the exemption API, the exemptions derived

@@ -10,8 +10,8 @@ import (
 
 	"github.com/TaxMachine/ARTEX/agent"
 	"github.com/TaxMachine/ARTEX/db"
-	"github.com/TaxMachine/ARTEX/traffic"
 	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
+	"github.com/TaxMachine/ARTEX/traffic"
 )
 
 func (s *Server) seedFindingWorkflowTools() {

@@ -29,6 +29,7 @@ type Planner struct {
 	window            int                                    // context window in tokens (for compaction)
 	windowFn          func() int                             // optional dynamic task-chain minimum
 	maxTurns          int                                    // max agent turns per run (0 = unlimited)
+	effortFn          func() string                          // per-agent effort override resolver; nil = inherit the profile
 	killWork          func(intentID int64) error             // engine callback to terminate a running work (nil = off)
 	steerWork         func(intentID int64, msg string) error // engine callback to steer a running work mid-run (nil = off)
 	proxyAddr         string                                 // recording proxy for WebFetch (empty = direct)
@@ -78,6 +79,17 @@ func (p *Planner) SetNoaEnabled(fn func() bool) { p.noaEnabledFn = fn }
 // SetMaxTokens wires a resolver for the per-reply output cap. nil/unset or 0 =
 // send no cap and let the endpoint decide. Read per run, like nonStreaming.
 func (p *Planner) SetMaxTokens(fn func() int) { p.maxTokensFn = fn }
+
+// SetReasoningEffort wires a resolver for this agent's effort override
+// ("" = the LLM profile's own setting).
+func (p *Planner) SetReasoningEffort(fn func() string) { p.effortFn = fn }
+
+func (p *Planner) reasoningEffort() string {
+	if p.effortFn == nil {
+		return ""
+	}
+	return p.effortFn()
+}
 
 func (p *Planner) maxTokens() int {
 	if p.maxTokensFn == nil {
@@ -521,6 +533,7 @@ func (p *Planner) Plan(ctx context.Context, taskID int64, as *db.AssetStore, ts 
 		settle = wrapupSettlementForTask("planner", nil, clamped)
 	}
 	opts := agentcore.Options{
+		ReasoningEffort: p.reasoningEffort(), // per-agent override; '' = the profile's
 		Provider:        p.prov,
 		SystemPrompt:    system,
 		DynamicBoundary: boundary,

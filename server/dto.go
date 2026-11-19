@@ -574,7 +574,10 @@ type AgentDTO struct {
 	RunSecs          int    `json:"run_seconds"`
 	WebSearch        bool   `json:"web_search"`
 	InteractiveShell bool   `json:"interactive_shell"`
-	LLMProfileID     *int64 `json:"llm_profile_id"` // bound LLM profile; null = follow the task/global setting
+	// Per-agent effort override: '' = inherit the LLM profile's effort;
+	// low/medium/high/xhigh/max = force for every request this agent makes.
+	ReasoningEffort string `json:"reasoning_effort"`
+	LLMProfileID    *int64 `json:"llm_profile_id"` // bound LLM profile; null = follow the task/global setting
 	// P3 post-trigger handling policy (only meaningful for custom agents).
 	TriggerRunMode     string `json:"trigger_run_mode"`
 	TriggerMergeMode   string `json:"trigger_merge_mode"`
@@ -598,6 +601,7 @@ func agentDTO(a *db.Agent) AgentDTO {
 		RunSecs:            a.RunSecs,
 		WebSearch:          a.WebSearch,
 		InteractiveShell:   a.InteractiveShell,
+		ReasoningEffort:    a.ReasoningEffort,
 		LLMProfileID:       a.LLMProfileID,
 		TriggerRunMode:     a.TriggerRunMode,
 		TriggerMergeMode:   a.TriggerMergeMode,

@@ -19,6 +19,7 @@ import (
 // (→planner) or direct high-priority intents (→frontier). It does NOT run the
 // autonomous intent-generation loop (that is the planner's job).
 type MainAgent struct {
+	effortFn        func() string // per-agent effort override resolver; nil = inherit the profile
 	findingRecorder FindingRecorder
 	prov            llm.Provider
 	model           string
@@ -134,6 +135,7 @@ func (m *MainAgent) Chat(ctx context.Context, taskID int64, mainSeg int, as *db.
 	ctx = intercept.WithReviewWorkingDirectory(ctx, mainDir)
 	system, boundary := deferredSystem(mainAgentSystem(goal, m.workDir, mainDir), def)
 	opts := agentcore.Options{
+		ReasoningEffort: m.reasoningEffort(), // per-agent override; '' = the profile's
 		Provider:        m.prov,
 		SystemPrompt:    system,
 		DynamicBoundary: boundary,
@@ -211,4 +213,15 @@ func (m *MainAgent) Chat(ctx context.Context, taskID int64, mainSeg int, as *db.
 		}
 	})
 	return text, err
+}
+
+// SetReasoningEffort wires a resolver for this agent's effort override
+// ("" = the LLM profile's own setting).
+func (m *MainAgent) SetReasoningEffort(fn func() string) { m.effortFn = fn }
+
+func (m *MainAgent) reasoningEffort() string {
+	if m.effortFn == nil {
+		return ""
+	}
+	return m.effortFn()
 }

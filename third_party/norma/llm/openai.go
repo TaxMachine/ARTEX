@@ -282,7 +282,11 @@ func (p *openaiProvider) buildBody(req CompletionRequest, stream bool) ([]byte, 
 	if thinkingType != "" {
 		body.Thinking = &oaThinking{Type: thinkingType}
 	}
-	body.ReasoningEffort = p.cfg.ReasoningEffort // omitempty drops it when unset
+	effort := p.cfg.ReasoningEffort
+	if req.Effort != "" {
+		effort = req.Effort // per-request override (agent-level effort setting)
+	}
+	body.ReasoningEffort = effort // omitempty drops it when unset
 	for _, t := range req.Tools {
 		var ot oaTool
 		ot.Type = "function"

@@ -33,10 +33,22 @@ type ChatAgent struct {
 	proxyAddr      string
 	proxyCACert    string
 	webSearch      WebSearchOpts
-	guard          *guard.Guard // optional; nil disables intercept hooks for chat
-	nonStreamingFn func() bool  // resolver: use non-streaming (Complete) path? (nil = streaming)
-	noaEnabledFn   func() bool  // resolver: use experimental noa compaction? (nil = off)
-	maxTokensFn    func() int   // resolver: per-reply output cap (nil/0 = send no cap)
+	guard          *guard.Guard  // optional; nil disables intercept hooks for chat
+	nonStreamingFn func() bool   // resolver: use non-streaming (Complete) path? (nil = streaming)
+	noaEnabledFn   func() bool   // resolver: use experimental noa compaction? (nil = off)
+	maxTokensFn    func() int    // resolver: per-reply output cap (nil/0 = send no cap)
+	effortFn       func() string // resolver: per-agent effort override (nil/"" = the profile's)
+}
+
+// SetReasoningEffort wires a resolver for this agent's effort override
+// ("" = the LLM profile's own setting).
+func (c *ChatAgent) SetReasoningEffort(fn func() string) { c.effortFn = fn }
+
+func (c *ChatAgent) reasoningEffort() string {
+	if c.effortFn == nil {
+		return ""
+	}
+	return c.effortFn()
 }
 
 func NewChatAgent(prov llm.Provider, model, workDir string, tx *transcript.Store, window int) *ChatAgent {
@@ -165,6 +177,7 @@ func (c *ChatAgent) Chat(ctx context.Context, agentKey, sessionID, message strin
 
 	system, boundary := deferredSystem(chatSystem(agentKey, c.workDir, sessionWorkDir), def)
 	opts := agentcore.Options{
+		ReasoningEffort: c.reasoningEffort(), // per-agent override; '' = the profile's
 		Provider:        c.prov,
 		SystemPrompt:    system,
 		DynamicBoundary: boundary,

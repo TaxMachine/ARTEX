@@ -77,8 +77,12 @@ func (p *anthropicProvider) buildBody(req CompletionRequest, stream bool) ([]byt
 	if thinkingType != "" {
 		body.Thinking = &anthropicThinking{Type: thinkingType}
 	}
-	if p.cfg.ReasoningEffort != "" {
-		body.OutputConfig = &anthropicOutputConfig{Effort: p.cfg.ReasoningEffort}
+	effort := p.cfg.ReasoningEffort
+	if req.Effort != "" {
+		effort = req.Effort // per-request override (agent-level effort setting)
+	}
+	if effort != "" {
+		body.OutputConfig = &anthropicOutputConfig{Effort: effort}
 	}
 	return json.Marshal(body)
 }

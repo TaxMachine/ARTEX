@@ -212,4 +212,8 @@ type CompletionRequest struct {
 	// tokens on reasoning and never replays thinking blocks (which Anthropic
 	// rejects when thinking is off).
 	Thinking string
+	// Effort overrides the provider's reasoning effort for THIS request only:
+	// "" inherits Config.ReasoningEffort; "low"/"medium"/"high"/... force that
+	// level. Lets one shared provider serve agents with different effort needs.
+	Effort string
 }

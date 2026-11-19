@@ -177,6 +177,10 @@ type Options struct {
 	Temperature    *float64
 	MaxConcurrency int
 	WorkingDir     string
+	// ReasoningEffort overrides the provider's effort for every request of this
+	// session ("" = inherit the provider config's). Hosts use it for per-agent
+	// effort settings over a shared provider.
+	ReasoningEffort string
 
 	// ToolOutputDir, when set, makes oversized tool output spill to a file there
 	// (full content preserved) and the tool return a head + pointer instead of
@@ -529,6 +533,7 @@ func (s *Session) Prompt(ctx context.Context, input string) iter.Seq2[harness.Ev
 		DeferredTools:           s.opts.DeferredTools,
 		MaxTokens:               s.opts.MaxTokens,
 		Temperature:             s.opts.Temperature,
+		ReasoningEffort:         s.opts.ReasoningEffort,
 		MaxTurns:                s.opts.MaxTurns,
 		MaxDuration:             s.opts.MaxDuration,
 		Settlement:              s.opts.Settlement,

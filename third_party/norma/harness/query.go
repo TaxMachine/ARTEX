@@ -30,6 +30,8 @@ type QueryInput struct {
 	// tool schemas sent as usual.
 	DeferredTools []string
 	MaxTokens     int
+	// ReasoningEffort overrides the provider's effort per session ("" = inherit).
+	ReasoningEffort string
 	Temperature   *float64
 	// MaxTurns bounds tool-turns (0 = off). MaxDuration bounds wall-clock time,
 	// checked at the turn boundary so a turn is never aborted mid-stream — unlike
@@ -801,6 +803,7 @@ func (l *loop) streamAndExecute(schemas []llm.ToolSchema) (asst llm.Message, exe
 		Tools:           schemas,
 		MaxTokens:       l.maxTokens(),
 		Temperature:     l.in.Temperature,
+		Effort:          l.in.ReasoningEffort,
 	}
 	if l.in.NonStreaming {
 		return l.completeAndExecute(req)

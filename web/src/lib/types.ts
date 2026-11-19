@@ -1234,6 +1234,7 @@ export interface Agent {
   run_seconds?: number; // worker per-run wall-clock cap (seconds); 0 = unlimited
   web_search?: boolean; // whether web search is enabled (gated by the global system switch)
   interactive_shell?: boolean; // whether the interactive shell is enabled (persistent PTY session tool family)
+  reasoning_effort?: string; // per-agent effort override: '' = inherit the LLM profile; low/medium/high/xhigh/max = force
   // P3 post-trigger handling policy (only meaningful for custom agents)
   trigger_run_mode?: "serial" | "parallel"; // queue serially / each trigger gets its own concurrent session
   trigger_merge_mode?: "by_task" | "all" | "none"; // serial only: merge per task / merge all / no merge

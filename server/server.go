@@ -29,10 +29,10 @@ import (
 	"github.com/TaxMachine/ARTEX/llmpool"
 	"github.com/TaxMachine/ARTEX/llmrec"
 	"github.com/TaxMachine/ARTEX/report"
-	"github.com/TaxMachine/ARTEX/traffic"
 	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 	"github.com/TaxMachine/ARTEX/third_party/norma/transcript"
+	"github.com/TaxMachine/ARTEX/traffic"
 )
 
 // BuildVersion is the backend application version, injected from cmd/artex at
@@ -121,7 +121,12 @@ type Server struct {
 	// Built lazily on first use; invalidated when any profile is saved/activated/deleted
 	// so edits take effect.
 	profMu         sync.Mutex
-	profChatAgents map[int64]*agent.ChatAgent // per-profile ChatAgent cache (chat page)
+	profChatAgents map[int64]*agent.ChatAgent
+	// per-(profile, agent-key) chat agents for agents with their own effort override
+	profChatAgentsByAgent map[struct {
+		id  int64
+		key string
+	}]*agent.ChatAgent // per-profile ChatAgent cache (chat page)
 
 	// provByProfile caches ONE provider per LLM profile id so every agent bound or
 	// pinned to the same profile shares a single provider instance — hence one rate
@@ -626,11 +631,69 @@ func (s *Server) effectiveProfileForAgent(agentKey string, pinID *int64) *int64 
 func (s *Server) resolveChatAgent(c *db.Conversation) *agent.ChatAgent {
 	ca := s.chatAgentRef()
 	if eff := s.effectiveProfileForAgent(c.AgentKey, c.LLMProfileID); eff != nil {
-		if pa := s.chatAgentForProfile(*eff); pa != nil {
+		if pa := s.chatAgentForAgent(*eff, c.AgentKey); pa != nil {
 			ca = pa
 		}
 	}
 	return ca
+}
+
+// chatAgentForAgent returns the per-(profile, agent) ChatAgent: same provider
+// pool as chatAgentForProfile, but its own instance so the agent's effort
+// override resolver can differ. Cached under a composite key.
+func (s *Server) chatAgentForAgent(profileID int64, agentKey string) *agent.ChatAgent {
+	eff := s.agentEffort(agentKey)
+	if eff == "" {
+		return s.chatAgentForProfile(profileID) // inherit the profile: shared instance is fine
+	}
+	type pk struct {
+		id  int64
+		key string
+	}
+	k := pk{profileID, agentKey}
+	s.profMu.Lock()
+	if ca := s.profChatAgentsByAgent[k]; ca != nil {
+		s.profMu.Unlock()
+		return ca
+	}
+	s.profMu.Unlock()
+	base := s.chatAgentForProfile(profileID)
+	if base == nil {
+		return nil
+	}
+	prov, cfg, ok := s.providerForProfile(profileID)
+	if !ok {
+		return base
+	}
+	tx := transcript.NewStore(filepath.Join(s.m.dir, "transcripts"))
+	ca := agent.NewChatAgent(s.poolForBinding(profileID, prov, cfg), cfg.Model, s.m.dir, tx, cfg.CompactionWindow())
+	ca.SetProxy(s.m.ProxyAddr(), s.m.ProxyCACert())
+	ca.SetWebSearch(s.m.WebSearchOpts())
+	ca.SetGuard(s.chatGuard())
+	ca.SetNonStreaming(nonStreamingResolver(cfg))
+	ca.SetMaxTokens(maxTokensResolver(cfg))
+	ca.SetNoaEnabled(s.m.NoaCompactionEnabled)
+	ca.SetReasoningEffort(func() string { return s.agentEffort(agentKey) })
+	s.profMu.Lock()
+	if ex := s.profChatAgentsByAgent[k]; ex != nil {
+		ca = ex
+	} else {
+		s.profChatAgentsByAgent[k] = ca
+	}
+	s.profMu.Unlock()
+	return ca
+}
+
+// agentEffort reads one agent's reasoning-effort override ('' = inherit).
+func (s *Server) agentEffort(agentKey string) string {
+	if s.m.pg == nil {
+		return ""
+	}
+	a, err := s.m.pg.GetAgentByKey(agentKey)
+	if err != nil || a == nil {
+		return ""
+	}
+	return a.ReasoningEffort
 }
 
 // chatUnavailableReason explains why no ChatAgent could be resolved, so the user
@@ -725,6 +788,10 @@ func (s *Server) chatAgentForProfile(id int64) *agent.ChatAgent {
 func (s *Server) invalidateProfileAgents() {
 	s.profMu.Lock()
 	s.profChatAgents = map[int64]*agent.ChatAgent{}
+	s.profChatAgentsByAgent = map[struct {
+		id  int64
+		key string
+	}]*agent.ChatAgent{}
 	s.profMu.Unlock()
 	s.provCacheMu.Lock()
 	s.provCacheGen++

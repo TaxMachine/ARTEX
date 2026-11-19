@@ -144,7 +144,7 @@ type ToolSet struct {
 	ts              *db.ExplorationStore
 	machines        *machine.Service // native VM/SSH backend (nil = machine tools unavailable)
 	worker          string
-	taskID          int64 // PG tasks.id; 0 when unknown (tests / orchestrator cross-task reads)
+	taskID          int64  // PG tasks.id; 0 when unknown (tests / orchestrator cross-task reads)
 	artifactDir     string // run-scoped dir for generated artifacts (msf payloads...); "" = os.TempDir fallback
 	// coverageDisabled mirrors tasks.coverage_enabled=false. Stored inverted so the
 	// zero value (all existing ToolSet constructions) means ENABLED — matching the

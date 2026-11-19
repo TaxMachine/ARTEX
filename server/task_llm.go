@@ -299,6 +299,21 @@ func (r *taskLLMRuntime) maxTokens() int {
 	return cfg.MaxTokens
 }
 
+// reasoningEffort returns THIS agent's effort override from the agents table:
+// ” = inherit the active LLM profile's effort; otherwise low/medium/high/...
+// forces every request this agent makes. Read per round so an admin edit
+// applies on the next turn without a bundle rebuild.
+func (r *taskLLMRuntime) reasoningEffort() string {
+	if r.s.m.pg == nil {
+		return ""
+	}
+	a, err := r.s.m.pg.GetAgentByKey(r.agentKey)
+	if err != nil || a == nil {
+		return ""
+	}
+	return a.ReasoningEffort
+}
+
 func parseTaskID(id string) (int64, error) {
 	n, err := strconv.ParseInt(id, 10, 64)
 	if err != nil || n <= 0 {
@@ -804,9 +819,10 @@ func (s *Server) agentsForTask(t *Task) *taskAgentBundle {
 	wk := agent.NewWorker(workerRuntime, "task-router", s.m.dir, tx, window, s.agentMaxTurns("worker"))
 	wk.SetFindingRecorder(s.evidenceStore())
 	wk.SetCompactionWindowResolver(workerRuntime.CompactionWindow)
-	wk.SetNonStreaming(workerRuntime.nonStreaming) // per the task's currently active profile streaming switch (read every turn)
-	wk.SetMaxTokens(workerRuntime.maxTokens)       // as above, the output cap also follows the currently active profile
-	wk.SetNoaEnabled(s.m.NoaCompactionEnabled)     // experimental: noa context compaction (platform-level switch, read every run)
+	wk.SetNonStreaming(workerRuntime.nonStreaming)       // per the task's currently active profile streaming switch (read every turn)
+	wk.SetMaxTokens(workerRuntime.maxTokens)             // as above, the output cap also follows the currently active profile
+	wk.SetReasoningEffort(workerRuntime.reasoningEffort) // per-agent effort override; '' = the profile's
+	wk.SetNoaEnabled(s.m.NoaCompactionEnabled)           // experimental: noa context compaction (platform-level switch, read every run)
 	wk.SetRunTimeout(time.Duration(s.agentRunSeconds("worker")) * time.Second)
 	wk.SetProxy(s.m.ProxyAddr(), s.m.ProxyCACert())
 	wk.SetWebSearch(s.webSearchFor("worker"))
@@ -816,7 +832,8 @@ func (s *Server) agentsForTask(t *Task) *taskAgentBundle {
 	pl.SetCompactionWindowResolver(plannerRuntime.CompactionWindow)
 	pl.SetNonStreaming(plannerRuntime.nonStreaming)
 	pl.SetMaxTokens(plannerRuntime.maxTokens)
-	pl.SetNoaEnabled(s.m.NoaCompactionEnabled) // experimental: noa context compaction (platform-level switch, read every run)
+	pl.SetReasoningEffort(plannerRuntime.reasoningEffort) // per-agent effort override; '' = the profile's
+	pl.SetNoaEnabled(s.m.NoaCompactionEnabled)            // experimental: noa context compaction (platform-level switch, read every run)
 	pl.SetKillWork(s.engine.KillWork)
 	pl.SetSteerWork(s.engine.SteerWork)
 	pl.SetProxy(s.m.ProxyAddr(), s.m.ProxyCACert())
@@ -834,7 +851,8 @@ func (s *Server) agentsForTask(t *Task) *taskAgentBundle {
 	main.SetCompactionWindowResolver(mainRuntime.CompactionWindow)
 	main.SetNonStreaming(mainRuntime.nonStreaming)
 	main.SetMaxTokens(mainRuntime.maxTokens)
-	main.SetNoaEnabled(s.m.NoaCompactionEnabled) // experimental: noa context compaction (platform-level switch, read every run)
+	main.SetReasoningEffort(mainRuntime.reasoningEffort) // per-agent effort override; '' = the profile's
+	main.SetNoaEnabled(s.m.NoaCompactionEnabled)         // experimental: noa context compaction (platform-level switch, read every run)
 	main.SetProxy(s.m.ProxyAddr(), s.m.ProxyCACert())
 	main.SetWebSearch(s.webSearchFor("mainagent"))
 	main.SetSteerWork(s.engine.SteerWork) // steer_work: real-time course correction on running work by a human

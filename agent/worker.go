@@ -93,6 +93,9 @@ type Worker struct {
 	// maxTokensFn resolves the per-reply output cap in tokens, on the same
 	// per-run basis. nil or 0 = send no cap and let the endpoint decide.
 	maxTokensFn func() int
+	// effortFn resolves the per-agent reasoning-effort override; nil or "" =
+	// inherit the provider config's effort.
+	effortFn func() string
 	// lessonsBlock is the raw RSI evidence block. Empty = off. Execute() frames
 	// it with a per-run data envelope (field=lessons) and appends it after the
 	// rendered system prompt. The server renders the text from outcome records.
@@ -138,6 +141,17 @@ func (w *Worker) SetNoaEnabled(fn func() bool) { w.noaEnabledFn = fn }
 // SetMaxTokens wires a resolver for the per-reply output cap. nil/unset or 0 =
 // send no cap and let the endpoint decide. Read per run, like nonStreaming.
 func (w *Worker) SetMaxTokens(fn func() int) { w.maxTokensFn = fn }
+
+// SetReasoningEffort wires a resolver for this agent's effort override
+// ("" = the LLM profile's own setting).
+func (w *Worker) SetReasoningEffort(fn func() string) { w.effortFn = fn }
+
+func (w *Worker) reasoningEffort() string {
+	if w.effortFn == nil {
+		return ""
+	}
+	return w.effortFn()
+}
 
 func (w *Worker) maxTokens() int {
 	if w.maxTokensFn == nil {
@@ -507,6 +521,7 @@ func (w *Worker) execute(ctx context.Context, name string, taskID int64, as *db.
 	}
 	opts := agentcore.Options{
 		Provider:        w.prov,
+		ReasoningEffort: w.reasoningEffort(), // per-agent override; '' = the profile's
 		SystemPrompt:    system,
 		DynamicBoundary: boundary,
 		Tools:           withWebFetch(ctx, tools, w.proxyAddr, w.proxyCACert),

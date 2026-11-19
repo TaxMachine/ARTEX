@@ -52,6 +52,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
   const [preview, setPreview] = React.useState("");
   const [maxTurns, setMaxTurns] = React.useState("0");
   const [runSecs, setRunSecs] = React.useState("600");
+  const [effort, setEffort] = React.useState("");
   // "" = follow (unbound); otherwise a profile id string
   const [llmProfileId, setLlmProfileId] = React.useState("");
   const [llmProfiles, setLlmProfiles] = React.useState<NonNullable<AgentDetail["llm_profiles"]>>([]);
@@ -91,6 +92,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
         setSkillVisible(d.visibility?.skill ?? []);
         setMaxTurns(String(d.agent?.max_turns ?? 0));
         setRunSecs(String(d.agent?.run_seconds ?? 600));
+        setEffort(d.agent?.reasoning_effort ?? "");
         setLlmProfileId(d.agent?.llm_profile_id != null ? String(d.agent.llm_profile_id) : "");
         setLlmProfiles(d.llm_profiles ?? []);
         setWebSearch(!!d.agent?.web_search);
@@ -186,6 +188,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
       if (showConfig) {
         patch.max_turns = Math.max(0, Math.floor(Number(maxTurns) || 0));
         patch.run_seconds = Math.max(0, Math.floor(Number(runSecs) || 0));
+        patch.reasoning_effort = effort;
       }
       if (showWebSearch) patch.web_search = webSearch;
       if (showInteractiveShell) patch.interactive_shell = interactiveShell;
@@ -318,6 +321,22 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                       <Label htmlFor="run-seconds" className="text-xs">Run duration (seconds, 0 = unlimited)</Label>
                       <Input id="run-seconds" type="number" min={0} className="h-8 w-32"
                         value={runSecs} onChange={(e) => setRunSecs(e.target.value)} />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label className="text-xs">Effort (per-agent)</Label>
+                      <Select value={effort || "inherit"} onValueChange={(v) => setEffort(v === "inherit" ? "" : v)}>
+                        <SelectTrigger className="h-8 w-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="inherit">Inherit profile</SelectItem>
+                          <SelectItem value="low">low</SelectItem>
+                          <SelectItem value="medium">medium</SelectItem>
+                          <SelectItem value="high">high</SelectItem>
+                          <SelectItem value="xhigh">xhigh</SelectItem>
+                          <SelectItem value="max">max</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </>
                 )}
