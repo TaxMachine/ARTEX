@@ -423,7 +423,7 @@ func (s *MachineStore) RecentCaptures(limit int) ([]MachineCaptureWithMachine, e
 		var c MachineCaptureWithMachine
 		var stopped sql.NullTime
 		if err := rows.Scan(&c.ID, &c.MachineID, &c.Machine, &c.TaskID, &c.Iface, &c.BPFFilter,
-			&c.RemotePath, &c.LocalPath, &c.PIDFile, &c.Status, &c.Bytes, &c.StartedAt, &stopped); err != nil {
+			&c.RemotePath, &c.LocalPath, &c.PIDFile, &c.Status, &c.Bytes, &c.StartedAt, &stopped, &c.Note); err != nil {
 			return nil, err
 		}
 		if stopped.Valid {
