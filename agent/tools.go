@@ -1415,7 +1415,7 @@ func (t *ToolSet) goalMet() actool.CoreTool {
 // --- worker write tools ---
 
 func (t *ToolSet) addFinding() actool.CoreTool {
-	return writeTool("report_finding", "Record a confirmed finding, with evidence providing verifiable proof such as command output and logs. In a task context, pass the current intent_id. The returned finding_id is the standalone finding record ID; finding_node_id is the exploration node ID (the first line keeps that node number).", obj(map[string]any{
+	return writeTool("report_finding", "Record a CONFIRMED finding — primitives are NOT exploits: a single weakness (crash, memory write, leak, bypass step, gadget) is a fact for record_fact, not a finding; report_finding is for an exploit chain whose primitives compose into the attacker's goal, end to end, self-contained. RCE = remote shell execution only: session opened + command output returned (msf tools). Other classes: perform the attacker's goal and capture the response (auth bypass acts authenticated, exposure quotes the data, privesc runs with elevated output, SSRF fetches the internal resource). Crash-only = DoS finding. Evidence must be verifiable proof: command output, session transcript, captured responses.", obj(map[string]any{
 		"vulnclass": str("vulnerability class"), "name": str("vulnerability name"), "severity": str("critical|high|medium|low"), "summary": str("finding summary"),
 		"category":  str("one of: operating-systems | hypervisors | web | applications | others (default others)"),
 		"intent_id": idp("the current task's intent id"), "asset_ids": map[string]any{"type": "array", "items": map[string]any{"type": "integer"}, "description": "affected asset ids"},

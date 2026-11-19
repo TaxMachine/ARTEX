@@ -34,13 +34,19 @@ evidence.
    pcap together is a complete RCE proof.
 6. **Clean up** — `msf_handler_stop` once the session line is recorded.
 
-## Evidence bar
+## Evidence bar (the RCE confirmation standard)
 
-- The session-open transcript excerpt (from `msf_handler_status`) is the
-  minimum; a pcap and the exact trigger request/command make it reproducible.
+- RCE is confirmed ONLY by self-contained remote shell execution: session open
+  (the `msf_handler_status` session line) AND a command executed through it
+  whose output returns. Nothing else counts — not "code path reached", not a
+  crash, not a pop, not "would execute". Crash-only = DoS finding.
+- The session-open transcript excerpt is the minimum; a pcap and the exact
+  trigger request/command make it reproducible.
 - Record the payload/lhost/lport used — reproduction needs all three.
-- A payload that crashes the target is NOT an RCE proof; that's a DoS finding
-  unless a session opened.
+- Primitives (memory write, control-flow hijack, gadget reach) are chain
+  anatomy, not findings: report them as facts and keep composing until the
+  shell opens, or report the chain as a hypothesis with the missing step
+  named.
 
 ## Notes
 

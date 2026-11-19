@@ -601,6 +601,7 @@ func (s *Server) seedOrchestrationTools() {
 	s.reseedPlannerPrompt()           // planner prompt: rewrites the "zero intents" justification rules + adds quantitative acceptance checks (one-time)
 	s.reseedWorkerPrompt()            // worker prompt: adds the evidence bar for negative conclusions (one-time)
 	s.reseedCompressedPrompts()       // all default prompts compressed (token diet) → old DBs append a new default version (one-time)
+	s.reseedConfirmStandardPrompts()  // executor prompts gain the primitives-vs-exploit-chain confirmation standard (one-time)
 	s.seedReporterAgent()             // seeds the "report writer" agent + tool bindings + finding trigger (one-time)
 	s.upgradeReporterTriggerMessage() // backfill migration for old DBs: makes the reporter send evidence_version back (one-time)
 	s.seedFindingTrafficTools()       // adds optional evidence params and read-only evidence tools, preserving user config
@@ -1213,4 +1214,36 @@ func (s *Server) reseedCompressedPrompts() {
 	}
 	push("reporter", agent.ReporterDefaultPrompt) // seeded by seedReporterAgent, first-insert-only
 	push("retester", agent.RetesterDefaultPrompt) // seeded by the finding-retest migration, first-insert-only
+}
+
+// reseedConfirmStandardPrompts pushes the executor/retester prompts carrying the
+// confirmation standard (primitives are NOT exploits; RCE = self-contained
+// remote shell execution) to existing DBs. One-time via settings flag; fresh
+// DBs seed the current defaults directly.
+func (s *Server) reseedConfirmStandardPrompts() {
+	const flag = "prompt_confirm_standard_v1"
+	if v, _, _ := s.m.pg.GetSetting(flag); v == "true" {
+		return
+	}
+	defer func() { _ = s.m.pg.SetSetting(flag, "true") }()
+	push := func(key, tmpl string) {
+		if tmpl == "" {
+			return
+		}
+		a, err := s.m.pg.GetAgentByKey(key)
+		if err != nil || a == nil {
+			return
+		}
+		if cur, err := s.m.pg.CurrentPrompt(a.ID); err == nil && cur == tmpl {
+			return
+		}
+		if _, err := s.m.pg.ResetPromptToDefault(a.ID, tmpl); err != nil {
+			log.Printf("[prompts] confirm-standard reseed %s failed: %v", key, err)
+			return
+		}
+		log.Printf("[prompts] %s prompt: appended confirmation-standard version (one-time)", key)
+	}
+	push("worker", agent.BuiltinPromptSeeds()["worker"])
+	push("pentest", agent.BuiltinPromptSeeds()["pentest"])
+	push("retester", agent.RetesterDefaultPrompt)
 }
