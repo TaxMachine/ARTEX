@@ -442,7 +442,7 @@ No duplicates, no padding. Goal unmet + uncovered deeper plays → dispatch them
 
 func plannerSystem(goal, dataDir, workDir string) string {
 	body := renderSystem("planner", plannerDefaultTmpl, PlannerVars{Goal: goal, DataDir: dataDir, Now: nowStr()})
-	return body + untrustedDataRules + artifactSpec(workDir) + noiseProfileBlock()
+	return body + untrustedDataRules + artifactSpec(workDir) + noiseProfileBlock() + outputStyleTail(body)
 }
 
 // Plan runs one planning round. emit, if non-nil, receives the planner's execution

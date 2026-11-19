@@ -559,7 +559,7 @@ func (c *Compactor) compress(ctx context.Context, g *coldGraph, b block, nodeByI
 
 // compressionSystem is the compactor's full system prompt: the §4 body prompt plus
 // the code-owned untrusted-data tail shared with the planner (#124).
-const compressionSystem = compressionSystemPrompt + untrustedDataRules + compactorDataRule
+const compressionSystem = compressionSystemPrompt + untrustedDataRules + compactorDataRule + outputStyleBlock
 
 // compressionSystemPrompt is the §4 body prompt.
 const compressionSystemPrompt = `You compress a group of interconnected exploration nodes into one consolidated conclusion (body) so the planner quickly grasps what this area established.
