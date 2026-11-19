@@ -1428,13 +1428,15 @@ func (t *ToolSet) addFinding() actool.CoreTool {
 	}, "vulnclass", "severity", "summary"), func(ctx context.Context, in json.RawMessage) (actool.Result, error) {
 		var a struct {
 			VulnClass, Name, Severity, Summary, Evidence string
-			Category                                     string            `json:"category"`
-			Counterevidence                              string            `json:"counterevidence"`
-			ConfidenceRationale                          string            `json:"confidence_rationale"`
-			IntentID                                     json.RawMessage   `json:"intent_id"`
-			AssetIDs                                     []json.RawMessage `json:"asset_ids"`
-			TrafficRefs                                  []db.TrafficRef   `json:"traffic_refs"`
-			EvidenceHintID                               json.RawMessage   `json:"evidence_hint_id"`
+			Category                                     string                     `json:"category"`
+			Counterevidence                              string                     `json:"counterevidence"`
+			ConfidenceRationale                          string                     `json:"confidence_rationale"`
+			Primitives                                   []db.FindingsPrimitiveJSON `json:"primitives"`
+			Chain                                        []db.FindingsChainStepJSON `json:"chain"`
+			IntentID                                     json.RawMessage            `json:"intent_id"`
+			AssetIDs                                     []json.RawMessage          `json:"asset_ids"`
+			TrafficRefs                                  []db.TrafficRef            `json:"traffic_refs"`
+			EvidenceHintID                               json.RawMessage            `json:"evidence_hint_id"`
 		}
 		if err := json.Unmarshal(in, &a); err != nil {
 			return actool.Errorf(err.Error()), nil

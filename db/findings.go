@@ -40,6 +40,8 @@ type DBFinding struct {
 	TaskDescription    string // populated via LEFT JOIN on tasks
 
 	Counterevidence     string // what was tested and did not work; optional, "" = not given
+	Primitives          []FindingPrimitive // single weaknesses the chain builds on (facts, not findings)
+	Chain               []FindingChainStep // composed exploit-chain steps; all confirmed = confirmed finding
 	ConfidenceRationale string // why the conclusion holds; optional, "" = not given
 	Category            string // operating-systems | hypervisors | web | applications | others
 }
@@ -169,6 +171,24 @@ func (d *DB) AddFinding(taskID, nodeID int64, vulnclass, name, severity, summary
 	return id, err
 }
 
+// FindingPrimitive is one single weakness a chain builds on — a FACT, not a
+// finding: crash, memory write, info leak, bypass step, gadget, SSRF reach.
+type FindingPrimitive struct {
+	Name      string `json:"name"`
+	Evidence  string `json:"evidence,omitempty"`
+	Confirmed bool   `json:"confirmed"` // observed this run vs inferred
+}
+
+// FindingChainStep is one step of the composed exploit chain. For a CONFIRMED
+// finding every step carries result evidence; a step whose result is assumed
+// makes the whole chain a hypothesis.
+type FindingChainStep struct {
+	Step    int    `json:"step"`
+	Action  string `json:"action"`
+	Result  string `json:"result,omitempty"`  // empty = assumed/unproven
+	Evidence string `json:"evidence,omitempty"`
+}
+
 // findingSelectCols is the column list (with task_description join) every finding
 // list query selects, so scanFinding stays in sync across callers.
 const findingSelectCols = `f.id, f.task_id, f.node_id, f.vulnclass, COALESCE(f.name, ''), f.severity, f.summary,
@@ -176,6 +196,7 @@ const findingSelectCols = `f.id, f.task_id, f.node_id, f.vulnclass, COALESCE(f.n
 	       COALESCE(t.description, '') AS task_description, f.evidence_version, f.report_evidence_version,
 	       f.poe_level, COALESCE(f.verification_status, 'unverified'), COALESCE(f.verification_note, ''),
 	       f.counterevidence, f.confidence_rationale, COALESCE(f.category, 'others'),
+	       COALESCE(f.primitives, '[]'), COALESCE(f.chain, '[]'),
  (SELECT count(*) FROM finding_traffic_bindings b WHERE b.finding_id=f.id)`
 
 // scanFindings materializes rows selected via findingSelectCols.
@@ -187,12 +208,20 @@ func scanFindings(rows interface {
 	var out []*DBFinding
 	for rows.Next() {
 		f := &DBFinding{}
-		var aidsJSON string
+		var aidsJSON, primitivesJSON, chainJSON string
 		if err := rows.Scan(&f.ID, &f.TaskID, &f.NodeID, &f.VulnClass, &f.Name, &f.Severity,
-			&f.Summary, &f.Evidence, &f.Worker, &aidsJSON, &f.Status, &f.ReportState, &f.CreatedAt, &f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &f.TrafficCount); err != nil {
+			&f.Summary, &f.Evidence, &f.Worker, &aidsJSON, &f.Status, &f.ReportState, &f.CreatedAt, &f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &primitivesJSON, &chainJSON, &f.TrafficCount); err != nil {
 			return nil, err
 		}
 		_ = json.Unmarshal([]byte(aidsJSON), &f.AssetIDs)
+		_ = json.Unmarshal([]byte(primitivesJSON), &f.Primitives)
+		_ = json.Unmarshal([]byte(chainJSON), &f.Chain)
+		if f.Primitives == nil {
+			f.Primitives = []FindingPrimitive{}
+		}
+		if f.Chain == nil {
+			f.Chain = []FindingChainStep{}
+		}
 		out = append(out, f)
 	}
 	return out, rows.Err()
@@ -593,13 +622,21 @@ func (d *DB) ListFindingsForExport(f FindingFilter, ids []int64) ([]*DBFinding, 
 	var out []*DBFinding
 	for rows.Next() {
 		f := &DBFinding{}
-		var aidsJSON string
+		var aidsJSON, primitivesJSON, chainJSON string
 		if err := rows.Scan(&f.ID, &f.TaskID, &f.NodeID, &f.VulnClass, &f.Name, &f.Severity,
 			&f.Summary, &f.Evidence, &f.Worker, &aidsJSON, &f.Status, &f.ReportState, &f.CreatedAt,
-			&f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &f.TrafficCount, &f.Report); err != nil {
+			&f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &primitivesJSON, &chainJSON, &f.TrafficCount, &f.Report); err != nil {
 			return nil, err
 		}
 		_ = json.Unmarshal([]byte(aidsJSON), &f.AssetIDs)
+		_ = json.Unmarshal([]byte(primitivesJSON), &f.Primitives)
+		_ = json.Unmarshal([]byte(chainJSON), &f.Chain)
+		if f.Primitives == nil {
+			f.Primitives = []FindingPrimitive{}
+		}
+		if f.Chain == nil {
+			f.Chain = []FindingChainStep{}
+		}
 		out = append(out, f)
 	}
 	return out, rows.Err()
@@ -779,14 +816,25 @@ func (d *DB) FindingStats() (*FindingStats, error) {
 // it also selects `report` — that column is only needed on the detail page.
 func (d *DB) GetFinding(id int64) (*DBFinding, error) {
 	f := &DBFinding{}
-	var aidsJSON string
+	var aidsJSON, primitivesJSON, chainJSON string
 	err := d.QueryRow(`SELECT `+findingSelectCols+`, COALESCE(f.report, '')
 		FROM findings f
 		LEFT JOIN tasks t ON f.task_id = t.id
 		WHERE f.id = $1`, id).Scan(
 		&f.ID, &f.TaskID, &f.NodeID, &f.VulnClass, &f.Name, &f.Severity,
 		&f.Summary, &f.Evidence, &f.Worker, &aidsJSON, &f.Status, &f.ReportState, &f.CreatedAt,
-		&f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &f.TrafficCount, &f.Report)
+		&f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &primitivesJSON, &chainJSON, &f.TrafficCount, &f.Report)
+	if err == nil {
+		_ = json.Unmarshal([]byte(aidsJSON), &f.AssetIDs)
+		_ = json.Unmarshal([]byte(primitivesJSON), &f.Primitives)
+		_ = json.Unmarshal([]byte(chainJSON), &f.Chain)
+		if f.Primitives == nil {
+			f.Primitives = []FindingPrimitive{}
+		}
+		if f.Chain == nil {
+			f.Chain = []FindingChainStep{}
+		}
+	}
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}

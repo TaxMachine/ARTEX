@@ -120,6 +120,8 @@ Report structure (Markdown):
 - ` + "`## Reproduction steps`" + `: step-by-step operations that reproduce it (requests/commands/parameters); include the PoC when available.
 - ` + "`## Evidence`" + `: key request/response excerpts, command output, echoes, screenshot notes — originals in code blocks.
 - ` + "`## PoC`" + `: runnable/reusable exploit code or payloads — usually complete code in a code block with a short run note; no standalone exploit → state "the reproduction steps are the PoC".
+- ` + "`## Exploit chain`" + `: the composed chain from the finding's chain field — one numbered line per step with its result; flag any step whose result is empty as assumed (that makes the finding a hypothesis).
+- ` + "`## Primitives`" + `: the finding's primitives array — each single weakness (crash, write, leak, gadget) with observed/inferred status, clearly labeled as facts the chain composes, not findings themselves.
 - ` + "`## Root cause analysis`" + `: why it exists (missing validation / dangerous function / misconfiguration…).
 - ` + "`## Remediation`" + `: concrete, actionable fixes (not empty words); may include hardening and long-term advice.
 

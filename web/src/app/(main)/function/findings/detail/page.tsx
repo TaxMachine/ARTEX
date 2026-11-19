@@ -212,6 +212,69 @@ function FindingDetailInner() {
                   )}
                 </CardContent>
               </Card>
+              {(finding.chain?.length ?? 0) > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">
+                      Exploit chain{" "}
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">
+                        {finding.chain?.every((c) => (c.result ?? "").trim()) ? "· every step confirmed" : "· has assumed steps (hypothesis)"}
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {finding.chain?.map((c) => (
+                      <div key={c.step} className="flex gap-3 rounded-md border px-3 py-2">
+                        <span className="font-mono text-xs font-semibold tabular-nums text-muted-foreground">{c.step}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm">{c.action}</div>
+                          {(c.result ?? "").trim() ? (
+                            <div className="mt-0.5 text-xs text-muted-foreground">
+                              <span className="font-medium text-emerald-600 dark:text-emerald-400">result:</span> {c.result}
+                            </div>
+                          ) : (
+                            <div className="mt-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+                              assumed / unproven — the whole finding is a hypothesis
+                            </div>
+                          )}
+                          {c.evidence?.trim() && (
+                            <div className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground" title={c.evidence}>
+                              {c.evidence}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+              {(finding.primitives?.length ?? 0) > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">
+                      Primitives{" "}
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">· single weaknesses this chain builds on (facts, not findings)</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-1.5">
+                    {finding.primitives?.map((pr, i) => (
+                      <div key={i} className="flex items-start gap-2 rounded-md border px-3 py-1.5">
+                        <Badge variant={pr.confirmed ? "default" : "outline"} className="mt-0.5 shrink-0 text-[10px]">
+                          {pr.confirmed ? "observed" : "inferred"}
+                        </Badge>
+                        <div className="min-w-0">
+                          <span className="text-sm font-medium">{pr.name}</span>
+                          {pr.evidence?.trim() && (
+                            <div className="truncate font-mono text-[11px] text-muted-foreground" title={pr.evidence}>
+                              {pr.evidence}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
               {finding.counterevidence?.trim() && (
                 <Card>
                   <CardHeader>

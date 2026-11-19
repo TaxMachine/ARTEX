@@ -353,6 +353,23 @@ type RecordFindingInput struct {
 	Category                                             string // canonical slug; "" = others
 	Counterevidence, ConfidenceRationale                 string // optional; "" = not given
 	AssetIDs                                             []int64
+	Primitives                                            []FindingsPrimitiveJSON // single weaknesses the chain builds on
+	Chain                                                 []FindingsChainStepJSON // composed chain steps
+}
+
+// FindingsPrimitiveJSON mirrors FindingPrimitive at the record boundary.
+type FindingsPrimitiveJSON struct {
+	Name      string `json:"name"`
+	Evidence  string `json:"evidence,omitempty"`
+	Confirmed bool   `json:"confirmed"`
+}
+
+// FindingsChainStepJSON mirrors FindingChainStep at the record boundary.
+type FindingsChainStepJSON struct {
+	Step     int    `json:"step"`
+	Action   string `json:"action"`
+	Result   string `json:"result,omitempty"`
+	Evidence string `json:"evidence,omitempty"`
 }
 
 type RecordedFinding struct {
@@ -409,8 +426,16 @@ VALUES($1,'finding',$2,9,'confirmed',$3) RETURNING id`, in.ExplorationID, string
 		assets = []int64{}
 	}
 	raw, _ := json.Marshal(assets)
-	if err := tx.QueryRow(`INSERT INTO findings(task_id,node_id,vulnclass,name,severity,summary,evidence,worker,asset_ids,counterevidence,confidence_rationale,category)
-VALUES(NULLIF($1,0),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`, in.TaskID, out.NodeID, in.VulnClass, in.Name, in.Severity, in.Summary, in.Evidence, in.Worker, string(raw), in.Counterevidence, in.ConfidenceRationale, category).Scan(&out.FindingID); err != nil {
+	primitives, _ := json.Marshal(in.Primitives)
+	if in.Primitives == nil {
+		primitives = []byte("[]")
+	}
+	chain, _ := json.Marshal(in.Chain)
+	if in.Chain == nil {
+		chain = []byte("[]")
+	}
+	if err := tx.QueryRow(`INSERT INTO findings(task_id,node_id,vulnclass,name,severity,summary,evidence,worker,asset_ids,counterevidence,confidence_rationale,category,primitives,chain)
+VALUES(NULLIF($1,0),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`, in.TaskID, out.NodeID, in.VulnClass, in.Name, in.Severity, in.Summary, in.Evidence, in.Worker, string(raw), in.Counterevidence, in.ConfidenceRationale, category, string(primitives), string(chain)).Scan(&out.FindingID); err != nil {
 		return nil, err
 	}
 	// Register a push event in the **same transaction**: committing guarantees

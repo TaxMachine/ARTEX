@@ -326,6 +326,11 @@ type FindingDTO struct {
 	VerificationNote      string                     `json:"verification_note"`
 	Counterevidence       string                     `json:"counterevidence,omitempty"`      // what was tested and did not work; optional
 	ConfidenceRationale   string                     `json:"confidence_rationale,omitempty"` // why the conclusion holds; optional
+	// Primitives vs chain: the explicit distinction. primitives are the single
+	// weaknesses (facts) the chain builds on; chain is the composed exploit path
+	// whose steps each carry a result (empty result = assumed step = hypothesis).
+	Primitives             []db.FindingPrimitive  `json:"primitives"`
+	Chain                  []db.FindingChainStep  `json:"chain"`
 
 	ID          string `json:"id"`
 	FindingID   string `json:"finding_id,omitempty"` // standalone findings-table id — the handle for status updates
@@ -476,6 +481,7 @@ func findingFromDB(f *db.DBFinding, assets map[int64]*db.Asset) FindingDTO {
 		ReportStale: f.Report != "" && f.EvidenceVersion != f.ReportEvidenceVersion, TrafficBindings: f.TrafficBindings,
 		PoELevel: f.PoELevel, VerificationStatus: f.VerificationStatus, VerificationNote: f.VerificationNote,
 		Counterevidence: f.Counterevidence, ConfidenceRationale: f.ConfidenceRationale,
+		Primitives: f.Primitives, Chain: f.Chain,
 		VulnClass:   f.VulnClass,
 		Name:        f.Name,
 		Category:    f.Category,

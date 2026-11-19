@@ -511,6 +511,9 @@ export interface Finding {
   verification_note?: string; // why the status was reached; empty when verified
   counterevidence?: string; // what was tested and did not work; optional, omitted when empty
   confidence_rationale?: string; // why the conclusion holds; optional, omitted when empty
+  // Primitives vs exploit chain (explicit distinction):
+  primitives?: { name: string; evidence?: string; confirmed: boolean }[]; // single weaknesses (facts) the chain builds on
+  chain?: { step: number; action: string; result?: string; evidence?: string }[]; // composed chain steps; empty result = assumed step
   id: string;
   finding_id?: string; // row id in the standalone findings table, the handle for status updates (may be missing for old in-task nodes)
   vulnclass: string;
