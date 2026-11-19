@@ -78,8 +78,29 @@ func (s *Server) getProject(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	// Binary assets of the project: every staged generation with version, kind,
+	// path, sha256 and OS build — the patch-diff pairs live here.
+	assets := []map[string]any{}
+	arows, err := s.m.pg.Query(`SELECT id, app_name, COALESCE(version,''), category,
+	       COALESCE(extra->>'path',''), COALESCE(extra->>'sha256',''), COALESCE(extra->>'os_build',''), COALESCE(extra->>'arch','')
+	FROM assets WHERE project_id=$1 AND type='binary' ORDER BY app_name, version`, p.ID)
+	if err == nil {
+		defer arows.Close()
+		for arows.Next() {
+			var id int64
+			var name, version, kind, path, sha, osb, arch string
+			if arows.Scan(&id, &name, &version, &kind, &path, &sha, &osb, &arch) == nil {
+				assets = append(assets, map[string]any{
+					"id": id, "name": name, "version": version, "kind": kind,
+					"path": path, "sha256": sha, "os_build": osb, "arch": arch,
+				})
+			}
+		}
+	}
 	crossmap := s.projectCrossmapStats(p.Binaries)
-	writeJSON(w, 200, map[string]any{"project": p, "tasks": taskRows, "findings": findings, "crossmap": crossmap})
+	writeJSON(w, 200, map[string]any{
+		"project": p, "tasks": taskRows, "findings": findings, "assets": assets, "crossmap": crossmap,
+	})
 }
 
 func (s *Server) setTaskProject(w http.ResponseWriter, r *http.Request) {

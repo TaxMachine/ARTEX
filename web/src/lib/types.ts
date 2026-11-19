@@ -1468,10 +1468,22 @@ export type ProjectGraphData = {
   crossmap: { function_total?: number; binaries_indexed?: number; function_nodes?: number; function_edges?: number };
 };
 
+export type ProjectAsset = {
+  id: number;
+  name: string;
+  version: string;
+  kind: string;
+  path: string;
+  sha256: string;
+  os_build: string;
+  arch: string;
+};
+
 export type ProjectDetail = {
   project: Project;
   tasks: { id: number; name: string; status: string }[];
   findings: { id: number; vulnclass: string; name: string; severity: string; status: string }[];
+  assets?: ProjectAsset[];
   crossmap: { available: boolean; binaries: Record<string, { indexed: boolean }> };
 };
 

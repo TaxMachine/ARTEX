@@ -222,7 +222,7 @@ export default function ProjectsPage() {
                   )}
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="grid grid-cols-4 gap-3 text-center">
                 <div className="rounded-lg border p-3">
                   <div className="text-lg font-semibold tabular-nums">{detail.tasks.length}</div>
                   <div className="text-xs text-muted-foreground">tasks</div>
@@ -239,7 +239,39 @@ export default function ProjectsPage() {
                   </div>
                   <div className="text-xs text-muted-foreground">map coverage</div>
                 </div>
+                <div className="rounded-lg border p-3">
+                  <div className="text-lg font-semibold tabular-nums">{(detail.assets ?? []).length}</div>
+                  <div className="text-xs text-muted-foreground">binary assets</div>
+                </div>
               </div>
+              {(detail.assets ?? []).length > 0 && (
+                <div>
+                  <h3 className="mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">Binary assets</h3>
+                  <div className="space-y-1">
+                    {(detail.assets ?? []).map((a) => (
+                      <div key={a.id} className="rounded-md border px-3 py-1.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="min-w-0 truncate font-mono text-sm">{a.name}</span>
+                          <span className="flex shrink-0 items-center gap-1">
+                            {a.version ? <Badge variant="outline" className="font-mono text-[10px]">{a.version}</Badge> : null}
+                            <Badge variant={a.kind === "driver" ? "default" : "secondary"} className="text-[10px]">{a.kind}</Badge>
+                          </span>
+                        </div>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+                          {a.os_build ? <span>{a.os_build}</span> : null}
+                          {a.arch ? <span>{a.arch}</span> : null}
+                          {a.path ? (
+                            <span className="max-w-[22rem] truncate font-mono" title={a.path}>{a.path}</span>
+                          ) : null}
+                          {a.sha256 ? (
+                            <span className="font-mono" title={a.sha256}>{a.sha256.slice(0, 12)}…</span>
+                          ) : null}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {detail.findings.length > 0 && (
                 <div>
                   <h3 className="mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">Findings</h3>
@@ -251,8 +283,9 @@ export default function ProjectsPage() {
                         className="flex items-center justify-between rounded-md border px-3 py-1.5 text-sm hover:bg-accent"
                       >
                         <span className="min-w-0 truncate">{f.name}</span>
-                        <span className={cn("ml-2 shrink-0 font-mono text-xs font-semibold", sevTone[f.severity])}>
-                          {f.severity}
+                        <span className="ml-2 flex shrink-0 items-center gap-1">
+                          <span className={cn("font-mono text-xs font-semibold", sevTone[f.severity])}>{f.severity}</span>
+                          <Badge variant="outline" className="text-[10px]">{f.status}</Badge>
                         </span>
                       </a>
                     ))}
