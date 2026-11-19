@@ -1130,6 +1130,7 @@ export interface LLMProfile {
   id: string;
   name: string;
   format: "openai" | "anthropic" | "openai-responses" | "ollama";
+  provider?: string; // preset id this profile was created from (opencode-zen, openai, ...); custom/empty = manual
   base_url?: string;
   proxy?: string;
   model: string;

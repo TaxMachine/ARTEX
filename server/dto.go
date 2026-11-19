@@ -651,10 +651,18 @@ type LLMProfileDTO struct {
 	// window). Per item attempts: 0=inherit the global policy | -1=disable that retry
 	// layer | >0=count; interval_ms: 0=default exponential backoff | >0=use that fixed millisecond interval. All zero = fully follow the global policy, i.e. the historical behavior.
 	Retry db.RetryOverride `json:"retry"`
+	// Provider preset this profile was created from (opencode-zen, openai, ...);
+	// '' = custom/manual. Groups the LLM page list.
+	Provider string `json:"provider,omitempty"`
 }
 
 func llmProfileDTO(p *db.LLMProfile) LLMProfileDTO {
+	provider := p.Provider
+	if provider == "" {
+		provider = "custom"
+	}
 	return LLMProfileDTO{
+		Provider:         provider,
 		ID:               i64s(p.ID),
 		Name:             p.Name,
 		Format:           p.Format,

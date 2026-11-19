@@ -30,6 +30,7 @@ import { api } from "@/lib/api";
 import type { LLMPoolMember, LLMPoolStatus, LLMProfile, LLMRetryOverride } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+import { ConnectDialog, ProviderPickerDialog, PROVIDER_PRESETS, type ProviderPreset } from "./_components/providers";
 import { ProfileRetryFields, RetryPolicyPanel, ZERO_OVERRIDE } from "./_components/retry";
 import { setVisibleInterval } from "@/lib/polling";
 
@@ -69,88 +70,6 @@ const EFFORT_LEVELS: { value: string; label: string }[] = [
   { value: "high", label: "high" },
   { value: "xhigh", label: "xhigh" },
   { value: "max", label: "max" },
-];
-
-// Provider presets for the create form: one click fills format + base URL +
-// field conventions, then "Discover models" lists what the key can reach.
-// keyFrom notes where a key lives when the operator already has one locally
-// (opencode's auth store) — the key itself is never read automatically.
-type ProviderPreset = {
-  id: string;
-  label: string;
-  format: ProfileFormat;
-  baseUrl: string;
-  nameHint: string;
-  maxTokensField?: typeof NONE | string;
-  note?: string;
-};
-
-const PROVIDER_PRESETS: ProviderPreset[] = [
-  {
-    id: "opencode-zen",
-    label: "opencode zen",
-    format: "openai",
-    baseUrl: "https://opencode.ai/zen/v1",
-    nameHint: "opencode zen",
-    note: "OpenAI-compatible gateway (50+ models: claude, gpt, glm, kimi, qwen…). Key: opencode auth (type api, provider opencode-go) — same key works here directly.",
-  },
-  {
-    id: "nvidia-nim",
-    label: "NVIDIA NIM",
-    format: "openai",
-    baseUrl: "https://integrate.api.nvidia.com/v1",
-    nameHint: "NVIDIA NIM",
-    note: "OpenAI-compatible. Key: build.nvidia.com API key (also stored by opencode auth as nvidia).",
-  },
-  {
-    id: "openai",
-    label: "OpenAI",
-    format: "openai",
-    baseUrl: "https://api.openai.com/v1",
-    nameHint: "OpenAI",
-    maxTokensField: "max_completion_tokens",
-    note: "o-series/GPT-5 reasoning models need max_completion_tokens; classic models keep max_tokens.",
-  },
-  {
-    id: "anthropic",
-    label: "Anthropic",
-    format: "anthropic",
-    baseUrl: "https://api.anthropic.com",
-    nameHint: "Anthropic",
-    note: "Messages API. max_tokens is mandatory — set a per-reply cap on this profile.",
-  },
-  {
-    id: "openai-responses",
-    label: "OpenAI Responses",
-    format: "openai-responses",
-    baseUrl: "https://api.openai.com/v1",
-    nameHint: "OpenAI Responses",
-    note: "The Responses API flavor of OpenAI (max_output_tokens fixed field).",
-  },
-  {
-    id: "deepseek",
-    label: "DeepSeek",
-    format: "openai",
-    baseUrl: "https://api.deepseek.com/v1",
-    nameHint: "DeepSeek",
-    note: "OpenAI-compatible; also serves an /anthropic Messages path.",
-  },
-  {
-    id: "openrouter",
-    label: "OpenRouter",
-    format: "openai",
-    baseUrl: "https://openrouter.ai/api/v1",
-    nameHint: "OpenRouter",
-    note: "OpenAI-compatible aggregator; model ids carry vendor/ prefixes.",
-  },
-  {
-    id: "ollama",
-    label: "Ollama (local)",
-    format: "ollama",
-    baseUrl: OLLAMA_DEFAULT_BASE_URL,
-    nameHint: "Ollama local",
-    note: "Keyless local server; discovery works without a key.",
-  },
 ];
 
 function cooldownText(secs: number) {
@@ -390,11 +309,13 @@ function PoolSheet({
 
 function ProfileSheet({
   profile,
+  prefill,
   open,
   onOpenChange,
   onSaved,
 }: {
   profile: LLMProfile | null; // null = create
+  prefill?: { preset: ProviderPreset; apiKey: string; model: string } | null; // from the connect flow's advanced path
   open: boolean;
   onOpenChange: (o: boolean) => void;
   onSaved: (id: string) => void;
@@ -426,21 +347,6 @@ function ProfileSheet({
   const [loadingModels, setLoadingModels] = React.useState(false);
   const [modelsOpen, setModelsOpen] = React.useState(false);
   const [modelQuery, setModelQuery] = React.useState(""); // filter text for the loaded model list; reset on open/close
-  const [activePreset, setActivePreset] = React.useState<string>(""); // which preset row is applied (create mode only)
-
-  // applyPreset fills the form from a provider preset: format + base URL + the
-  // max_tokens field convention, and a name when the operator has not typed one.
-  // The key always stays manual — even when one exists locally (opencode auth),
-  // copying it into ARTEX is a deliberate act.
-  function applyPreset(pr: ProviderPreset) {
-    setActivePreset(pr.id);
-    setFormat(pr.format);
-    setBaseUrl(pr.baseUrl);
-    if (!name.trim()) setName(pr.nameHint);
-    setMaxTokensField(pr.maxTokensField ?? NONE);
-    setModels([]); // a previous discovery belongs to the old endpoint
-    if (pr.note) toast.info(pr.label, { description: pr.note, duration: 8000 });
-  }
 
   // Every time it opens, the form is re-filled from the passed-in profile (reset to defaults when creating). Closing and reopening
   // the drawer is a clean start, leaving no leftovers from the previous profile.
@@ -473,8 +379,16 @@ function ProfileSheet({
     setModels([]);
     setModelsOpen(false);
     setModelQuery("");
-    setActivePreset("");
-  }, [open, profile]);
+    // advanced path from the connect flow: start from the preset + key already typed
+    if (!profile && prefill) {
+      setFormat(prefill.preset.format);
+      setBaseUrl(prefill.preset.baseUrl);
+      if (prefill.model) setModel(prefill.model);
+      if (!name.trim()) setName(prefill.preset.nameHint);
+      setApiKey(prefill.apiKey);
+      setMaxTokensField(prefill.preset.maxTokensField ?? NONE);
+    }
+  }, [open, profile, prefill]);
 
   const profileId = profile ? Number(profile.id) : undefined;
 
@@ -555,6 +469,7 @@ function ProfileSheet({
         base_url: baseUrl.trim(),
         proxy: proxy.trim(),
         api_key: apiKey,
+        provider: profile?.provider ?? prefill?.preset.id ?? "",
         rate_per_second: Number(rps) || 0,
         rate_per_minute: Number(rpm) || 0,
         context_window_k: Number(cw) || 0,
@@ -612,30 +527,6 @@ function ProfileSheet({
         </SheetHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
-          {isNew && (
-            <div className="grid gap-2">
-              <Label>Quick start preset</Label>
-              <div className="flex flex-wrap gap-1.5">
-                {PROVIDER_PRESETS.map((pr) => (
-                  <button
-                    key={pr.id}
-                    type="button"
-                    onClick={() => applyPreset(pr)}
-                    className={cn(
-                      "rounded-md border px-2 py-1 text-xs font-medium hover:bg-accent",
-                      activePreset === pr.id ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground",
-                    )}
-                  >
-                    {pr.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Fills format + base URL, then paste the API key and Discover models. opencode zen and NVIDIA keys from the
-                local opencode auth ({"~/.local/share/opencode/auth.json"}) work as-is.
-              </p>
-            </div>
-          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="p-name">Name</Label>
@@ -1004,6 +895,12 @@ export default function LLMPage() {
     setEditing(p);
     setEditOpen(true);
   }, []);
+  // provider flow: picker -> connect (preset) or straight to the manual editor (custom)
+  const [pickerOpen, setPickerOpen] = React.useState(false);
+  const [connectPreset, setConnectPreset] = React.useState<ProviderPreset | null>(null);
+  const [connectOpen, setConnectOpen] = React.useState(false);
+  // prefill handed from the connect flow to the manual editor (advanced path)
+  const [prefill, setPrefill] = React.useState<{ preset: ProviderPreset; apiKey: string; model: string } | null>(null);
 
   const loadPool = React.useCallback(async () => {
     try {
@@ -1077,7 +974,7 @@ export default function LLMPage() {
               </Badge>
             )}
           </Button>
-          <Button size="sm" variant="outline" onClick={() => openEditor(null)}>
+          <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)}>
             <PlusIcon /> Create
           </Button>
         </div>
@@ -1090,7 +987,15 @@ export default function LLMPage() {
         </TabsList>
 
         <TabsContent value="profiles" className="mt-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <GroupedProfiles
+            profiles={profiles}
+            health={health}
+            poolOn={poolOn}
+            onEdit={openEditor}
+            onActivate={(id, name) => void activate(id, name)}
+            onRemove={(p) => void remove(p)}
+          />
+          <div className="hidden">
             {profiles.map((p) => {
               const h = healthOf(p, health.get(p.id));
               return (
@@ -1177,11 +1082,7 @@ export default function LLMPage() {
                 </Card>
               );
             })}
-            {profiles.length === 0 && (
-              <div className="col-span-full rounded-lg border border-dashed p-10 text-center text-muted-foreground text-sm">
-                No model profiles yet — click "Create" in the top right to add the first one.
-              </div>
-            )}
+            {profiles.length === 0 && null}
           </div>
         </TabsContent>
 
@@ -1190,8 +1091,211 @@ export default function LLMPage() {
         </TabsContent>
       </Tabs>
 
-      <ProfileSheet profile={editing} open={editOpen} onOpenChange={setEditOpen} onSaved={() => void load()} />
+      <ProviderPickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onPick={(pr) => {
+          setPickerOpen(false);
+          setConnectPreset(pr);
+          setConnectOpen(true);
+        }}
+        onCustom={() => {
+          setPickerOpen(false);
+          openEditor(null);
+        }}
+      />
+      <ConnectDialog
+        preset={connectPreset}
+        open={connectOpen}
+        onOpenChange={setConnectOpen}
+        onCustomize={(pr, key, model) => {
+          setConnectOpen(false);
+          setPrefill({ preset: pr, apiKey: key, model });
+          openEditor(null);
+        }}
+        onConnected={() => void load()}
+      />
+      <ProfileSheet
+        profile={editing}
+        prefill={prefill}
+        open={editOpen}
+        onOpenChange={(o) => {
+          setEditOpen(o);
+          if (!o) setPrefill(null);
+        }}
+        onSaved={() => void load()}
+      />
       <PoolSheet open={poolOpen} onOpenChange={setPoolOpen} pool={pool} onReload={loadPool} />
+    </div>
+  );
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Grouped model list: one section per provider (preset id or custom), the
+// active profile's section first, cards inside each section.
+// ─────────────────────────────────────────────────────────────────────────────
+function providerLabel(id: string | undefined): string {
+  const pr = PROVIDER_PRESETS.find((x) => x.id === id);
+  return pr ? pr.label : (id || "custom");
+}
+
+function GroupedProfiles({
+  profiles,
+  health,
+  poolOn,
+  onEdit,
+  onActivate,
+  onRemove,
+}: {
+  profiles: LLMProfile[];
+  health: Map<string, LLMPoolMember>;
+  poolOn: boolean;
+  onEdit: (p: LLMProfile) => void;
+  onActivate: (id: string, name: string) => void;
+  onRemove: (p: LLMProfile) => void;
+}) {
+  // group by provider; unknown/empty -> custom
+  const groups = React.useMemo(() => {
+    const m = new Map<string, LLMProfile[]>();
+    for (const p of profiles) {
+      const key = p.provider || "custom";
+      if (!m.has(key)) m.set(key, []);
+      m.get(key)?.push(p);
+    }
+    // active profile's provider first, then by provider name
+    const activeProvider = profiles.find((p) => p.is_default)?.provider || "custom";
+    return [...m.entries()].sort((a, b) => {
+      if (a[0] === activeProvider) return -1;
+      if (b[0] === activeProvider) return 1;
+      return providerLabel(a[0]).localeCompare(providerLabel(b[0]));
+    });
+  }, [profiles]);
+
+  if (profiles.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground text-sm">
+        No model profiles yet — click "Create" in the top right to add the first one.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {groups.map(([prov, list]) => (
+        <section key={prov} className="space-y-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold tracking-wide uppercase">{providerLabel(prov)}</h2>
+            <Badge variant="secondary" className="text-[10px]">
+              {list.length} profile{list.length > 1 ? "s" : ""}
+            </Badge>
+            {prov !== "custom" && (
+              <code className="text-muted-foreground text-[11px]">
+                {PROVIDER_PRESETS.find((x) => x.id === prov)?.baseUrl}
+              </code>
+            )}
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {list.map((p) => {
+              const h = healthOf(p, health.get(p.id));
+              return (
+                // biome-ignore lint/a11y/useSemanticElements: the card contains its own action buttons; a native <button> would nest buttons (invalid HTML)
+                <Card
+                  key={p.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onEdit(p)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onEdit(p);
+                    }
+                  }}
+                  className={cn(
+                    "cursor-pointer gap-0 py-4 outline-none transition-colors hover:border-foreground/30",
+                    p.is_default && "border-amber-400/50 bg-amber-400/5",
+                  )}
+                >
+                  <CardContent className="grid gap-2 px-4">
+                    <div className="flex items-start gap-2">
+                      <StarIcon
+                        className={cn(
+                          "mt-0.5 size-4 shrink-0",
+                          p.is_default ? "fill-amber-400 text-amber-400" : "text-muted-foreground",
+                        )}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate text-sm font-medium">{p.name}</span>
+                          <Badge variant="outline" className="ml-auto shrink-0 text-[10px] uppercase">
+                            {p.format}
+                          </Badge>
+                          <Badge variant="outline" className={cn("shrink-0", h.cls)} title={h.hint}>
+                            {h.label}
+                          </Badge>
+                        </div>
+                        <code className="mt-1 block truncate font-mono text-muted-foreground text-xs">{p.model}</code>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 pl-6 text-muted-foreground text-xs">
+                      {p.api_key_hint && <span>{p.api_key_hint}</span>}
+                      <span>
+                        {p.rate_per_second}/s · {p.rate_per_minute}/min
+                      </span>
+                      {p.proxy && <span className="truncate">Proxy {p.proxy}</span>}
+                      {p.reasoning_effort && (
+                        <span>Thinking {p.reasoning_effort === "off" ? "off" : p.reasoning_effort}</span>
+                      )}
+                      {poolOn &&
+                        !p.is_default &&
+                        (p.pool_exclude ? <span>Excluded from pool</span> : <span>Priority {p.priority ?? 0}</span>)}
+                    </div>
+
+                    <div className="mt-1 flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        disabled={p.is_default}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onActivate(p.id, p.name);
+                        }}
+                      >
+                        {p.is_default ? "Active" : "Set as active"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(p);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        aria-label="Delete profile"
+                        disabled={p.is_default}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRemove(p);
+                        }}
+                      >
+                        <Trash2Icon className="text-destructive" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

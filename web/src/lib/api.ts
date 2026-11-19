@@ -1089,6 +1089,7 @@ export const api = {
     id?: number; // omit/0 = create; set = update that profile
     name: string;
     format: string;
+    provider?: string; // preset id (opencode-zen, openai, ...) or custom; groups the LLM list
     model: string;
     base_url?: string;
     proxy?: string;
