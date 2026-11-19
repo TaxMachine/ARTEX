@@ -87,27 +87,35 @@ func (s *Service) CaptureStart(ctx context.Context, taskID int64, name, iface, b
 	if !safeBPFRE.MatchString(bpf) {
 		return db.MachineCapture{}, errors.New("bpf_filter contains unsupported characters")
 	}
+	isWin := isWindowsMachine(m)
 	stamp := time.Now().UTC().Format("20060102T150405")
-	pcap := fmt.Sprintf("/tmp/artex-%s-%s.pcap", safeBase(m.Name), stamp)
-	pidf := fmt.Sprintf("/tmp/artex-%s-%s.pid", safeBase(m.Name), stamp)
-	logf := fmt.Sprintf("/tmp/artex-%s-%s.log", safeBase(m.Name), stamp)
-	prefix := "tcpdump"
-	if v, ok := m.Config["capture_sudo"].(bool); ok && v {
-		prefix = "sudo -n tcpdump"
+	var pcap, pidf, logf, cmd string
+	var stdout, stderr string
+	var exit int
+	var runErr error
+	if isWin {
+		// pktmon: ETL first, pcapng after stop. The PID file is unused (named
+		// session stopped by name), the "pid" marker is the ETL path itself.
+		pcap = fmt.Sprintf(`C:\Windows\Temp\artex-%s-%s.etl`, safeBase(m.Name), stamp)
+		pidf = pcap
+		logf = fmt.Sprintf(`C:\Windows\Temp\artex-%s-%s.log`, safeBase(m.Name), stamp)
+		stdout, stderr, exit, runErr = s.startCaptureWindows(ctx, taskID, m, c, iface, bpf, pcap, pidf, logf)
+		cmd = "pktmon start (windows)"
+	} else {
+		pcap = fmt.Sprintf("/tmp/artex-%s-%s.pcap", safeBase(m.Name), stamp)
+		pidf = fmt.Sprintf("/tmp/artex-%s-%s.pid", safeBase(m.Name), stamp)
+		logf = fmt.Sprintf("/tmp/artex-%s-%s.log", safeBase(m.Name), stamp)
+		stdout, stderr, exit, runErr = s.startCaptureUnix(ctx, taskID, m, c, iface, bpf, pcap, pidf, logf)
+		cmd = "tcpdump (unix)"
 	}
-	cmd := fmt.Sprintf(
-		"nohup %s -i %s -U -w %s %s >%s 2>&1 & p=$!; echo $p; sleep 1; "+
-			"if kill -0 $p 2>/dev/null; then echo RUNNING; else echo FAILED; cat %s; fi",
-		prefix, iface, pcap, bpf, logf, logf)
-	stdout, stderr, exit, runErr := s.captureCommand(ctx, m, c, cmd, 45*time.Second)
 	if runErr != nil {
 		s.captureEvent(taskID, m, "capture_start", cmd, stdout, stderr, exit, pcap)
 		return db.MachineCapture{}, runErr
 	}
 	if !strings.Contains(stdout, "RUNNING") {
-		msg := "tcpdump did not stay running\n" + stdout + stderr
+		msg := "capture did not start\n" + stdout + stderr
 		s.captureEvent(taskID, m, "capture_start", cmd, msg, stderr, 1, pcap)
-		return db.MachineCapture{}, fmt.Errorf("capture failed to start (tcpdump installed? privileges?): %s", truncate(msg, 1200))
+		return db.MachineCapture{}, fmt.Errorf("capture failed to start (tcpdump/pktmon installed? privileges?): %s", truncate(msg, 1200))
 	}
 	cap := db.MachineCapture{MachineID: m.ID, TaskID: &taskID, Iface: iface, BPFFilter: bpf, RemotePath: pcap, PIDFile: pidf}
 	id, err := s.pg.Machines().CreateCapture(cap)
@@ -137,17 +145,27 @@ func (s *Service) CaptureStop(ctx context.Context, taskID int64, name string, ca
 	if cap.Status != "running" {
 		return cap, fmt.Errorf("capture %d is already %s", captureID, cap.Status)
 	}
-	// The pid file lives on the guest, not the host; read it remotely.
-	cmd := fmt.Sprintf("p=$(cat %s 2>/dev/null); [ -n \"$p\" ] && kill -INT $p 2>/dev/null; sleep 1; ls -l %s 2>/dev/null || true",
-		cap.PIDFile, cap.RemotePath)
-	stdout, stderr, exit, runErr := s.captureCommand(ctx, m, c, cmd, 30*time.Second)
+	var cmd, remoteFinal string
+	var stdout, stderr string
+	var exit int
+	var runErr error
+	if isWindowsMachine(m) {
+		remoteFinal, stdout, stderr, exit, runErr = s.stopCaptureWindows(ctx, taskID, m, c, cap)
+		cmd = "pktmon stop + etl2pcapng (windows)"
+	} else {
+		remoteFinal = cap.RemotePath
+		// The pid file lives on the guest, not the host; read it remotely.
+		cmd = fmt.Sprintf("p=$(cat %s 2>/dev/null); [ -n \"$p\" ] && kill -INT $p 2>/dev/null; sleep 1; ls -l %s 2>/dev/null || true",
+			cap.PIDFile, cap.RemotePath)
+		stdout, stderr, exit, runErr = s.captureCommand(ctx, m, c, cmd, 30*time.Second)
+	}
 	if runErr != nil {
 		s.captureEvent(taskID, m, "capture_stop", cmd, stdout, stderr, exit, cap.RemotePath)
 		return cap, runErr
 	}
 	localDir := filepath.Join(s.dataDir, "machine_captures", safeBase(m.Name))
 	local := filepath.Join(localDir, fmt.Sprintf("%d.pcap", cap.ID))
-	dl, dlErr := s.Download(ctx, taskID, m.Name, username, credentialID, cap.RemotePath, local)
+	dl, dlErr := s.Download(ctx, taskID, m.Name, username, credentialID, remoteFinal, local)
 	if dlErr != nil {
 		_ = s.pg.Machines().FinishCapture(cap.ID, "", 0, "failed")
 		s.captureEvent(taskID, m, "capture_stop", cmd, stdout, stderr, 1, cap.RemotePath)

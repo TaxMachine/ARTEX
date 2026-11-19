@@ -75,7 +75,8 @@ func builtinToolsByAgent() map[string][]actool.CoreTool {
 		"pentest": {ts.listAssets(), ts.insertAssets(), ts.addFinding(), ts.listFindings(), ts.listCompanies(), ts.saveTaskCredential(), ts.listTaskCredentials(),
 			ts.listMachines(), ts.machineStatus(), ts.machineStart(), ts.machineStop(),
 			ts.machineReset(), ts.machineSnapshot(), ts.sshExec(), ts.sshUpload(), ts.sshDownload(),
-			ts.machineEvents(), ts.machineEventGet(), ts.captureStart(), ts.captureStop(), ts.captureList()},
+			ts.machineEvents(), ts.machineEventGet(), ts.captureStart(), ts.captureStop(), ts.captureList(),
+			ts.msfPayload(), ts.msfHandlerStart(), ts.msfHandlerStatus(), ts.msfHandlerStop()},
 	}
 }
 

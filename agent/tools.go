@@ -145,6 +145,7 @@ type ToolSet struct {
 	machines        *machine.Service // native VM/SSH backend (nil = machine tools unavailable)
 	worker          string
 	taskID          int64 // PG tasks.id; 0 when unknown (tests / orchestrator cross-task reads)
+	artifactDir     string // run-scoped dir for generated artifacts (msf payloads...); "" = os.TempDir fallback
 	// coverageDisabled mirrors tasks.coverage_enabled=false. Stored inverted so the
 	// zero value (all existing ToolSet constructions) means ENABLED — matching the
 	// DB default (true). When true: graphOverviewData drops the coverage block, the
@@ -261,6 +262,11 @@ func (t *ToolSet) SetMachines(m *machine.Service) { t.machines = m }
 // SetTaskID sets the PG task id on this ToolSet so that report_finding can
 // dual-write to the standalone findings table (which survives task deletion).
 func (t *ToolSet) SetTaskID(id int64) { t.taskID = id }
+
+// SetArtifactDir sets the directory generated artifacts (msfvenom payloads,
+// handler resources/transcripts) are written to — the agent's run dir, so
+// artifacts land beside the session's other files instead of /tmp.
+func (t *ToolSet) SetArtifactDir(dir string) { t.artifactDir = dir }
 
 // SetCoverageEnabled records whether this task has the asset-coverage feature on
 // (default enabled). Passing false makes graphOverviewData omit the coverage block

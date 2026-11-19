@@ -463,6 +463,7 @@ func (w *Worker) execute(ctx context.Context, name string, taskID int64, as *db.
 	// This intent's dedicated work dir <workDir>/tasks/<taskID>/i<intentID> is created
 	// by the engine first.
 	runDir := ensureRunDir(w.workDir, taskID, intent.ID)
+	tsx.SetArtifactDir(runDir) // msf payloads/handler files land in the intent's run dir
 	// The run-wide intent is not the current tool action. Do not forward it or
 	// inherit a parent run's background into the action reviewer.
 	ctx = intercept.WithReviewContext(ctx, runDir, intercept.ReviewBackground{})

@@ -45,6 +45,16 @@ var noTargetTools = toolSet(
 	// are gated through machineTools below when the gate has a resolver).
 	"list_machines", "machine_status", "machine_events", "machine_event_get",
 	"capture_list", "desktop_close",
+	// machine lifecycle touches the platform's own VM registry (libvirt /
+	// operator scripts), not a network endpoint of the task's scope.
+	"machine_start", "machine_stop", "machine_reset", "machine_snapshot",
+	// software projects: platform records.
+	"list_projects", "project_context", "save_project", "set_task_project",
+	// metasploit tooling: payload generation is local file output; the handler
+	// listens on the platform's own interface (lhost), status/stop read local
+	// process state. The payload's eventual execution target is gated where it
+	// happens (ssh_exec / Bash), not at generation.
+	"msf_payload", "msf_handler_start", "msf_handler_status", "msf_handler_stop",
 )
 
 // machineTools are the native machine tools whose call reaches a registered

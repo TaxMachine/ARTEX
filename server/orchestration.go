@@ -44,6 +44,11 @@ func (s *Server) hostTools() ([]actool.CoreTool, map[string][]string) {
 	tools := append(s.m.HostTools(), s.orchestrationTools()...)
 	tools = append(tools, s.findingRetestTools()...)
 	tools = append(tools, s.platformTools()...) // platform operation tools (create/edit skills/tools/MCP, for Auto)
+	// Metasploit host tools: msfvenom payload generation + detached handlers.
+	// Bound per-agent via the tools table (worker + pentest defaults seeded in
+	// the catalog); ToolResolve keeps them only where bound.
+	tsx := agent.NewToolSet(nil, "host")
+	tools = append(tools, tsx.MsfTools()...)
 	custom, err := s.customTools()
 	if err != nil {
 		log.Printf("[custom-tool] load failed: %v", err)

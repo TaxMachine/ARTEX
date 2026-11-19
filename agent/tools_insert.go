@@ -730,6 +730,8 @@ func (t *ToolSet) WorkerTools() []actool.CoreTool {
 		t.sshExec(), t.sshUpload(), t.sshDownload(),
 		t.machineEvents(), t.machineEventGet(),
 		t.captureStart(), t.captureStop(), t.captureList(),
+		// Metasploit: payload generation + detached handlers for RCE proofs.
+		t.msfPayload(), t.msfHandlerStart(), t.msfHandlerStatus(), t.msfHandlerStop(),
 		// Desktop console (VNC/RDP): screenshot+OCR, click, type, keys.
 		t.desktopOpen(), t.desktopScreen(), t.desktopClick(),
 		t.desktopType(), t.desktopKey(), t.desktopClose(),
@@ -775,6 +777,8 @@ func (t *ToolSet) MainAgentTools() []actool.CoreTool {
 		// Native machines: plan/boot/snapshot VM work and review machine evidence.
 		t.listMachines(), t.machineStatus(), t.machineStart(), t.machineStop(),
 		t.machineReset(), t.machineSnapshot(), t.machineEvents(), t.machineEventGet(),
+		// Metasploit: payload generation + detached handlers for RCE proofs.
+		t.msfPayload(), t.msfHandlerStart(), t.msfHandlerStatus(), t.msfHandlerStop(),
 	}
 }
 

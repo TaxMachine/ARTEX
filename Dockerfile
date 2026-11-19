@@ -131,6 +131,21 @@ RUN set -eux; \
     tar -xJf "/tmp/$asset" -C /usr/local --strip-components=1 --no-same-owner; \
     rm -f "/tmp/$asset" /tmp/SHASUMS256.txt; \
     node --version; npm --version
+# Metasploit Framework (payload generation + handlers for RCE proving) from
+# Rapid7's official apt repo. The signing key is the armored copy embedded in
+# rapid7/metasploit-omnibus' msfupdate.erb (pinned commit check omitted: the
+# key is stable since 2015 and verified by apt against every package).
+# Nightly-built package (no tagged release to pin). ~900MB installed; bundles
+# its own Ruby runtime under /opt/metasploit-framework, no system-Ruby impact.
+COPY assets/keys/metasploit-framework.gpg /usr/share/keyrings/metasploit-framework.gpg
+RUN set -eux; \
+    echo "deb [signed-by=/usr/share/keyrings/metasploit-framework.gpg] https://apt.metasploit.com/ lucid main" > /etc/apt/sources.list.d/metasploit-framework.list; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends metasploit-framework; \
+    rm -rf /var/lib/apt/lists/*; \
+    rm /etc/apt/sources.list.d/metasploit-framework.list; \
+    command -v msfconsole msfvenom msfdb
+
 # Pinned, checksum-verified recon binaries and the sqlmap checkout from the tools stage.
 COPY --from=tools /out/ /usr/local/bin/
 COPY --from=tools /opt/sqlmap /opt/sqlmap
