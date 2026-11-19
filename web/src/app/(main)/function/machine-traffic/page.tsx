@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataTableShell } from "@/components/data-table-shell";
 import { api, ApiError } from "@/lib/api";
-import type { MachineCapture, MachineEvent } from "@/lib/types";
+import type { MachineEvent } from "@/lib/types";
 
 function errText(e: unknown) {
   return e instanceof ApiError ? e.message : e instanceof Error ? e.message : String(e);
@@ -45,8 +45,6 @@ export default function MachineTrafficPage() {
   const [loading, setLoading] = React.useState(true);
   const [detail, setDetail] = React.useState<MachineEvent | null>(null);
   const [filter, setFilter] = React.useState({ machine: "", action: "", q: "" });
-  const [capMachine, setCapMachine] = React.useState("");
-  const [captures, setCaptures] = React.useState<MachineCapture[]>([]);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -64,22 +62,13 @@ export default function MachineTrafficPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function loadCaptures() {
-    if (!capMachine.trim()) return;
-    try {
-      setCaptures(await api.machineCaptures(capMachine.trim()));
-    } catch (e) {
-      toast.error(errText(e));
-    }
-  }
-
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Machine Traffic</h1>
           <p className="text-sm text-muted-foreground">
-            Native VM/SSH evidence: commands and output, uploads/downloads, lifecycle actions and packet captures. Web
+            Native VM/SSH evidence: commands and output, uploads/downloads, lifecycle actions. Packet captures have their own page. Web
             HTTP exchanges stay on the separate Traffic page.
           </p>
         </div>
@@ -169,58 +158,17 @@ export default function MachineTrafficPage() {
         </Table>
       </DataTableShell>
 
-      <DataTableShell
-        className="h-64 shrink-0"
-        toolbar={
-          <>
-            <CardTitle className="text-base">Packet captures</CardTitle>
-            <Input
-              className="h-8 w-40"
-              placeholder="machine"
-              value={capMachine}
-              onChange={(e) => setCapMachine(e.target.value)}
-            />
-            <Button size="sm" variant="outline" onClick={() => void loadCaptures()}>
-              Load
-            </Button>
-          </>
-        }
-      >
-        <Table>
-          <TableHeader className="sticky top-0 z-10 bg-card">
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Interface</TableHead>
-              <TableHead>Filter</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Bytes</TableHead>
-              <TableHead>Local pcap</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {captures.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                  Enter a machine name and Load. Captures are created by capture_start (Linux targets).
-                </TableCell>
-              </TableRow>
-            ) : (
-              captures.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="text-xs">#{c.id}</TableCell>
-                  <TableCell className="text-xs">{c.iface}</TableCell>
-                  <TableCell className="max-w-[320px] truncate font-mono text-xs">{c.bpf_filter || "—"}</TableCell>
-                  <TableCell>
-                    <Badge variant={c.status === "running" ? "default" : "secondary"}>{c.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-xs">{fmtBytes(c.bytes)}</TableCell>
-                  <TableCell className="max-w-[360px] truncate font-mono text-xs">{c.local_path || c.remote_path}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </DataTableShell>
+      <Card className="shrink-0 py-4">
+        <CardContent className="flex flex-wrap items-center justify-between gap-2 px-4">
+          <CardTitle className="text-base">Packet captures moved</CardTitle>
+          <span className="text-xs text-muted-foreground">
+            Machine pcaps now live on their own page — filterable, with task links and pcap downloads.
+          </span>
+          <Button size="sm" variant="outline" asChild>
+            <a href="/function/machine-captures">Open Packet captures</a>
+          </Button>
+        </CardContent>
+      </Card>
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-w-4xl">

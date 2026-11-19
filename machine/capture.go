@@ -198,3 +198,14 @@ func safeBase(s string) string {
 	}
 	return b.String()
 }
+
+// RecentCaptures lists the newest captures across every machine (with machine
+// names) for the packet-captures page.
+func (s *Service) RecentCaptures(limit int) ([]db.MachineCaptureWithMachine, error) {
+	return s.pg.Machines().RecentCaptures(limit)
+}
+
+// Capture returns one capture row by id.
+func (s *Service) Capture(id int64) (db.MachineCapture, error) {
+	return s.pg.Machines().Capture(id)
+}

@@ -341,6 +341,8 @@ export const api = {
   machineSnapshot: (name: string, action: "list" | "create" | "revert", snapshot?: string) =>
     post<{ output: string }>(`/machines/${encodeURIComponent(name)}/snapshot`, { action, snapshot }),
   machineCaptures: (name: string) => get<MachineCapture[]>(`/machines/${encodeURIComponent(name)}/captures`).then((r) => arr(r)),
+  machineCaptureList: (limit = 200) =>
+    get<MachineCapture[]>(`/machine-captures?limit=${limit}`).then((r) => arr(r)),
   machineAutostart: (taskId?: number) =>
     post<{ results: MachineBootResult[] }>("/machines/autostart", taskId ? { task_id: taskId } : undefined).then((r) => r.results),
   machineEvents: (params: { task_id?: string; machine?: string; action?: string; q?: string; limit?: number; offset?: number }) => {

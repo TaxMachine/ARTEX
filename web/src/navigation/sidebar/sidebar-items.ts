@@ -75,6 +75,7 @@ export const sidebarItems: NavGroup[] = [
       { id: "findings", title: "Findings", url: "/function/findings", icon: Bug },
       { id: "traffic", title: "Web Traffic", url: "/function/traffic", icon: Globe },
       { id: "machine-traffic", title: "Machine Traffic", url: "/function/machine-traffic", icon: Activity },
+      { id: "machine-captures", title: "Packet Captures", url: "/function/machine-captures", icon: Radio },
       { id: "machines", title: "Machines", url: "/function/machines", icon: Server },
       { id: "projects", title: "Projects", url: "/function/projects", icon: Boxes },
       { id: "commands", title: "Tool Execution", url: "/function/commands", icon: Terminal },

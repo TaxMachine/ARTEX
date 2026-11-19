@@ -2,7 +2,10 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -174,6 +177,48 @@ func (s *Server) listMachineCaptures(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, 200, list)
+}
+
+// listAllMachineCaptures serves the packet-captures page: the newest captures
+// across all machines with names joined in.
+func (s *Server) listAllMachineCaptures(w http.ResponseWriter, r *http.Request) {
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	list, err := s.m.Machines().RecentCaptures(limit)
+	if err != nil {
+		writeErr(w, 500, err.Error())
+		return
+	}
+	if list == nil {
+		list = []db.MachineCaptureWithMachine{}
+	}
+	writeJSON(w, 200, list)
+}
+
+// downloadMachineCapture serves a finished capture's local pcap file.
+func (s *Server) downloadMachineCapture(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil || id <= 0 {
+		writeErr(w, 400, "bad capture id")
+		return
+	}
+	cap, err := s.m.Machines().Capture(id)
+	if err != nil {
+		writeErr(w, 404, err.Error())
+		return
+	}
+	if cap.LocalPath == "" {
+		writeErr(w, 409, "capture has no downloaded pcap yet (still running or failed)")
+		return
+	}
+	f, err := os.Open(cap.LocalPath)
+	if err != nil {
+		writeErr(w, 500, "pcap file missing on the server: "+err.Error())
+		return
+	}
+	defer f.Close()
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s-%d.pcapng\"", "capture", id))
+	_, _ = io.Copy(w, f)
 }
 
 func clip(s string, n int) string {

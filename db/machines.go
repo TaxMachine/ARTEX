@@ -392,6 +392,45 @@ func (s *MachineStore) Capture(id int64) (MachineCapture, error) {
 	return c, nil
 }
 
+// RecentCaptures lists the newest captures across every machine, with the
+// machine name joined in for the packet-captures page.
+func (s *MachineStore) RecentCaptures(limit int) ([]MachineCaptureWithMachine, error) {
+	if limit <= 0 || limit > 200 {
+		limit = 100
+	}
+	rows, err := s.db.Query(`
+		SELECT c.id, c.machine_id, m.name, c.task_id, c.iface, c.bpf_filter,
+		       c.remote_path, c.local_path, c.pid_file, c.status, c.bytes,
+		       c.started_at, c.stopped_at
+		FROM machine_captures c JOIN machines m ON m.id = c.machine_id
+		ORDER BY c.id DESC LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []MachineCaptureWithMachine
+	for rows.Next() {
+		var c MachineCaptureWithMachine
+		var stopped sql.NullTime
+		if err := rows.Scan(&c.ID, &c.MachineID, &c.Machine, &c.TaskID, &c.Iface, &c.BPFFilter,
+			&c.RemotePath, &c.LocalPath, &c.PIDFile, &c.Status, &c.Bytes, &c.StartedAt, &stopped); err != nil {
+			return nil, err
+		}
+		if stopped.Valid {
+			t := stopped.Time
+			c.StoppedAt = &t
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
+// MachineCaptureWithMachine is a capture row plus its machine's name.
+type MachineCaptureWithMachine struct {
+	MachineCapture
+	Machine string `json:"machine"`
+}
+
 func (s *MachineStore) Captures(machineID int64, limit int) ([]MachineCapture, error) {
 	if limit <= 0 || limit > 100 {
 		limit = 20
