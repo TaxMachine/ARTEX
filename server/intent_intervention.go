@@ -115,8 +115,28 @@ func (s *Server) sendWorkerMessage(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusConflict, "node is not an intent")
 		return
 	}
+	if node.State == "running" {
+		// Opencode-style steering for a live work: queue the message into the
+		// engine's steer box; the worker reads it right before its NEXT tool call
+		// (the call is blocked and the message handed back, so it re-plans). The
+		// human turn is recorded on the intent so it renders in the session.
+		if err := s.engine.SteerWork(iid, message); err != nil {
+			writeErr(w, http.StatusConflict, err.Error())
+			return
+		}
+		uid := iid
+		s.engine.emitActivity(t, db.Activity{NodeID: &uid, Worker: "user", Kind: "user", Summary: message, Detail: message})
+		writeJSON(w, http.StatusOK, map[string]any{
+			"id":         iid,
+			"state":      "running",
+			"accepted":   true,
+			"queued":     true,
+			"request_id": requestID,
+		})
+		return
+	}
 	if node.State != "paused" {
-		writeErr(w, http.StatusConflict, "Only a paused Worker accepts messages; pause it first")
+		writeErr(w, http.StatusConflict, "Only a paused or running Worker accepts messages")
 		return
 	}
 	agentMessage, ok := s.prepareChatMentionMessage(w, message)
@@ -143,4 +163,56 @@ func (s *Server) sendWorkerMessage(w http.ResponseWriter, r *http.Request) {
 		"accepted":   true,
 		"request_id": requestID,
 	})
+}
+
+// sendPlannerMessage steers the task's planner opencode-style: the message is
+// stored as an operator hint (origin human) the planner reads at its NEXT round
+// (the hint trigger wakes it immediately when the task is running), and the
+// human turn is recorded on the task's planner lane so it renders in the
+// session transcript. Unlike worker steering there is no pre-tool-call
+// injection point — planner rounds are discrete LLM calls — so the hint block
+// + trigger is the delivery mechanism.
+func (s *Server) sendPlannerMessage(w http.ResponseWriter, r *http.Request) {
+	t, ok := s.m.Task(r.PathValue("id"))
+	if !ok {
+		writeErr(w, http.StatusNotFound, "task not found")
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, maxWorkerMessageBytes)
+	var req struct {
+		Message   string `json:"message"`
+		RequestID string `json:"request_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			writeErr(w, http.StatusRequestEntityTooLarge, "Request body too large")
+			return
+		}
+		writeErr(w, http.StatusBadRequest, "bad json: "+err.Error())
+		return
+	}
+	message := strings.TrimSpace(req.Message)
+	if message == "" {
+		writeErr(w, http.StatusBadRequest, "Message cannot be empty")
+		return
+	}
+	if len([]rune(message)) > 4000 {
+		writeErr(w, http.StatusBadRequest, "Message must not exceed 4000 characters")
+		return
+	}
+	agentMessage, ok := s.prepareChatMentionMessage(w, message)
+	if !ok {
+		return
+	}
+	// Store as an operator hint: the planner's next round renders hints in its
+	// situation block, and the trigger wakes it now (a paused/terminal task
+	// still stores the hint; it is read when planning resumes).
+	if _, err := t.Store.AddNode(db.KindHint, map[string]any{"text": agentMessage}, 0, "active", "human", nil); err != nil {
+		writeErr(w, http.StatusInternalServerError, "hint store failed: "+err.Error())
+		return
+	}
+	t.NotifyHint("human", []string{agentMessage})
+	s.engine.emitActivity(t, db.Activity{Worker: "planner", Kind: "user", Summary: message, Detail: message})
+	writeJSON(w, http.StatusOK, map[string]any{"accepted": true, "queued": true, "request_id": req.RequestID})
 }

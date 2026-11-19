@@ -432,8 +432,14 @@ export const api = {
       id: number;
       state: "running";
       accepted: true;
+      queued?: boolean;
       request_id: string;
     }>(`/tasks/${taskId}/intents/${intentId}/messages`, { message, request_id: requestId }),
+  sendPlannerMessage: (taskId: string, message: string, requestId: string) =>
+    post<{ accepted: boolean; queued: boolean; request_id: string }>(`/tasks/${taskId}/planner-message`, {
+      message,
+      request_id: requestId,
+    }),
   taskLLMResolution: (id: string) => get<TaskLLMResolutions>(`/tasks/${id}/llm/resolution`),
   // Rerun an intent that did not succeed (blocked/exhausted/stopped): set back to open, and a worker re-claims and reruns it from scratch.
   rerunIntent: (taskId: string, intentId: string) =>

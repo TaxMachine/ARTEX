@@ -540,6 +540,8 @@ export function SessionsTab({ taskId, taskPaused = false }: { taskId: string; ta
   // Delete mode: soft = soft delete (default, sets deleted + records the reason, keeps data) | hard = hard delete (cascade-removes exclusive descendants).
   const [deleteMode, setDeleteMode] = React.useState<"soft" | "hard">("soft");
   const [workerMessage, setWorkerMessage] = React.useState("");
+  const [plannerMessage, setPlannerMessage] = React.useState("");
+  const [plannerSending, setPlannerSending] = React.useState(false);
   const [workerMessageRequestId, setWorkerMessageRequestId] = React.useState("");
   const [workerMessageSending, setWorkerMessageSending] = React.useState(false);
   // Method 1, file upload: chosen attachments (already landed in the task work dir uploads/) are sent with the next message.
@@ -1534,11 +1536,28 @@ export function SessionsTab({ taskId, taskPaused = false }: { taskId: string; ta
       .finally(() => setSending(false));
   }
 
+  function sendPlannerChat() {
+    const message = plannerMessage.trim();
+    if (!message || plannerSending) return;
+    setPlannerSending(true);
+    api
+      .sendPlannerMessage(taskId, message, `web-${Date.now()}`)
+      .then(() => {
+        setPlannerMessage("");
+        toast.success("Message queued for the planner; it reads it on its next round");
+      })
+      .catch((e) => toast.error(`Send failed: ${(e as Error).message || "please retry later"}`))
+      .finally(() => setPlannerSending(false));
+  }
+
   function sendWorkerChat() {
     const intentId = active.intent_id;
     const message = workerMessage.trim();
     if (side.handleCommand(message, () => setWorkerMessage(""))) return;
-    if (!intentId || active.inherited || active.status !== "paused" || workerMessageSending || !message) return;
+    // Running workers queue the message opencode-style (delivered right before the
+    // next tool call); paused workers take the resume-with-message path.
+    if (!intentId || active.inherited || (active.status !== "paused" && active.status !== "running") || workerMessageSending || !message)
+      return;
     if (workerMessageCharCount(message) > MAX_WORKER_MESSAGE_CHARS) {
       toast.error(`Messages cannot exceed ${MAX_WORKER_MESSAGE_CHARS} characters`);
       return;
@@ -1554,7 +1573,11 @@ export function SessionsTab({ taskId, taskPaused = false }: { taskId: string; ta
         patchIntentState(intentId, result.state);
         setWorkerMessage("");
         setWorkerMessageRequestId("");
-        toast.success(`Message sent to Worker #${intentId}; execution resumed immediately`);
+        toast.success(
+          result.queued
+            ? `Message queued for Worker #${intentId}; it reads it right before its next action`
+            : `Message sent to Worker #${intentId}; execution resumed immediately`,
+        );
       })
       .catch((error) => {
         toast.error(`Send failed: ${(error as Error).message || "please retry later"}`);
@@ -2027,7 +2050,11 @@ export function SessionsTab({ taskId, taskPaused = false }: { taskId: string; ta
                     inputGroup
                     rows={1}
                     aria-label={`Message Worker #${active.intent_id}`}
-                    placeholder={`Message Worker #${active.intent_id}; @ to reference records and adjust execution direction…`}
+                    placeholder={
+                      active.status === "running"
+                        ? `Message Worker #${active.intent_id} — queued, read right before its next action; @ to reference records…`
+                        : `Message Worker #${active.intent_id}; @ to reference records and adjust execution direction…`
+                    }
                     value={workerMessage}
                     onValueChange={(value) => {
                       setWorkerMessage(value);
@@ -2051,9 +2078,19 @@ export function SessionsTab({ taskId, taskPaused = false }: { taskId: string; ta
                     >
                       {workerMessageCharCount(workerMessage)}/{MAX_WORKER_MESSAGE_CHARS}
                     </span>
-                    {active.status === "running" && isBtwCommand(workerMessage) && (
-                      <InputGroupButton size="icon-xs" onClick={sendWorkerChat} aria-label="Send side question">
-                        <ArrowUpIcon />
+                    {active.status === "running" && (
+                      <InputGroupButton
+                        size="icon-xs"
+                        onClick={sendWorkerChat}
+                        disabled={
+                          workerMessageSending ||
+                          !workerMessage.trim() ||
+                          workerMessageCharCount(workerMessage) > MAX_WORKER_MESSAGE_CHARS
+                        }
+                        title={isBtwCommand(workerMessage) ? "Send side question" : "Queue message (read before the worker's next action)"}
+                        aria-label="Send message"
+                      >
+                        {workerMessageSending ? <Spinner /> : <ArrowUpIcon />}
                       </InputGroupButton>
                     )}
                     {active.status === "running" ? (
@@ -2105,6 +2142,38 @@ export function SessionsTab({ taskId, taskPaused = false }: { taskId: string; ta
                         </InputGroupButton>
                       </>
                     )}
+                  </InputGroupAddon>
+                </InputGroup>
+              </div>
+            ) : isPlanner ? (
+              <div className="border-t p-3">
+                <InputGroup className="min-h-9 has-disabled:opacity-100">
+                  <MentionTextarea
+                    inputGroup
+                    rows={1}
+                    aria-label="Message planner"
+                    placeholder="Message the planner — queued as an operator hint, read on its next round; @ to reference records…"
+                    value={plannerMessage}
+                    onValueChange={setPlannerMessage}
+                    onKeyDown={(event) => {
+                      if (!shouldSubmitOnKey(event, sendMode)) return;
+                      event.preventDefault();
+                      sendPlannerChat();
+                    }}
+                    disabled={plannerSending}
+                    className="max-h-36 min-h-9 overflow-y-auto"
+                  />
+                  <InputGroupAddon align="block-end">
+                    <InputGroupButton
+                      className="ml-auto"
+                      size="icon-xs"
+                      onClick={sendPlannerChat}
+                      disabled={plannerSending || !plannerMessage.trim()}
+                      title="Queue for the planner's next round"
+                      aria-label="Send message to planner"
+                    >
+                      {plannerSending ? <Spinner /> : <ArrowUpIcon />}
+                    </InputGroupButton>
                   </InputGroupAddon>
                 </InputGroup>
               </div>
