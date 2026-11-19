@@ -167,11 +167,11 @@ func (s *Service) CaptureStop(ctx context.Context, taskID int64, name string, ca
 	local := filepath.Join(localDir, fmt.Sprintf("%d.pcap", cap.ID))
 	dl, dlErr := s.Download(ctx, taskID, m.Name, username, credentialID, remoteFinal, local)
 	if dlErr != nil {
-		_ = s.pg.Machines().FinishCapture(cap.ID, "", 0, "failed")
+		_ = s.pg.Machines().FinishCaptureNote(cap.ID, "", 0, "failed", truncate(dlErr.Error(), 400))
 		s.captureEvent(taskID, m, "capture_stop", cmd, stdout, stderr, 1, cap.RemotePath)
 		return cap, fmt.Errorf("stop ok but download failed: %w", dlErr)
 	}
-	_ = s.pg.Machines().FinishCapture(cap.ID, dl.LocalPath, dl.Bytes, "stopped")
+	_ = s.pg.Machines().FinishCaptureNote(cap.ID, dl.LocalPath, dl.Bytes, "stopped", pcapngSummary(dl.LocalPath))
 	s.captureEvent(taskID, m, "capture_stop", cmd, stdout, stderr, 0, dl.LocalPath)
 	cap, _ = s.pg.Machines().Capture(cap.ID)
 	return cap, nil

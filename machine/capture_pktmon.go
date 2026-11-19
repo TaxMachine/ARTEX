@@ -3,8 +3,10 @@ package machine
 import (
 	"context"
 	"encoding/base64"
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -152,4 +154,43 @@ func psEncode(script string) string {
 		u16 = append(u16, b, 0)
 	}
 	return base64.StdEncoding.EncodeToString(u16)
+}
+
+// pcapngSummary counts packets in a downloaded capture (pcapng or classic pcap)
+// for the captures list: "N packets". Best effort — unreadable file returns "".
+func pcapngSummary(path string) string {
+	b, err := os.ReadFile(path)
+	if err != nil || len(b) < 12 {
+		return ""
+	}
+	// pcapng: Enhanced Packet Blocks (type 6); classic pcap: little/big-endian counts
+	if b[0] == 0x0a && b[1] == 0x0d { // \n\r magic
+		n, i := 0, 0
+		for i+8 <= len(b) {
+			bt := binary.LittleEndian.Uint32(b[i : i+4])
+			bl := binary.LittleEndian.Uint32(b[i+4 : i+8])
+			if bl < 12 || i+int(bl) > len(b) {
+				break
+			}
+			if bt == 6 {
+				n++
+			}
+			i += int(bl)
+		}
+		return fmt.Sprintf("%d packets", n)
+	}
+	// classic pcap: 24-byte header, 16-byte per-packet records
+	if binary.LittleEndian.Uint32(b[:4]) == 0xa1b2c3d4 || binary.LittleEndian.Uint32(b[:4]) == 0xd4c3b2a1 {
+		n, i := 0, 24
+		for i+16 <= len(b) {
+			cl := binary.LittleEndian.Uint32(b[i+8 : i+12])
+			if cl == 0 {
+				break
+			}
+			n++
+			i += 16 + int(cl)
+		}
+		return fmt.Sprintf("%d packets", n)
+	}
+	return ""
 }

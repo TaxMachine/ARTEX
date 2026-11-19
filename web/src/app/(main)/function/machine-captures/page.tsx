@@ -150,6 +150,11 @@ export default function PacketCapturesPage() {
                     <Badge variant={c.status === "running" ? "default" : c.status === "failed" ? "destructive" : "secondary"}>
                       {c.status}
                     </Badge>
+                    {c.note && (
+                      <div className="mt-0.5 max-w-[180px] truncate text-[10px] text-muted-foreground" title={c.note}>
+                        {c.status === "stopped" ? c.note : c.note}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell className="text-right text-xs tabular-nums">{fmtBytes(c.bytes)}</TableCell>
                   <TableCell className="text-right text-xs tabular-nums">

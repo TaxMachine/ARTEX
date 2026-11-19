@@ -1575,6 +1575,7 @@ export interface MachineCapture {
   bytes: number;
   started_at: string;
   stopped_at?: string;
+  note?: string; // packet summary on success ('N packets'); failure reason otherwise
 }
 
 

@@ -68,6 +68,7 @@ type MachineCapture struct {
 	Bytes      int64      `json:"bytes"`
 	StartedAt  time.Time  `json:"started_at"`
 	StoppedAt  *time.Time `json:"stopped_at,omitempty"`
+	Note       string     `json:"note,omitempty"` // failure/download reason when status != stopped
 }
 
 var machineNameRE = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,63}$`)
@@ -368,16 +369,25 @@ func (s *MachineStore) FinishCapture(id int64, localPath string, bytes int64, st
 	return err
 }
 
+// FinishCaptureNote records the outcome with a reason (failed downloads,
+// conversion errors) surfaced in the captures list.
+func (s *MachineStore) FinishCaptureNote(id int64, localPath string, bytes int64, status, note string) error {
+	_, err := s.db.Exec(`
+		UPDATE machine_captures SET local_path=$2, bytes=$3, status=$4, note=NULLIF($5,''), stopped_at=now()
+		WHERE id=$1`, id, localPath, bytes, status, note)
+	return err
+}
+
 func (s *MachineStore) Capture(id int64) (MachineCapture, error) {
 	var c MachineCapture
 	var taskID sql.NullInt64
 	var stopped sql.NullTime
 	err := s.db.QueryRow(`
 		SELECT id, machine_id, task_id, iface, bpf_filter, remote_path, local_path, pid_file,
-		       status, bytes, started_at, stopped_at
+		       status, bytes, started_at, stopped_at, COALESCE(note,'')
 		FROM machine_captures WHERE id=$1`, id).
 		Scan(&c.ID, &c.MachineID, &taskID, &c.Iface, &c.BPFFilter, &c.RemotePath,
-			&c.LocalPath, &c.PIDFile, &c.Status, &c.Bytes, &c.StartedAt, &stopped)
+			&c.LocalPath, &c.PIDFile, &c.Status, &c.Bytes, &c.StartedAt, &stopped, &c.Note)
 	if err != nil {
 		return c, err
 	}
@@ -401,7 +411,7 @@ func (s *MachineStore) RecentCaptures(limit int) ([]MachineCaptureWithMachine, e
 	rows, err := s.db.Query(`
 		SELECT c.id, c.machine_id, m.name, c.task_id, c.iface, c.bpf_filter,
 		       c.remote_path, c.local_path, c.pid_file, c.status, c.bytes,
-		       c.started_at, c.stopped_at
+		       c.started_at, c.stopped_at, COALESCE(c.note,'')
 		FROM machine_captures c JOIN machines m ON m.id = c.machine_id
 		ORDER BY c.id DESC LIMIT $1`, limit)
 	if err != nil {
@@ -437,7 +447,7 @@ func (s *MachineStore) Captures(machineID int64, limit int) ([]MachineCapture, e
 	}
 	rows, err := s.db.Query(`
 		SELECT id, machine_id, task_id, iface, bpf_filter, remote_path, local_path, pid_file,
-		       status, bytes, started_at, stopped_at
+		       status, bytes, started_at, stopped_at, COALESCE(note,'')
 		FROM machine_captures WHERE machine_id=$1 ORDER BY id DESC LIMIT $2`, machineID, limit)
 	if err != nil {
 		return nil, err
