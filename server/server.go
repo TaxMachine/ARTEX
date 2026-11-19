@@ -872,6 +872,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/machines/{name}/snapshot", s.machineSnapshot)
 	mux.HandleFunc("GET /api/machines/{name}/captures", s.listMachineCaptures)
 	mux.HandleFunc("GET /api/machine-captures", s.listAllMachineCaptures)
+	mux.HandleFunc("GET /api/vuln-classes", s.listVulnClasses)
 	mux.HandleFunc("GET /api/machine-captures/{id}/download", s.downloadMachineCapture)
 	mux.HandleFunc("POST /api/machines/{name}/{action}", s.machineLifecycle)
 	mux.HandleFunc("GET /api/machine-events", s.listMachineEvents)

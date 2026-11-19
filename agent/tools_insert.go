@@ -779,6 +779,8 @@ func (t *ToolSet) MainAgentTools() []actool.CoreTool {
 		t.machineReset(), t.machineSnapshot(), t.machineEvents(), t.machineEventGet(),
 		// Metasploit: payload generation + detached handlers for RCE proofs.
 		t.msfPayload(), t.msfHandlerStart(), t.msfHandlerStatus(), t.msfHandlerStop(),
+		// canonical exploit-type taxonomy lookup for report_finding.
+		t.listVulnClasses(),
 	}
 }
 

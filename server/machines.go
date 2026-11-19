@@ -221,6 +221,11 @@ func (s *Server) downloadMachineCapture(w http.ResponseWriter, r *http.Request) 
 	_, _ = io.Copy(w, f)
 }
 
+// listVulnClasses serves the canonical exploit-type taxonomy.
+func (s *Server) listVulnClasses(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, 200, map[string]any{"classes": db.VulnClasses, "total": len(db.VulnClasses)})
+}
+
 func clip(s string, n int) string {
 	if len(s) <= n {
 		return s

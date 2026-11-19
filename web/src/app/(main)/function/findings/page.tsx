@@ -155,6 +155,8 @@ export default function FindingsPage() {
   const [reportState, setReportState] = React.useState<"all" | FindingReportState>("all");
   const [verificationStatus, setVerificationStatus] = React.useState<"all" | VerificationStatus>("all");
   const [vulnclass, setVulnclass] = React.useState<string>("all");
+  const [chainType, setChainType] = React.useState<string>("all");
+  const [vulnClasses, setVulnClasses] = React.useState<{ id: string; name: string }[]>([]);
   const [category, setCategory] = React.useState<"all" | FindingCategory>("all");
   const [task, setTask] = React.useState<string>("all");
   const [sort, setSort] = React.useState<"severity" | "time">("severity");
@@ -273,9 +275,14 @@ export default function FindingsPage() {
     if (!preferencesHydrated) return;
     setLocalStorageValue(
       FINDING_LIST_PREFERENCE_KEY,
-      JSON.stringify({ view, severity, status, reportState, verificationStatus, vulnclass, category, task, sort }),
+      JSON.stringify({ view, severity, status, reportState, verificationStatus, vulnclass, chainType, category, task, sort }),
     );
-  }, [preferencesHydrated, reportState, severity, sort, status, task, verificationStatus, view, vulnclass, category]);
+  }, [preferencesHydrated, reportState, severity, sort, status, task, verificationStatus, view, vulnclass, chainType, category]);
+
+  // Canonical exploit-type taxonomy (static server-side list).
+  React.useEffect(() => {
+    api.vulnClasses().then((r) => setVulnClasses(r.classes)).catch(() => {});
+  }, []);
 
   React.useEffect(() => {
     const timer = window.setTimeout(() => setQuery(search.trim()), 300);
@@ -335,7 +342,7 @@ export default function FindingsPage() {
       await api.exportFindings({
         format: exportFormat,
         scope: exportScope,
-        filters: { severity, status, reportState, verificationStatus, vulnclass, category, task, query, sort },
+        filters: { severity, status, reportState, verificationStatus, vulnclass, chainType, category, task, query, sort },
         ids: [...selectedIds],
       });
       setExportOpen(false);
@@ -378,6 +385,7 @@ export default function FindingsPage() {
         reportState,
         verificationStatus,
         vulnclass,
+        chainType,
         category,
         task,
         query,
@@ -421,6 +429,7 @@ export default function FindingsPage() {
         reportState,
         verificationStatus,
         vulnclass,
+        chainType,
         category,
         task,
         query,
@@ -440,7 +449,7 @@ export default function FindingsPage() {
       setAssetTree((current) => ({ ...current, loading: false }));
       toast.error(`Failed to load the asset tree: ${(e as Error).message}`);
     }
-  }, [filterFingerprint, reportState, severity, status, verificationStatus, vulnclass, task, query, sort]);
+  }, [filterFingerprint, reportState, severity, status, verificationStatus, vulnclass, chainType, task, query, sort]);
 
   const refreshGroups = React.useCallback(async () => {
     const requestFilter = filterFingerprint;
@@ -455,6 +464,7 @@ export default function FindingsPage() {
         reportState,
         verificationStatus,
         vulnclass,
+        chainType,
         category,
         task,
         query,
@@ -467,7 +477,7 @@ export default function FindingsPage() {
     } catch {
       // Polling keeps the last successful snapshot visible.
     }
-  }, [filterFingerprint, page, pageSize, reportState, severity, status, verificationStatus, vulnclass, category, task, query, sort]);
+  }, [filterFingerprint, page, pageSize, reportState, severity, status, verificationStatus, vulnclass, chainType, category, task, query, sort]);
 
   const loadGroup = React.useCallback(
     async (key: string, groupPage: number, groupPageSize: number) => {
@@ -495,6 +505,7 @@ export default function FindingsPage() {
           reportState,
           verificationStatus,
           vulnclass,
+        chainType,
           category,
           task: key,
           query,
@@ -1154,15 +1165,28 @@ export default function FindingsPage() {
             </SelectContent>
           </Select>
 
-          <Select value={vulnclass} onValueChange={setVulnclass}>
-            <SelectTrigger size="sm" className="w-40">
-              <SelectValue placeholder="Vulnerability type" />
+          <Select value={chainType} onValueChange={setChainType}>
+            <SelectTrigger size="sm" className="w-44">
+              <SelectValue placeholder="Chain type" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">All chain types</SelectItem>
+              <SelectItem value="exploit-chain">exploit chain (confirmed)</SelectItem>
+              <SelectItem value="hypothesis">hypothesis (assumed steps)</SelectItem>
+              <SelectItem value="primitives">primitives only</SelectItem>
+              <SelectItem value="unset">no anatomy recorded</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={vulnclass} onValueChange={setVulnclass}>
+            <SelectTrigger size="sm" className="w-52">
+              <SelectValue placeholder="Vulnerability type" />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
               <SelectItem value="all">All types</SelectItem>
-              {stats.vulnclasses.map((vc) => (
-                <SelectItem key={vc} value={vc}>
-                  {vc}
+              {(vulnClasses.length > 0 ? vulnClasses : stats.vulnclasses.map((id) => ({ id, name: id }))).map((vc) => (
+                <SelectItem key={vc.id} value={vc.id}>
+                  {vc.id} · {vc.name}
                 </SelectItem>
               ))}
             </SelectContent>

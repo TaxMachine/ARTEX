@@ -256,6 +256,10 @@ type FindingFilter struct {
 	VerificationStatus string // verified | unverified | blocked | not_assessed | false_positive
 	VulnClass          string
 	Category           string // operating-systems | hypervisors | web | applications | others
+	// ChainType filters by the primitives/chain anatomy: exploit-chain (chain
+	// present, every step has a result) | hypothesis (chain with an empty
+	// result) | primitives (primitives, no chain) | unset (neither).
+	ChainType string
 	TaskID             string // task id (in string form; empty/invalid = do not filter by task)
 	Query              string // fuzzy search keyword over name/class/summary/evidence/report body
 	Sort               string // "severity" | "time"
@@ -290,6 +294,16 @@ func (f FindingFilter) where() (string, []any) {
 		conds = append(conds, fmt.Sprintf("f.%s = $%d", col, len(args)))
 	}
 	add("severity", f.Severity)
+	switch f.ChainType {
+	case "exploit-chain":
+		conds = append(conds, `jsonb_array_length(COALESCE(f.chain,'[]'::jsonb)) > 0 AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements(f.chain) e WHERE COALESCE(e->>'result','') = '')`)
+	case "hypothesis":
+		conds = append(conds, `jsonb_array_length(COALESCE(f.chain,'[]'::jsonb)) > 0 AND EXISTS (SELECT 1 FROM jsonb_array_elements(f.chain) e WHERE COALESCE(e->>'result','') = '')`)
+	case "primitives":
+		conds = append(conds, `jsonb_array_length(COALESCE(f.primitives,'[]'::jsonb)) > 0 AND jsonb_array_length(COALESCE(f.chain,'[]'::jsonb)) = 0`)
+	case "unset":
+		conds = append(conds, `jsonb_array_length(COALESCE(f.primitives,'[]'::jsonb)) = 0 AND jsonb_array_length(COALESCE(f.chain,'[]'::jsonb)) = 0`)
+	}
 	add("status", f.Status)
 	add("report_state", f.ReportState)
 	add("verification_status", f.VerificationStatus)

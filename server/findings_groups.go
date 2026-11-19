@@ -45,6 +45,7 @@ func findingFilterFromQuery(q url.Values) db.FindingFilter {
 		VerificationStatus: normFilter(q.Get("verification_status")),
 		VulnClass:          normFilter(q.Get("vulnclass")),
 		Category:           normCategoryFilter(q.Get("category")),
+		ChainType:          normFilter(q.Get("chain_type")),
 		// task_id (independent of the task param, which switches to the per-task-node branch): filters the global table by task.
 		TaskID:     normFilter(q.Get("task_id")),
 		Query:      q.Get("q"),

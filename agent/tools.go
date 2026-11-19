@@ -1416,7 +1416,7 @@ func (t *ToolSet) goalMet() actool.CoreTool {
 
 func (t *ToolSet) addFinding() actool.CoreTool {
 	return writeTool("report_finding", "Record a CONFIRMED finding — primitives are NOT exploits: a single weakness (crash, memory write, leak, bypass step, gadget) is a fact for record_fact, not a finding; report_finding is for an exploit chain whose primitives compose into the attacker's goal, end to end, self-contained. RCE = remote shell execution only: session opened + command output returned (msf tools). Other classes: perform the attacker's goal and capture the response (auth bypass acts authenticated, exposure quotes the data, privesc runs with elevated output, SSRF fetches the internal resource). Crash-only = DoS finding. Evidence must be verifiable proof: command output, session transcript, captured responses.", obj(map[string]any{
-		"vulnclass": str("vulnerability class"), "name": str("vulnerability name"), "severity": str("critical|high|medium|low"), "summary": str("finding summary"),
+		"vulnclass": map[string]any{"type": "string", "description": "canonical exploit type from the closed taxonomy (memory-*, rce-*, auth-*, access-*, info-*, crypto-*, dos-*, config-*, supply-chain-*, driver-*, kernel-*, fileformat-*, protocol-*, logic-*, xss/ssrf/xxe/csrf/sql-injection/path-traversal/race-condition/other...). Unknown free-text values are rejected; call list_vuln_classes for the exact list."}, "name": str("vulnerability name"), "severity": str("critical|high|medium|low"), "summary": str("finding summary"),
 		"category":  str("one of: operating-systems | hypervisors | web | applications | others (default others)"),
 		"intent_id": idp("the current task's intent id"), "asset_ids": map[string]any{"type": "array", "items": map[string]any{"type": "integer"}, "description": "affected asset ids"},
 		"evidence":         str("evidence/PoC text"),
@@ -1460,7 +1460,19 @@ func (t *ToolSet) addFinding() actool.CoreTool {
 		if err != nil {
 			return actool.Errorf(err.Error()), nil
 		}
-		input := db.RecordFindingInput{TaskID: t.taskID, ExplorationID: t.ts.ID(), IntentID: pid(a.IntentID), VulnClass: a.VulnClass, Name: a.Name, Severity: a.Severity, Summary: a.Summary, Evidence: a.Evidence, Worker: t.worker, AssetIDs: pidList(a.AssetIDs), Counterevidence: a.Counterevidence, ConfidenceRationale: a.ConfidenceRationale, Category: db.NormalizeFindingCategory(a.Category)}
+		vulnClass := a.VulnClass
+	if norm, ok := db.NormalizeVulnClass(vulnClass); ok {
+		vulnClass = norm
+	} else if strings.Contains(vulnClass, "/") || strings.Contains(vulnClass, "(") || len(vulnClass) > 48 {
+		// free-text drift: try harder (normalized form may match a synonym)
+		if norm, ok2 := db.NormalizeVulnClass(db.NormalizeSlug(vulnClass)); ok2 {
+			vulnClass = norm
+		}
+	}
+	if _, ok := db.NormalizeVulnClass(vulnClass); !ok {
+		return actool.Errorf("vulnclass "+strconv.Quote(a.VulnClass)+" is not in the canonical taxonomy; pick the closest id from list_vuln_classes (e.g. memory-oob-write, rce-deserialization, dos-crash, access-privilege-escalation)"), nil
+	}
+	input := db.RecordFindingInput{TaskID: t.taskID, ExplorationID: t.ts.ID(), IntentID: pid(a.IntentID), VulnClass: vulnClass, Name: a.Name, Severity: a.Severity, Summary: a.Summary, Evidence: a.Evidence, Worker: t.worker, AssetIDs: pidList(a.AssetIDs), Counterevidence: a.Counterevidence, ConfidenceRationale: a.ConfidenceRationale, Category: db.NormalizeFindingCategory(a.Category)}
 		var recorded *db.RecordedFinding
 		if t.findingRecorder != nil {
 			recorded, err = t.findingRecorder.Record(ctx, input, refs)

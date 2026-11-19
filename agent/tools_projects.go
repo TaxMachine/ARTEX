@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/TaxMachine/ARTEX/db"
 	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
@@ -182,3 +183,24 @@ func (t *ToolSet) setTaskProject() actool.CoreTool {
 }
 
 var _ = fmt.Sprintf
+
+func (t *ToolSet) listVulnClasses() actool.CoreTool {
+	return readTool("list_vuln_classes",
+		"List the canonical exploit-type taxonomy (the closed set report_finding's vulnclass accepts), grouped by family: memory corruption, code execution, access control, info exposure, crypto, availability, configuration, platform-specific. Call it when unsure which id fits your finding.",
+		obj(map[string]any{
+			"family": str("optional: filter by family prefix (memory, rce, auth, access, info, crypto, dos, config, supply-chain, driver, kernel, fileformat, protocol, logic, other)"),
+		}, ""),
+		func(ctx context.Context, in json.RawMessage) (actool.Result, error) {
+			var a struct{ Family string }
+			_ = json.Unmarshal(in, &a)
+			fam := strings.ToLower(strings.TrimSpace(a.Family))
+			out := []map[string]string{}
+			for _, c := range db.VulnClasses {
+				if fam != "" && !strings.HasPrefix(c.ID, fam) {
+					continue
+				}
+				out = append(out, map[string]string{"id": c.ID, "name": c.Name})
+			}
+			return jsonResult(map[string]any{"classes": out, "total": len(db.VulnClasses)})
+		})
+}

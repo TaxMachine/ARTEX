@@ -58,6 +58,32 @@ export const CATEGORIES: FindingCategory[] = [
   "others",
 ];
 
+// ChainTypeBadge classifies a finding by its primitives/chain anatomy:
+// exploit-chain (chain present, every step confirmed) / hypothesis (chain with
+// an assumed step) / primitives (facts recorded, no chain) / unset.
+export function chainTypeOf(f: Pick<Finding, "chain" | "primitives">): "exploit-chain" | "hypothesis" | "primitives" | "unset" {
+  const chain = f.chain ?? [];
+  const prims = f.primitives ?? [];
+  if (chain.length > 0) {
+    return chain.every((c) => (c.result ?? "").trim()) ? "exploit-chain" : "hypothesis";
+  }
+  return prims.length > 0 ? "primitives" : "unset";
+}
+
+export function ChainTypeBadge({ finding }: { finding: Pick<Finding, "chain" | "primitives"> }) {
+  const t = chainTypeOf(finding);
+  switch (t) {
+    case "exploit-chain":
+      return <Badge className="border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">exploit chain</Badge>;
+    case "hypothesis":
+      return <Badge className="border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400">hypothesis</Badge>;
+    case "primitives":
+      return <Badge className="border-slate-500/40 bg-slate-500/10 text-slate-600 dark:text-slate-400">primitives</Badge>;
+    default:
+      return <span className="text-xs text-muted-foreground">—</span>;
+  }
+}
+
 export const FINDING_STATUSES: FindingStatus[] = [
   "pending",
   "in_progress",
@@ -245,7 +271,7 @@ export function FindingsTable({
           <TableHead className="w-20">Severity</TableHead>
           <TableHead className="w-36">Category</TableHead>
           <TableHead>Vulnerability</TableHead>
-          <TableHead className="w-44">Asset</TableHead>
+          <TableHead className="w-32">Type</TableHead>
           <TableHead className="w-28">Status</TableHead>
           <TableHead className="w-36">Report</TableHead>
           <TableHead className="w-32">Task</TableHead>
@@ -314,24 +340,7 @@ export function FindingsTable({
                   </div>
                 </TableCell>
                 <TableCell>
-                  {f.assets && f.assets.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {f.assets.slice(0, 3).map((a) => (
-                        <code
-                          key={a.id}
-                          className="max-w-full truncate rounded bg-muted px-1.5 py-0.5 font-mono text-xs"
-                          title={`${a.type} · ${a.label}`}
-                        >
-                          {a.label}
-                        </code>
-                      ))}
-                      {f.assets.length > 3 && (
-                        <span className="text-xs text-muted-foreground">+{f.assets.length - 3}</span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
+                  <ChainTypeBadge finding={f} />
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   {f.finding_id ? (

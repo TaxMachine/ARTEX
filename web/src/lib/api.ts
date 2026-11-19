@@ -256,6 +256,7 @@ function findingFilterParams(q: Omit<FindingQuery, "page" | "pageSize">): URLSea
   if (q.reportState && q.reportState !== "all") p.set("report_state", q.reportState);
   if (q.verificationStatus && q.verificationStatus !== "all") p.set("verification_status", q.verificationStatus);
   if (q.vulnclass && q.vulnclass !== "all") p.set("vulnclass", q.vulnclass);
+  if (q.chainType && q.chainType !== "all") p.set("chain_type", q.chainType);
   if (q.category && q.category !== "all") p.set("category", q.category);
   if (q.task && q.task !== "all") p.set("task_id", q.task);
   if (q.query?.trim()) p.set("q", q.query.trim());
@@ -341,6 +342,7 @@ export const api = {
   machineSnapshot: (name: string, action: "list" | "create" | "revert", snapshot?: string) =>
     post<{ output: string }>(`/machines/${encodeURIComponent(name)}/snapshot`, { action, snapshot }),
   machineCaptures: (name: string) => get<MachineCapture[]>(`/machines/${encodeURIComponent(name)}/captures`).then((r) => arr(r)),
+  vulnClasses: () => get<{ classes: { id: string; name: string }[]; total: number }>("/vuln-classes"),
   machineCaptureList: (limit = 200) =>
     get<MachineCapture[]>(`/machine-captures?limit=${limit}`).then((r) => arr(r)),
   machineAutostart: (taskId?: number) =>

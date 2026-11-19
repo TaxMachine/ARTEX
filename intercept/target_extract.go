@@ -55,6 +55,8 @@ var noTargetTools = toolSet(
 	// process state. The payload's eventual execution target is gated where it
 	// happens (ssh_exec / Bash), not at generation.
 	"msf_payload", "msf_handler_start", "msf_handler_status", "msf_handler_stop",
+	// canonical taxonomy lookup: platform-static list, no target data.
+	"list_vuln_classes",
 )
 
 // machineTools are the native machine tools whose call reaches a registered
