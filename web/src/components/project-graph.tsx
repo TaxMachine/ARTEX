@@ -42,12 +42,12 @@ const SEV_COLORS: Record<string, string> = {
   low: "#60a5fa",
 };
 
-const CROSSMAP = "http://172.17.0.1:13060";
+// proxied through the ARTEX origin (with session auth) — the browser never
+// touches the docker bridge directly.
+import { http } from "@/lib/api";
 
 async function crossmap<T = Record<string, unknown>>(path: string): Promise<T> {
-  const r = await fetch(`${CROSSMAP}${path}`);
-  if (!r.ok) throw new Error(`crossmap ${path}: ${r.status}`);
-  return (await r.json()) as T;
+  return http<T>(`/crossmap/${path}`);
 }
 
 type ExpandedBin = {
@@ -75,6 +75,7 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
   const [code, setCode] = React.useState<string | null>(null);
   const [codeLoading, setCodeLoading] = React.useState(false);
   const fgRef = React.useRef<{ zoomToFit: (ms?: number, px?: number) => void; zoom: (z: number, ms?: number) => void } | null>(null);
+  const autoExpandedRef = React.useRef<Set<string>>(new Set());
   const expandedRef = React.useRef<Set<string>>(new Set());
   const canvasWrap = React.useRef<HTMLDivElement | null>(null);
   const [dim, setDim] = React.useState({ w: 900, h: 650 });
@@ -126,7 +127,7 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
       if (expandedRef.current.has(binName)) return null;
       expandedRef.current.add(binName);
       try {
-        const sum = await crossmap<ExpandedBin>(`/map/expand?binary=${encodeURIComponent(binName)}&limit=40`);
+        const sum = await crossmap<ExpandedBin>(`map/expand?binary=${encodeURIComponent(binName)}&limit=40`);
         setGraph((prev) => {
           if (!prev) return prev;
           const ids = new Set(prev.nodes.map((n) => n.id));
@@ -173,7 +174,7 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
       setCodeLoading(true);
       try {
         const r = await crossmap<{ available: boolean; code?: string; error?: string }>(
-          `/map/decompile?binary=${encodeURIComponent(bin)}&function=${encodeURIComponent(fn)}`,
+          `map/decompile?binary=${encodeURIComponent(bin)}&function=${encodeURIComponent(fn)}`,
         );
         if (r.available && r.code) {
           // the passthrough wraps JSON; try to pull pseudocode out
@@ -204,7 +205,7 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
     }
     try {
       const r = await crossmap<{ paths: { hops: { ref: string }[] }[] }>(
-        `/map/paths?from=${encodeURIComponent(chainFrom)}&to=${encodeURIComponent(chainTo)}&max_hops=6`,
+        `map/paths?from=${encodeURIComponent(chainFrom)}&to=${encodeURIComponent(chainTo)}&max_hops=6`,
       );
       if (!r.paths?.length) {
         toast.info("no path within 6 hops");
@@ -368,7 +369,36 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
               else if (node.group === "function") void openFunction(node);
               else setDetail({ kind: "finding", node });
             }}
-            onZoom={(z) => (zoomRef.current = typeof z === "number" ? z : z.k)}
+            onZoom={(z) => {
+              const k = typeof z === "number" ? z : z.k;
+              zoomRef.current = k;
+              if (k > FN_ZOOM) {
+                // zoomed into function territory: expand every binary whose
+                // ball is currently in view (max 3 per zoom event, closest first)
+                const g = graph;
+                if (!g) return;
+                const width = dim.w;
+                const height = dim.h;
+                const cands: { name: string; d: number }[] = [];
+                for (const n of g.nodes) {
+                  if (n.group !== "binary") continue;
+                  const bn = String(n.extra?.name ?? n.label.split(" ")[0]);
+                  if (autoExpandedRef.current.has(bn)) continue;
+                  if (n.extra?.is_latest === false && !showGenerations) continue;
+                  if (n.x == null || n.y == null) continue;
+                  // transform: graph coords → screen (force-graph centers)
+                  const sx = width / 2 + (n.x - width / 2) * k;
+                  const sy = height / 2 + (n.y - height / 2) * k;
+                  if (sx < -50 || sy < -50 || sx > width + 50 || sy > height + 50) continue;
+                  cands.push({ name: bn, d: Math.hypot(sx - width / 2, sy - height / 2) });
+                }
+                cands.sort((a, b) => a.d - b.d);
+                for (const c of cands.slice(0, 3)) {
+                  autoExpandedRef.current.add(c.name);
+                  void expandBinary(c.name);
+                }
+              }
+            }}
             cooldownTicks={200}
           />
         ) : (
