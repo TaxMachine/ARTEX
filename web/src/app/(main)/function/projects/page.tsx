@@ -42,6 +42,19 @@ export default function ProjectsPage() {
   const [form, setForm] = React.useState({ name: "", key: "", description: "", binaries: "" });
   const [creating, setCreating] = React.useState(false);
 
+  const openDetail = React.useCallback(async (key: string) => {
+    setDetailKey(key);
+    setDetailLoading(true);
+    setDetail(null);
+    try {
+      setDetail(await api.project(key));
+    } catch (e) {
+      toast.error(errText(e));
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
+
   const load = React.useCallback(async () => {
     setLoading(true);
     try {
@@ -130,7 +143,7 @@ export default function ProjectsPage() {
               </TableRow>
             ) : (
               projects.map((p) => (
-                <TableRow key={p.id} className="cursor-pointer" >
+                <TableRow key={p.id} className="cursor-pointer" onClick={() => void openDetail(p.key)}>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <BoxesIcon className="size-4 text-muted-foreground" />
