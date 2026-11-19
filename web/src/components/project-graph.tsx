@@ -9,21 +9,19 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, http } from "@/lib/api";
 
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), { ssr: false });
 
 type GNode = {
   id: string;
-  group: string; // binary | finding | function
+  group: string; // binary | finding
   label: string;
   sub?: string;
   color?: string;
   extra?: Record<string, unknown>;
   x?: number;
   y?: number;
-  hl?: boolean;
-  findingId?: number;
 };
 
 type GLink = { source: string | GNode; target: string | GNode; kind: string; hl?: boolean };
@@ -42,29 +40,53 @@ const SEV_COLORS: Record<string, string> = {
   low: "#60a5fa",
 };
 
-// proxied through the ARTEX origin (with session auth) — the browser never
-// touches the docker bridge directly.
-import { http } from "@/lib/api";
+// cluster reveal: at scale <= REVEAL_START the binary is a solid ball; at
+// scale >= REVEAL_END it has fully dissolved into its function balls.
+const REVEAL_START = 1.1;
+const REVEAL_END = 2.3;
+
+type ClusterFn = { name: string; in: number; out: number };
+type Cluster = { fns: ClusterFn[]; edges: { a: number; b: number }[]; idx: Map<string, number> };
 
 async function crossmap<T = Record<string, unknown>>(path: string): Promise<T> {
   return http<T>(`/crossmap/${path}`);
 }
 
-type ExpandedBin = {
-  functions: { name: string; in: number; out: number }[];
-  edges: { from: string; to: string; kind: string }[];
-};
+async function fetchCluster(bin: string): Promise<Cluster | null> {
+  try {
+    const r = await crossmap<{ functions: ClusterFn[]; edges: { from: string; to: string }[] }>(
+      `map/expand?binary=${encodeURIComponent(bin)}&limit=60`,
+    );
+    const fns = r.functions ?? [];
+    const idx = new Map<string, number>();
+    fns.forEach((f, i) => idx.set(f.name, i));
+    const edges: { a: number; b: number }[] = [];
+    for (const e of r.edges ?? []) {
+      const a = idx.get(e.from.split("!").pop() ?? "");
+      const b = idx.get(e.to.split("!").pop() ?? "");
+      if (a != null && b != null) edges.push({ a, b });
+    }
+    return { fns, edges, idx };
+  } catch {
+    return null;
+  }
+}
 
-// threshold (global scale) at which function balls render
-const FN_ZOOM = 1.4;
+// deterministic spiral position for the i-th of n functions
+function spiral(i: number, n: number, R: number): { x: number; y: number } {
+  if (n === 1) return { x: 0, y: 0 };
+  const r = R * Math.sqrt((i + 0.6) / n);
+  const th = i * 2.39996323; // golden angle
+  return { x: r * Math.cos(th), y: r * Math.sin(th) };
+}
 
 export function ProjectGraphView({ projectKey }: { projectKey: string }) {
   const [graph, setGraph] = React.useState<ProjectGraph | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [detail, setDetail] = React.useState<
-    | { kind: "binary"; node: GNode; summary: ExpandedBin }
-    | { kind: "function"; node: GNode }
+    | { kind: "binary"; node: GNode; cluster: Cluster | null }
     | { kind: "finding"; node: GNode }
+    | { kind: "code"; binary: string; fn: string }
     | null
   >(null);
   const [fnFilter, setFnFilter] = React.useState("");
@@ -74,12 +96,12 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
   const [chainPath, setChainPath] = React.useState<string[] | null>(null);
   const [code, setCode] = React.useState<string | null>(null);
   const [codeLoading, setCodeLoading] = React.useState(false);
-  const fgRef = React.useRef<{ zoomToFit: (ms?: number, px?: number) => void; zoom: (z: number, ms?: number) => void } | null>(null);
-  const autoExpandedRef = React.useRef<Set<string>>(new Set());
-  const expandedRef = React.useRef<Set<string>>(new Set());
+  const fgRef = React.useRef<{ zoomToFit: (ms?: number, px?: number) => void } | null>(null);
   const canvasWrap = React.useRef<HTMLDivElement | null>(null);
   const [dim, setDim] = React.useState({ w: 900, h: 650 });
-  const zoomRef = React.useRef(1);
+  const clusters = React.useRef<Map<string, Cluster>>(new Map());
+  const clustersFetched = React.useRef<Set<string>>(new Set());
+  const [, bumpRepaint] = React.useState(0);
 
   React.useEffect(() => {
     const ro = new ResizeObserver(() => {
@@ -108,95 +130,55 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
     void load();
   }, [load]);
 
-  // finding titles → candidate function-name matches (for glow attach)
-  const findingFnMatches = React.useMemo(() => {
-    if (!graph) return new Map<string, GNode>();
-    const m = new Map<string, GNode>();
-    for (const n of graph.nodes) {
-      if (n.group !== "finding") continue;
-      // crude: finding label often mentions the API; take quoted/backticked tokens
-      const toks = n.label.match(/[A-Za-z_][A-Za-z0-9_]{5,}/g) ?? [];
-      m.set(n.id, n);
-      (n as GNode & { tokens?: string[] }).tokens = toks;
-    }
-    return m;
-  }, [graph]);
-
-  const expandBinary = React.useCallback(
-    async (binName: string) => {
-      if (expandedRef.current.has(binName)) return null;
-      expandedRef.current.add(binName);
-      try {
-        const sum = await crossmap<ExpandedBin>(`map/expand?binary=${encodeURIComponent(binName)}&limit=40`);
-        setGraph((prev) => {
-          if (!prev) return prev;
-          const ids = new Set(prev.nodes.map((n) => n.id));
-          const add: GNode[] = [];
-          for (const f of sum.functions) {
-            const id = `fn:${binName}!${f.name}`;
-            if (!ids.has(id)) {
-              add.push({ id, group: "function", label: f.name, sub: `${f.in}↖ ${f.out}↘`, extra: { binary: binName } });
-            }
-          }
-          const have = new Set(prev.edges.map((e) => `${e.from}->${e.to}`));
-          const addLinks = sum.edges
-            .filter((e) => !have.has(`${e.from}->${e.to}`))
-            .map((e) => ({ from: e.from, to: e.to, kind: e.kind }));
-          return { ...prev, nodes: [...prev.nodes, ...add], edges: [...prev.edges, ...addLinks] };
-        });
-        return sum;
-      } catch (e) {
-        expandedRef.current.delete(binName);
-        toast.error(`expand failed: ${String(e)}`);
-        return null;
-      }
-    },
-    [],
-  );
-
-  const openBinary = React.useCallback(
-    async (node: GNode) => {
-      const binName = String(node.extra?.name ?? node.label.split(" ")[0]);
-      setFnFilter("");
-      setDetail({ kind: "binary", node, summary: { functions: [], edges: [] } });
-      const sum = await expandBinary(binName);
-      if (sum) setDetail({ kind: "binary", node, summary: sum });
-    },
-    [expandBinary],
-  );
-
-  const openFunction = React.useCallback(
-    async (node: GNode) => {
-      const bin = String(node.extra?.binary ?? node.extra?.name ?? "");
-      const fn = node.label;
-      setDetail({ kind: "function", node });
-      setCode(null);
-      setCodeLoading(true);
-      try {
-        const r = await crossmap<{ available: boolean; code?: string; error?: string }>(
-          `map/decompile?binary=${encodeURIComponent(bin)}&function=${encodeURIComponent(fn)}`,
-        );
-        if (r.available && r.code) {
-          // the passthrough wraps JSON; try to pull pseudocode out
-          let text = r.code;
-          try {
-            const inner = JSON.parse(r.code) as { pseudocode?: string };
-            if (inner.pseudocode) text = inner.pseudocode;
-          } catch {
-            /* raw text */
-          }
-          setCode(text);
-        } else {
-          setCode(r.error ?? "decompile unavailable");
+  // fetch the function cluster for every binary once the graph loads
+  const ensureClusters = React.useCallback(async (g: ProjectGraph | null) => {
+    if (!g) return;
+    const names = g.nodes
+      .filter((n) => n.group === "binary")
+      .map((n) => String(n.extra?.name ?? n.label.split(" ")[0]));
+    await Promise.all(
+      names.map(async (name) => {
+        if (clustersFetched.current.has(name)) return;
+        clustersFetched.current.add(name);
+        const c = await fetchCluster(name);
+        if (c) {
+          clusters.current.set(name, c);
+          bumpRepaint((v) => v + 1);
         }
-      } catch (e) {
-        setCode(`decompile failed: ${String(e)}`);
-      } finally {
-        setCodeLoading(false);
+      }),
+    );
+  }, []);
+
+  React.useEffect(() => {
+    if (graph) void ensureClusters(graph);
+  }, [graph, ensureClusters]);
+
+  const openCode = React.useCallback(async (binary: string, fn: string) => {
+    setDetail({ kind: "code", binary, fn });
+    setCode(null);
+    setCodeLoading(true);
+    try {
+      const r = await crossmap<{ available: boolean; code?: string; error?: string }>(
+        `map/decompile?binary=${encodeURIComponent(binary)}&function=${encodeURIComponent(fn)}`,
+      );
+      if (r.available && r.code) {
+        let text = r.code;
+        try {
+          const inner = JSON.parse(r.code) as { pseudocode?: string };
+          if (inner.pseudocode) text = inner.pseudocode;
+        } catch {
+          /* raw text */
+        }
+        setCode(text);
+      } else {
+        setCode(r.error ?? "decompile unavailable");
       }
-    },
-    [],
-  );
+    } catch (e) {
+      setCode(`decompile failed: ${String(e)}`);
+    } finally {
+      setCodeLoading(false);
+    }
+  }, []);
 
   const findChain = React.useCallback(async () => {
     if (!chainFrom.includes("!") || !chainTo.includes("!")) {
@@ -221,92 +203,172 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
 
   const data = React.useMemo(() => {
     if (!graph) return { nodes: [] as GNode[], links: [] as GLink[] };
-    const hlSet = new Set(chainPath ?? []);
-    const strip = (id: string) => (id.startsWith("fn:") ? id.slice(3) : id);
-    const visible = graph.nodes.filter((n) => {
-      if (n.group === "binary" && !showGenerations && n.extra?.is_latest === false) return false;
-      return true;
-    });
-    const visIds = new Set(visible.map((n) => n.id));
+    const visIds = new Set(
+      graph.nodes
+        .filter((n) => !(n.group === "binary" && !showGenerations && n.extra?.is_latest === false))
+        .map((n) => n.id),
+    );
     return {
-      nodes: visible.map((n) => ({ ...n, hl: chainPath ? hlSet.has(strip(n.id)) : false })),
+      nodes: graph.nodes.filter((n) => visIds.has(n.id)),
       links: graph.edges
         .filter((e) => visIds.has(e.from) && visIds.has(e.to))
-        .map((e) => ({
-          source: e.from,
-          target: e.to,
-          kind: e.kind,
-          hl: chainPath ? hlSet.has(strip(e.from)) && hlSet.has(strip(e.to)) : false,
-        })),
+        .map((e) => ({ source: e.from, target: e.to, kind: e.kind })),
     };
-  }, [graph, chainPath, showGenerations]);
+  }, [graph, showGenerations]);
 
-  const nodeColor = (n: GNode) => {
-    if (n.hl) return "#22d3ee";
-    if (n.group === "finding" && n.color && SEV_COLORS[n.color]) return SEV_COLORS[n.color];
-    if (n.group === "binary") return "#38bdf8";
-    return "#8fa3bf";
-  };
+  // finding token match: highlight function balls whose name appears in a
+  // finding title of this project (best-effort anchoring)
+  const findingTokens = React.useMemo(() => {
+    if (!graph) return [] as { sev: string; toks: string[] }[];
+    return graph.nodes
+      .filter((n) => n.group === "finding")
+      .map((n) => ({
+        sev: String(n.color ?? "medium"),
+        toks: (n.label.match(/[A-Za-z_][A-Za-z0-9_]{5,}/g) ?? []).map((t) => t.toLowerCase()),
+      }));
+  }, [graph]);
 
-  const nodeSize = (n: GNode) => {
-    if (n.group === "binary") return 10 + Math.min(10, ((n.extra?.functions as number) ?? 0) / 1500);
-    if (n.group === "finding") return 7;
-    return n.hl ? 6 : 3.5;
-  };
+  const hlFor = React.useCallback(
+    (fnName: string): string | null => {
+      const lower = fnName.toLowerCase();
+      for (const f of findingTokens) {
+        if (f.toks.some((t) => lower.includes(t) || t.includes(lower))) return f.sev;
+      }
+      return null;
+    },
+    [findingTokens],
+  );
+
+  const chainSet = React.useMemo(() => new Set(chainPath ?? []), [chainPath]);
 
   const nodeCanvasObject = React.useCallback(
-    (node: GNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
-      const r = nodeSize(node);
-      ctx.beginPath();
-      ctx.arc(node.x ?? 0, node.y ?? 0, r, 0, 2 * Math.PI);
-      ctx.fillStyle = nodeColor(node);
-      ctx.fill();
-      if (node.hl) {
-        ctx.strokeStyle = "#22d3ee";
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-      }
+    (node: GNode, ctx: CanvasRenderingContext2D, scale: number) => {
+      const x = node.x ?? 0;
+      const y = node.y ?? 0;
+
       if (node.group === "finding") {
-        // findings glow
+        const sev = node.color ?? "medium";
+        const c = SEV_COLORS[sev] ?? "#f87171";
         ctx.beginPath();
-        ctx.arc(node.x ?? 0, node.y ?? 0, r + 3, 0, 2 * Math.PI);
-        ctx.strokeStyle = nodeColor(node) + "88";
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.fillStyle = c;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x, y, 9.5, 0, 2 * Math.PI);
+        ctx.strokeStyle = `${c}66`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.font = "4px ui-sans-serif, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillStyle = "#fecaca";
+        ctx.fillText(node.label.length > 34 ? `${node.label.slice(0, 33)}…` : node.label, x, y + 11);
+        return;
+      }
+
+      // binary: solid ball at low zoom; dissolves into its function cluster
+      const binName = String(node.extra?.name ?? node.label.split(" ")[0]);
+      const cluster = clusters.current.get(binName);
+      const nFn = cluster?.fns.length ?? Number(node.extra?.functions ?? 0);
+      const R = 14 + Math.min(16, Math.sqrt(nFn) * 0.9);
+      let t = 0;
+      if (scale <= REVEAL_START) t = 0;
+      else if (scale >= REVEAL_END) t = 1;
+      else t = (scale - REVEAL_START) / (REVEAL_END - REVEAL_START);
+      t = t * t * (3 - 2 * t); // smoothstep
+
+      // cluster behind the ball
+      if (cluster && t > 0.02) {
+        const CR = R * (1.15 + 0.85 * t);
+        // internal edges
+        ctx.lineWidth = 0.5;
+        for (const e of cluster.edges) {
+          const pa = spiral(e.a, cluster.fns.length, CR);
+          const pb = spiral(e.b, cluster.fns.length, CR);
+          ctx.strokeStyle = `rgba(120,144,180,${0.35 * t})`;
+          ctx.beginPath();
+          ctx.moveTo(x + pa.x, y + pa.y);
+          ctx.lineTo(x + pb.x, y + pb.y);
+          ctx.stroke();
+        }
+        // function balls
+        cluster.fns.forEach((f, i) => {
+          const p = spiral(i, cluster.fns.length, CR);
+          const deg = f.in + f.out;
+          const r = 0.9 + Math.min(1.6, deg / 60);
+          const hl = hlFor(f.name);
+          const onChain = chainSet.has(`${binName}!${f.name}`);
+          ctx.beginPath();
+          ctx.arc(x + p.x, y + p.y, r * (0.6 + 0.4 * t), 0, 2 * Math.PI);
+          ctx.fillStyle = onChain ? "#22d3ee" : hl ? (SEV_COLORS[hl] ?? "#f87171") : `rgba(148,168,196,${0.85})`;
+          ctx.fill();
+          if (hl) {
+            ctx.beginPath();
+            ctx.arc(x + p.x, y + p.y, r + 2.2, 0, 2 * Math.PI);
+            ctx.strokeStyle = `${SEV_COLORS[hl]}55`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+          // labels for the biggest hubs when nearly dissolved
+          if (t > 0.75 && deg > 40) {
+            ctx.font = "2.6px ui-monospace, monospace";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.fillStyle = "rgba(203,213,225,0.9)";
+            ctx.fillText(f.name.length > 22 ? `${f.name.slice(0, 21)}…` : f.name, x + p.x, y + p.y + r + 0.6);
+          }
+        });
+      }
+
+      // the ball itself fades out as the cluster dissolves in
+      const ballAlpha = 1 - t * 0.9;
+      if (ballAlpha > 0.03) {
+        ctx.beginPath();
+        ctx.arc(x, y, R, 0, 2 * Math.PI);
+        ctx.fillStyle = `rgba(56,189,248,${ballAlpha})`;
+        ctx.fill();
+        ctx.strokeStyle = `rgba(56,189,248,${0.5 * ballAlpha})`;
         ctx.lineWidth = 1.5;
         ctx.stroke();
       }
-      const showLabel = node.group !== "function" || globalScale > FN_ZOOM;
-      if (showLabel) {
-        const x = node.x ?? 0;
-        const y = node.y ?? 0;
+
+      // label + stats fade with the ball
+      const labelAlpha = 1 - t * 0.85;
+      if (labelAlpha > 0.08) {
         ctx.textAlign = "center";
-        const title = node.label.length > 26 ? `${node.label.slice(0, 25)}…` : node.label;
-        ctx.font = `${node.group === "function" ? 3 : 4.2}px ui-sans-serif, sans-serif`;
-        ctx.fillStyle = node.group === "finding" ? "#fecaca" : "rgba(232,238,247,0.95)";
+        ctx.font = `4.4px ui-sans-serif, sans-serif`;
+        ctx.fillStyle = `rgba(232,238,247,${labelAlpha})`;
         ctx.textBaseline = "top";
-        ctx.fillText(title, x, y + r + 1.5);
-        if (node.group === "binary") {
-          const f = node.extra?.functions as number | undefined;
-          const fcount = node.extra?.findings as number | undefined;
-          const gen = node.extra?.version ? `v${String(node.extra.version).split(".").pop()}` : "";
-          const stat = [f != null ? `${f.toLocaleString()} fns` : "", gen, fcount ? `${fcount} finding${fcount > 1 ? "s" : ""}` : ""]
-            .filter(Boolean)
-            .join(" · ");
-          if (stat) {
-            ctx.font = "3px ui-sans-serif, sans-serif";
-            ctx.fillStyle = "rgba(148,163,184,0.95)";
-            ctx.fillText(stat, x, y + r + 6.5);
-          }
+        const title = node.label.length > 26 ? `${node.label.slice(0, 25)}…` : node.label;
+        ctx.fillText(title, x, y + R + 2);
+        const fcount = node.extra?.findings as number | undefined;
+        const gen = node.extra?.version ? `v${String(node.extra.version).split(".").pop()}` : "";
+        const stat = [nFn ? `${nFn.toLocaleString()} fns` : "", gen, fcount ? `${fcount} finding${fcount > 1 ? "s" : ""}` : ""]
+          .filter(Boolean)
+          .join(" · ");
+        if (stat) {
+          ctx.font = "3px ui-sans-serif, sans-serif";
+          ctx.fillStyle = `rgba(148,163,184,${labelAlpha})`;
+          ctx.fillText(stat, x, y + R + 7.5);
         }
       }
     },
-    [chainPath],
+    [chainSet, hlFor],
   );
 
+  const nodeArea = React.useCallback((node: GNode, color: string, ctx: CanvasRenderingContext2D) => {
+    const R = node.group === "finding" ? 12 : 30;
+    ctx.beginPath();
+    ctx.arc(node.x ?? 0, node.y ?? 0, R, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }, []);
+
   const filteredFns = React.useMemo(() => {
-    if (detail?.kind !== "binary") return [];
+    if (detail?.kind !== "binary" || !detail.cluster) return [];
     const q = fnFilter.trim().toLowerCase();
-    if (!q) return detail.summary.functions;
-    return detail.summary.functions.filter((f) => f.name.toLowerCase().includes(q));
+    const fns = detail.cluster.fns;
+    return q ? fns.filter((f) => f.name.toLowerCase().includes(q)) : fns;
   }, [detail, fnFilter]);
 
   const olderGens = graph ? graph.nodes.filter((n) => n.group === "binary" && n.extra?.is_latest === false) : [];
@@ -318,13 +380,14 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
           <span className="flex items-center gap-1">
             <span className="inline-block size-2.5 rounded-full" style={{ background: "#38bdf8" }} /> binary
           </span>
+          <span>zoom in → functions</span>
           {(["critical", "high", "medium", "low"] as const).map((s) => (
             <span key={s} className="flex items-center gap-1">
-              <span className="inline-block size-2.5 rounded-full" style={{ background: SEV_COLORS[s] }} /> {s} finding
+              <span className="inline-block size-2.5 rounded-full" style={{ background: SEV_COLORS[s] }} /> {s}
             </span>
           ))}
           {graph && (graph.crossmap.function_total ?? 0) > 0 && (
-            <span>· {graph.crossmap.function_total?.toLocaleString()} fns indexed · zoom into a binary to see functions · click a function for its code</span>
+            <span>· {graph.crossmap.function_total?.toLocaleString()} fns indexed</span>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -356,50 +419,20 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
             height={dim.h}
             onEngineStop={() => fgRef.current?.zoomToFit(300, 60)}
             nodeCanvasObject={(n, ctx, scale) => nodeCanvasObject(n as GNode, ctx, scale)}
-            nodePointerAreaPaint={(n, color, ctx) => {
-              const node = n as GNode;
-              ctx.beginPath();
-              ctx.arc(node.x ?? 0, node.y ?? 0, nodeSize(node) + 4, 0, 2 * Math.PI);
-              ctx.fillStyle = color;
-              ctx.fill();
-            }}
+            nodePointerAreaPaint={(n, color, ctx) => nodeArea(n as GNode, color, ctx)}
             onNodeClick={(n) => {
               const node = n as GNode;
-              if (node.group === "binary") void openBinary(node);
-              else if (node.group === "function") void openFunction(node);
-              else setDetail({ kind: "finding", node });
-            }}
-            onZoom={(z) => {
-              const k = typeof z === "number" ? z : z.k;
-              zoomRef.current = k;
-              if (k > FN_ZOOM) {
-                // zoomed into function territory: expand every binary whose
-                // ball is currently in view (max 3 per zoom event, closest first)
-                const g = graph;
-                if (!g) return;
-                const width = dim.w;
-                const height = dim.h;
-                const cands: { name: string; d: number }[] = [];
-                for (const n of g.nodes) {
-                  if (n.group !== "binary") continue;
-                  const bn = String(n.extra?.name ?? n.label.split(" ")[0]);
-                  if (autoExpandedRef.current.has(bn)) continue;
-                  if (n.extra?.is_latest === false && !showGenerations) continue;
-                  if (n.x == null || n.y == null) continue;
-                  // transform: graph coords → screen (force-graph centers)
-                  const sx = width / 2 + (n.x - width / 2) * k;
-                  const sy = height / 2 + (n.y - height / 2) * k;
-                  if (sx < -50 || sy < -50 || sx > width + 50 || sy > height + 50) continue;
-                  cands.push({ name: bn, d: Math.hypot(sx - width / 2, sy - height / 2) });
-                }
-                cands.sort((a, b) => a.d - b.d);
-                for (const c of cands.slice(0, 3)) {
-                  autoExpandedRef.current.add(c.name);
-                  void expandBinary(c.name);
-                }
+              if (node.group === "binary") {
+                const bin = String(node.extra?.name ?? node.label.split(" ")[0]);
+                setFnFilter("");
+                setDetail({ kind: "binary", node, cluster: clusters.current.get(bin) ?? null });
+              } else {
+                setDetail({ kind: "finding", node });
               }
             }}
             cooldownTicks={200}
+            minZoom={0.4}
+            maxZoom={12}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -407,9 +440,9 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
           </div>
         )}
 
-        {(detail || codeLoading) && (
+        {detail && (
           <div className="absolute right-2 top-2 bottom-2 flex w-[30rem] flex-col gap-2 overflow-hidden rounded-xl border bg-background/95 p-4 text-sm shadow-lg backdrop-blur">
-            {detail?.kind === "binary" && (
+            {detail.kind === "binary" && (
               <>
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -428,38 +461,49 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
                 </div>
                 <Input
                   className="h-8 text-xs"
-                  placeholder={`filter ${detail.summary.functions.length} functions…`}
+                  placeholder={`filter ${detail.cluster?.fns.length ?? 0} functions…`}
                   value={fnFilter}
                   onChange={(e) => setFnFilter(e.target.value)}
                 />
                 <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
-                  {filteredFns.map((f) => (
-                    <button
-                      key={f.name}
-                      type="button"
-                      className="flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-left font-mono text-xs hover:bg-accent"
-                      onClick={() => {
-                        setChainFrom(`${String(detail.node.extra?.name)}!${f.name}`);
-                        void openFunction({ id: `fn:${String(detail.node.extra?.name)}!${f.name}`, group: "function", label: f.name, extra: { binary: String(detail.node.extra?.name) } });
-                      }}
-                      title="open code + set chain start"
-                    >
-                      <span className="min-w-0 truncate">{f.name}</span>
-                      <span className="ml-2 shrink-0 text-muted-foreground">↖{f.in} ↘{f.out}</span>
-                    </button>
-                  ))}
-                  {filteredFns.length === 0 && <div className="py-4 text-center text-xs text-muted-foreground">no match</div>}
+                  {(detail.cluster?.fns ?? []).length === 0 && (
+                    <div className="py-4 text-center text-xs text-muted-foreground">cluster not loaded yet</div>
+                  )}
+                  {filteredFns.map((f) => {
+                    const hl = hlFor(f.name);
+                    return (
+                      <button
+                        key={f.name}
+                        type="button"
+                        className="flex w-full items-center justify-between rounded-md border px-2 py-1.5 text-left font-mono text-xs hover:bg-accent"
+                        onClick={() => {
+                          const bin = String(detail.node.extra?.name);
+                          setChainFrom(`${bin}!${f.name}`);
+                          void openCode(bin, f.name);
+                        }}
+                        title="open code + set chain start"
+                        style={hl ? { borderColor: SEV_COLORS[hl] ?? "#f87171" } : undefined}
+                      >
+                        <span className="min-w-0 truncate">
+                          {hl && <span className="mr-1 inline-block size-2 rounded-full align-middle" style={{ background: SEV_COLORS[hl] }} />}
+                          {f.name}
+                        </span>
+                        <span className="ml-2 shrink-0 text-muted-foreground">↖{f.in} ↘{f.out}</span>
+                      </button>
+                    );
+                  })}
                 </div>
+                <div className="text-[11px] text-muted-foreground">click a function → its decompiled code + chain start</div>
               </>
             )}
-            {detail?.kind === "function" && (
+            {detail.kind === "code" && (
               <>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="text-[11px] text-muted-foreground uppercase tracking-wide">function · {String(detail.node.extra?.binary ?? "")}</div>
-                    <div className="truncate font-mono text-sm font-semibold">{detail.node.label}</div>
+                    <div className="text-[11px] text-muted-foreground uppercase tracking-wide">function · {detail.binary}</div>
+                    <div className="truncate font-mono text-sm font-semibold">{detail.fn}</div>
                   </div>
-                  <Button size="icon-sm" variant="ghost" onClick={() => { setDetail(null); setCode(null); }}>
+                  <Button size="icon-sm" variant="ghost" onClick={() => setDetail(null)}>
                     <XIcon />
                   </Button>
                 </div>
@@ -473,20 +517,22 @@ export function ProjectGraphView({ projectKey }: { projectKey: string }) {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setChainFrom(`${String(detail.node.extra?.binary)}!${detail.node.label}`)}>
+                  <Button size="sm" variant="outline" onClick={() => setChainFrom(`${detail.binary}!${detail.fn}`)}>
                     set as chain start
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setChainTo(`${String(detail.node.extra?.binary)}!${detail.node.label}`)}>
+                  <Button size="sm" variant="outline" onClick={() => setChainTo(`${detail.binary}!${detail.fn}`)}>
                     set as chain end
                   </Button>
                 </div>
               </>
             )}
-            {detail?.kind === "finding" && (
+            {detail.kind === "finding" && (
               <>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="text-[11px] text-muted-foreground uppercase tracking-wide">finding · {String(detail.node.color)} · {String(detail.node.extra?.status)}</div>
+                    <div className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                      finding · {String(detail.node.color)} · {String(detail.node.extra?.status)}
+                    </div>
                     <div className="font-medium leading-snug">{detail.node.label}</div>
                   </div>
                   <Button size="icon-sm" variant="ghost" onClick={() => setDetail(null)}>
