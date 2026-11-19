@@ -5,6 +5,7 @@ import * as React from "react";
 import Link from "next/link";
 
 import { ArrowDownIcon, ArrowUpIcon, ArrowUpRightIcon, ChevronRightIcon } from "lucide-react";
+import { ChainTypeBadge } from "@/components/chain-type-badge";
 import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/status-badge";
@@ -63,6 +64,7 @@ function Row({
             className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-90")}
           />
           <StatusBadge domain="severity" value={f.severity} dot />
+          <ChainTypeBadge finding={f} />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex min-w-0 items-center gap-2">
               <span className="truncate font-medium">{findingLabel(f)}</span>

@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { ArrowLeftIcon, ArrowUpRightIcon, ShieldAlertIcon } from "lucide-react";
 import { toast } from "sonner";
 
+import { ChainTypeBadge } from "@/components/chain-type-badge";
 import { CopyButton } from "@/components/copy-button";
 import { FindingRetestPanel } from "@/components/finding-retest-panel";
 import { FindingTrafficPanel } from "@/components/finding-traffic-panel";
@@ -170,6 +171,10 @@ function FindingDetailInner() {
           <Separator orientation="vertical" className="mx-1 h-4" />
           <StatusBadge domain="severity" value={finding.severity} dot />
           <StatusBadge domain="finding" value={finding.status} dot />
+          <ChainTypeBadge finding={finding} />
+          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+            {finding.vulnclass}
+          </code>
           <ReportStateBadge state={finding.report_state} />
           <VerificationBadge finding={finding} />
           {finding.inherited && finding.source_task_id && (

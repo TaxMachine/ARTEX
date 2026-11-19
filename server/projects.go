@@ -69,14 +69,15 @@ func (s *Server) getProject(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	var findings []map[string]any = []map[string]any{}
-	frows, err := s.m.pg.Query(`SELECT id, vulnclass, name, severity, status FROM findings WHERE project_id=$1 ORDER BY id DESC LIMIT 100`, p.ID)
+	frows, err := s.m.pg.Query(`SELECT id, vulnclass, name, severity, status, COALESCE(primitives,'[]'), COALESCE(chain,'[]') FROM findings WHERE project_id=$1 ORDER BY id DESC LIMIT 100`, p.ID)
 	if err == nil {
 		defer frows.Close()
 		for frows.Next() {
 			var id int64
-			var vulnclass, name, severity, status string
-			if frows.Scan(&id, &vulnclass, &name, &severity, &status) == nil {
-				findings = append(findings, map[string]any{"id": id, "vulnclass": vulnclass, "name": name, "severity": severity, "status": status})
+			var vulnclass, name, severity, status, primitives, chain string
+			if frows.Scan(&id, &vulnclass, &name, &severity, &status, &primitives, &chain) == nil {
+				findings = append(findings, map[string]any{"id": id, "vulnclass": vulnclass, "name": name, "severity": severity, "status": status,
+					"primitives": json.RawMessage(primitives), "chain": json.RawMessage(chain)})
 			}
 		}
 	}

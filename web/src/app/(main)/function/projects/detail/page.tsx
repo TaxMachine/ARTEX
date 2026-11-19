@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { ArrowLeftIcon, Loader2Icon } from "lucide-react";
 
+import { ChainTypeBadge } from "@/components/chain-type-badge";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { DataTableShell } from "@/components/data-table-shell";
@@ -151,6 +152,7 @@ export default function ProjectDetailPage() {
                 <TableRow key={f.id}>
                   <TableCell>
                     <StatusBadge domain="severity" value={f.severity} dot />
+                    <ChainTypeBadge finding={f} />
                   </TableCell>
                   <TableCell className="max-w-md">
                     <Link className="text-sm hover:underline" href={`/function/findings/detail?id=${f.id}`}>

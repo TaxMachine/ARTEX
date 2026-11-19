@@ -1493,7 +1493,7 @@ export type ProjectAsset = {
 export type ProjectDetail = {
   project: Project;
   tasks: { id: number; name: string; status: string }[];
-  findings: { id: number; vulnclass: string; name: string; severity: string; status: string }[];
+  findings: { id: number; vulnclass: string; name: string; severity: string; status: string; primitives?: Finding["primitives"]; chain?: Finding["chain"] }[];
   assets?: ProjectAsset[];
   crossmap: { available: boolean; binaries: Record<string, { indexed: boolean }> };
 };
