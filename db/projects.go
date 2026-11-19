@@ -126,8 +126,13 @@ FROM projects WHERE key=$1`, key).
 func (d *DB) ListProjects() ([]map[string]any, error) {
 	rows, err := d.Query(`
 SELECT p.id, p.key, p.name, p.kind, p.description, array_to_json(p.binaries)::text, p.created_at, p.updated_at,
-       (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.deleted_at IS NULL),
+       (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.deleted_at IS NULL AND t.status='running'),
+       (SELECT count(*) FROM tasks t WHERE t.project_id=p.id AND t.deleted_at IS NULL AND t.status IN ('done','failed','timeout')),
        (SELECT count(*) FROM findings f WHERE f.project_id=p.id),
+       (SELECT count(*) FROM findings f WHERE f.project_id=p.id AND f.severity='critical'),
+       (SELECT count(*) FROM findings f WHERE f.project_id=p.id AND f.severity='high'),
+       (SELECT count(*) FROM findings f WHERE f.project_id=p.id AND f.severity='medium'),
+       (SELECT count(*) FROM findings f WHERE f.project_id=p.id AND f.severity='low'),
        (SELECT count(*) FROM assets a WHERE a.project_id=p.id)
 FROM projects p ORDER BY p.updated_at DESC`)
 	if err != nil {
@@ -139,8 +144,9 @@ FROM projects p ORDER BY p.updated_at DESC`)
 		var id int64
 		var key, name, kind, desc, bins string
 		var created, updated time.Time
-		var tasks, findings, assets int64
-		if err := rows.Scan(&id, &key, &name, &kind, &desc, &bins, &created, &updated, &tasks, &findings, &assets); err != nil {
+		var tasksRun, tasksDone, findings, fc, fh, fm, fl, assets int64
+		if err := rows.Scan(&id, &key, &name, &kind, &desc, &bins, &created, &updated,
+			&tasksRun, &tasksDone, &findings, &fc, &fh, &fm, &fl, &assets); err != nil {
 			return nil, err
 		}
 		var binList []string
@@ -148,7 +154,9 @@ FROM projects p ORDER BY p.updated_at DESC`)
 		out = append(out, map[string]any{
 			"id": id, "key": key, "name": name, "kind": kind, "description": desc,
 			"binaries": binList, "created_at": created, "updated_at": updated,
-			"task_count": tasks, "finding_count": findings, "binary_count": assets,
+			"task_count": tasksRun + tasksDone, "tasks_running": tasksRun, "tasks_done": tasksDone,
+			"finding_count": findings, "findings": map[string]int64{"critical": fc, "high": fh, "medium": fm, "low": fl},
+			"asset_count": assets,
 		})
 	}
 	return out, rows.Err()

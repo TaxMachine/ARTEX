@@ -1448,8 +1448,12 @@ export interface Project {
 
 export type ProjectSummary = Project & {
   task_count: number;
+  tasks_running: number;
+  tasks_done: number;
   finding_count: number;
-  binary_count: number;
+  findings: { critical: number; high: number; medium: number; low: number };
+  asset_count: number;
+  binary_count?: number;
 };
 
 export type ProjectGraphNode = {
