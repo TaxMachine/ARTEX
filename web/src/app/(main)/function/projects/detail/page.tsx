@@ -118,7 +118,7 @@ export default function ProjectDetailPage() {
       </div>
 
       {(detail.assets ?? []).length > 0 && (
-        <DataTableShell toolbar={<span className="text-sm text-muted-foreground">Binary assets — every staged generation</span>}>
+        <DataTableShell className="h-[38%] min-h-[14rem] shrink-0" toolbar={<span className="text-sm text-muted-foreground">Binary assets — every staged generation</span>}>
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow>
@@ -155,7 +155,7 @@ export default function ProjectDetailPage() {
       )}
 
       {detail.findings.length > 0 && (
-        <DataTableShell toolbar={<span className="text-sm text-muted-foreground">Findings</span>}>
+        <DataTableShell className="h-[34%] min-h-[12rem] shrink-0" toolbar={<span className="text-sm text-muted-foreground">Findings</span>}>
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow>
@@ -188,7 +188,7 @@ export default function ProjectDetailPage() {
       )}
 
       {detail.tasks.length > 0 && (
-        <DataTableShell toolbar={<span className="text-sm text-muted-foreground">Tasks</span>}>
+        <DataTableShell className="h-[28%] min-h-[10rem] shrink-0" toolbar={<span className="text-sm text-muted-foreground">Tasks</span>}>
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow>
