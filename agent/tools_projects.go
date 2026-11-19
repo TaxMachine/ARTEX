@@ -122,12 +122,12 @@ FROM assets WHERE project_id=$1 AND type='binary' ORDER BY app_name, version`, p
 
 func (t *ToolSet) saveProject() actool.CoreTool {
 	return writeTool("save_project",
-		"Create (or update) a software project — the unit tasks on the same target accumulate under. key is a slug (clfs-sys, wordpress-7-1-4); binaries lists the crossmap binary names (usually the file names: clfs.sys, afd.sys) so the function graph joins back. Returns the project.",
+		"Create (or update) a software project — the unit tasks on the same target accumulate under. NAMING RULE: name is THE PRODUCT NAME AND VERSION, never a binary or machine name — \"Microsoft 365 Apps (16.0.20625, Current channel)\", \"Windows 11 26H2 (build 26300.9974)\", \"WordPress 7.1.4\"; the component goes in the description (\"Word document parsing (WINWORD.EXE, WWLIB.DLL)\"), not the title. key is a slug (microsoft-365-16-0-20625, windows-11-26h2-26300, wordpress-7-1-4); binaries lists the crossmap binary names (file names: clfs.sys, WINWORD.EXE) so the function graph joins back. Returns the project.",
 		obj(map[string]any{
-			"name":        str("display name, e.g. clfs.sys (Windows CLFS driver)"),
+			"name":        str("PRODUCT NAME AND VERSION, e.g. \"Microsoft 365 Apps (16.0.20625, Current channel)\" — never a lone binary/machine name"),
 			"key":         str("slug; auto-derived from name when omitted"),
 			"kind":        map[string]any{"type": "string", "enum": []string{"software", "product", "suite"}, "description": "default software"},
-			"description": str("what this target is"),
+			"description": str("what this target is; components/binaries/machines go here, not in the name"),
 			"binaries":    map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "binary names (file names) that belong to this project"},
 		}, "name"),
 		t.needMachines("save_project", func(ctx context.Context, in json.RawMessage) (actool.Result, error) {
@@ -155,7 +155,7 @@ func (t *ToolSet) saveProject() actool.CoreTool {
 
 func (t *ToolSet) setTaskProject() actool.CoreTool {
 	return writeTool("set_task_project",
-		"Link THIS task to a software project (created with save_project when missing). Once linked, project_context returns everything prior tasks on the same software found, and this task's findings/binaries roll up under the project too. Operators can also link from the task page.",
+		"Link THIS task to a software project (created with save_project when missing). Once linked, project_context returns everything prior tasks on the same software found, and this task's findings/binaries roll up under the project too. Operators can also link from the task page. Pass the project key created by save_project (its name is the PRODUCT NAME AND VERSION, e.g. \"Microsoft 365 Apps (16.0.20625)\"); when no project exists yet, call save_project FIRST with a proper product name instead of letting this create a placeholder named after a binary or machine.",
 		obj(map[string]any{
 			"key": str("project key (or name; slugged automatically)"),
 		}, "key"),

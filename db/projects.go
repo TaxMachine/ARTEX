@@ -54,6 +54,24 @@ func NormalizeProjectKey(name string) string {
 var ErrProjectInvalid = errors.New("project key must be 1-64 chars: lowercase letters, digits, dot, dash, underscore")
 
 // UpsertProject creates or updates a project by key. Binaries merge (union).
+// placeholderProjectName turns a slug into a clearly-pending display name for
+// projects auto-created without one (title-case the slug; the operator or an
+// agent is expected to save_project a proper product name + version over it).
+func placeholderProjectName(key string) string {
+	parts := strings.Split(key, "-")
+	for i, w := range parts {
+		if w == "" {
+			continue
+		}
+		r := []rune(w)
+		if r[0] >= 'a' && r[0] <= 'z' {
+			r[0] = r[0] - 32
+		}
+		parts[i] = string(r)
+	}
+	return strings.Join(parts, " ") + " (unnamed product — set product name + version)"
+}
+
 func (d *DB) UpsertProject(name, key, kind, description string, binaries []string) (*Project, error) {
 	key = NormalizeProjectKey(key)
 	if key == "" || len(key) > 64 || !projectKeyRE.MatchString(key) {
@@ -68,6 +86,21 @@ func (d *DB) UpsertProject(name, key, kind, description string, binaries []strin
 	name = strings.TrimSpace(name)
 	if name == "" {
 		name = key
+	}
+	// Naming rule: the display name must be a product name + version, never a
+	// bare binary/machine slug. When the caller passes nothing better than the
+	// key itself (placeholder auto-create paths), keep the existing name on
+	// update; on insert leave a title-cased placeholder that clearly awaits a
+	// proper product name rather than freezing "msoffice-word-office-vm"-style
+	// nomenclature into the UI.
+	if strings.EqualFold(name, key) {
+		var existing string
+		_ = d.QueryRow(`SELECT name FROM projects WHERE key=$1`, key).Scan(&existing)
+		if existing != "" {
+			name = existing
+		} else {
+			name = placeholderProjectName(key)
+		}
 	}
 	var p Project
 	var bins string

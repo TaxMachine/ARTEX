@@ -54,7 +54,9 @@ func (s *Server) getProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Rollups: tasks, findings, and the crossmap stats for the project's binaries.
-	var taskRows []map[string]any
+	// Slices are initialized non-nil so an empty project serializes as [], not
+	// null — the detail page reads .length on them.
+	taskRows := []map[string]any{}
 	rows, err := s.m.pg.Query(`SELECT id, name, status FROM tasks WHERE project_id=$1 AND deleted_at IS NULL ORDER BY id DESC LIMIT 50`, p.ID)
 	if err == nil {
 		defer rows.Close()
@@ -66,7 +68,7 @@ func (s *Server) getProject(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	var findings []map[string]any
+	var findings []map[string]any = []map[string]any{}
 	frows, err := s.m.pg.Query(`SELECT id, vulnclass, name, severity, status FROM findings WHERE project_id=$1 ORDER BY id DESC LIMIT 100`, p.ID)
 	if err == nil {
 		defer frows.Close()
