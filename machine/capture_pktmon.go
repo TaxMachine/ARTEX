@@ -2,6 +2,7 @@ package machine
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -46,31 +47,60 @@ func (s *Service) startCaptureWindows(ctx context.Context, taskID int64, m db.Ma
 			ifIdx = "" // capture all interfaces
 		}
 	}
+	// Verified against Windows 11 26H2 pktmon: -p is an EVENT PROVIDER flag
+	// (not packet size!), -c/--capture enables packet capture with --comp
+	// defaulting to all, --pkt-size 0 logs whole packets. Full-packet capture:
+	//   pktmon start --capture --pkt-size 0 -f <etl> -m multi-file
+	// Interface selection uses --comp <id> (component/NIC id from pktmon list).
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf(`pktmon stop --name artex 2>nul & pktmon filter remove 2>nul & `))
+	sb.WriteString(`pktmon stop 2>nul & pktmon filter remove 2>nul & `)
 	if bpf != "" {
-		// pktmon -f accepts a simplified filter (host/port/IP); pass it through.
+		// pktmon filter add takes -i (IP) / -p (port); pass simple filters through as -f.
 		sb.WriteString(fmt.Sprintf(`pktmon filter add -f "%s" 2>nul & `, sanitizeWinPSString(bpf)))
 	}
+	sb.WriteString(fmt.Sprintf(`pktmon start --capture --pkt-size 0 -f %s -m multi-file 2>&1`, etl))
 	if ifIdx != "" && !strings.EqualFold(ifIdx, "any") {
-		sb.WriteString(fmt.Sprintf(`pktmon start --name artex --etw -p 0 -c %s -f %s -m multi-file 2>&1`, ifIdx, etl))
-	} else {
-		sb.WriteString(fmt.Sprintf(`pktmon start --etw -p 0 -c comp -f %s -m multi-file 2>&1`, etl))
+		sb.WriteString(fmt.Sprintf(` --comp %s`, ifIdx))
 	}
 	sb.WriteString(` & echo RUNNING`)
 	return s.captureCommand(ctx, m, c, sb.String(), 45*time.Second)
 }
 
 // stopCaptureWindows stops pktmon and converts the ETL to pcapng next to it;
-// the converted file becomes the download path.
+// the converted file becomes the download path. -m multi-file appends a counter
+// suffix to the ETL when it rolls (artex.etl -> artex1.etl), and the base name
+// may itself exist from a prior run, so resolve the newest artex*.etl by mtime.
+// Conversion is `pktmon etl2pcap` on current builds (etl2pcapng on older ones;
+// both are tried).
 func (s *Service) stopCaptureWindows(ctx context.Context, taskID int64, m db.Machine, c db.TaskCredential, cap db.MachineCapture) (remotePath string, stdout, stderr string, exit int, err error) {
-	pcapng := strings.TrimSuffix(cap.RemotePath, filepath.Ext(cap.RemotePath)) + ".pcapng"
-	cmd := fmt.Sprintf(`pktmon stop 2>&1 & pktmon etl2pcapng %s --out %s 2>&1 & dir /b %s 2>nul`, cap.RemotePath, pcapng, pcapng)
-	stdout, stderr, exit, err = s.captureCommand(ctx, m, c, cmd, 60*time.Second)
-	if err == nil && !strings.Contains(stdout, pcapng) && !strings.Contains(stderr, pcapng) {
-		// etl2pcapng names output by ETL suffix when --out is unsupported (older builds)
-		stdout += "\n[note] pcapng path: " + pcapng
+	// Windows paths: split on backslashes explicitly — filepath.Dir/Base on the
+	// Linux host treat the whole C:\...\x.etl as one filename.
+	full := strings.ReplaceAll(cap.RemotePath, "/", "\\")
+	i := strings.LastIndex(full, "\\")
+	dir, file := ".", full
+	if i >= 0 {
+		dir, file = full[:i], full[i+1:]
 	}
+	name := strings.TrimSuffix(file, filepath.Ext(file))
+	base := full[:len(full)-len(filepath.Ext(full))]
+	pcapng := base + ".pcapng"
+	// One PowerShell line: stop pktmon, locate the newest artex-*.etl (the
+	// multi-file mode appends a counter suffix), convert with etl2pcap (falling
+	// back to etl2pcapng on older builds). cmd.exe chaining with for /f + set
+	// proved fragile over SSH; a single powershell -Command is robust.
+	// The whole script travels base64-encoded (powershell -EncodedCommand): no
+	// quoting survives the Windows SSH default shell + cmd + powershell chain
+	// intact, and paths with backslashes drive that mangling.
+	ps := fmt.Sprintf(
+		`pktmon stop | Out-Null; `+
+			`$e = Get-ChildItem -Path '%s' -Filter '%s*.etl' | Sort-Object LastWriteTime -Descending | Select-Object -First 1; `+
+			`$out = '%s'; `+
+			`if ($e) { pktmon etl2pcap $e.FullName --out $out }; `+
+			`if ($e -and -not (Test-Path $out)) { pktmon etl2pcapng $e.FullName --out $out }; `+
+			`if (Test-Path $out) { Write-Output 'PCAPNG_OK' } else { Write-Output 'PCAPNG_MISSING' }`,
+		dir, name, pcapng)
+	cmd := "powershell -NoProfile -EncodedCommand " + psEncode(ps)
+	stdout, stderr, exit, err = s.captureCommand(ctx, m, c, cmd, 120*time.Second)
 	return pcapng, stdout, stderr, exit, err
 }
 
@@ -113,4 +143,13 @@ func isWindowsMachine(m db.Machine) bool {
 		return true
 	}
 	return strings.HasSuffix(strings.ToLower(m.Host), ".win") || m.Config["capture_mode"] == "pktmon"
+}
+
+// psEncode encodes a PowerShell script for -EncodedCommand (UTF-16LE base64).
+func psEncode(script string) string {
+	u16 := make([]byte, 0, len(script)*2)
+	for _, b := range []byte(script) {
+		u16 = append(u16, b, 0)
+	}
+	return base64.StdEncoding.EncodeToString(u16)
 }

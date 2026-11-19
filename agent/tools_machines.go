@@ -258,11 +258,11 @@ func (t *ToolSet) machineEventGet() actool.CoreTool {
 
 func (t *ToolSet) captureStart() actool.CoreTool {
 	return writeTool("capture_start",
-		"Start a tcpdump packet capture on a Linux machine over SSH (target-gated: the machine's SSH endpoint needs a pin, (requires tcpdump and permission on the target; set config.capture_sudo or use a root credential). The pcap stays on the guest until capture_stop, which downloads and records it. iface defaults to any; bpf_filter is a tcpdump expression.",
+		"Start a packet capture on a registered machine over SSH — the TRAFFIC-PROOF tool: wrap exploit/payload/callback traffic (RCE proofs, msf handler sessions, malicious document fetches) in a capture and cite the pcap in the finding's evidence. Linux machines use tcpdump (needs it installed; config.capture_sudo or a root credential for privileges); Windows machines use the built-in pktmon (no install, captures to ETL, auto-converted to pcapng on stop). Works whether or not the machine's traffic goes through the HTTP capture proxy — machine capture sees ALL protocols (SMB, DNS, TCP callbacks), not just HTTP. The capture stays on the guest until capture_stop, which downloads it into data/machine_captures/<machine>/ and records it as machine evidence. iface defaults to any; bpf_filter is a tcpdump expression on Linux / a simplified host-port filter on Windows (empty = all traffic).",
 		obj(map[string]any{
-			"machine":       str("registered Linux machine name"),
+			"machine":       str("registered machine name"),
 			"iface":         str("interface, default any"),
-			"bpf_filter":    str("tcpdump filter, e.g. 'tcp port 445'"),
+			"bpf_filter":    str("tcpdump filter, e.g. 'tcp port 445' (Linux); simplified host/port filter on Windows"),
 			"username":      str("optional SSH username"),
 			"credential_id": idp("optional task credential id"),
 		}, "machine"),
@@ -285,7 +285,7 @@ func (t *ToolSet) captureStart() actool.CoreTool {
 
 func (t *ToolSet) captureStop() actool.CoreTool {
 	return writeTool("capture_stop",
-		"Stop one packet capture, download the pcap (target-gated: the machine's SSH endpoint needs a pin) into data/machine_captures/<machine>/<id>.pcap and record the result as machine evidence. Returns the local path for further analysis.",
+		"Stop one packet capture, download the pcap/pcapng into data/machine_captures/<machine>/<id>.pcap and record the result as machine evidence (Windows pktmon captures are converted from ETL to pcapng first). Returns the local path — cite it in the finding's evidence: handler transcript + pcap is the complete RCE proof.",
 		obj(map[string]any{
 			"machine":       str("registered machine name"),
 			"capture_id":    idp("capture id returned by capture_start"),
@@ -310,7 +310,7 @@ func (t *ToolSet) captureStop() actool.CoreTool {
 
 func (t *ToolSet) captureList() actool.CoreTool {
 	return readTool("capture_list",
-		"List recent packet captures for a registered machine: id, interface, filter, status, bytes, local pcap path.",
+		"List recent packet captures for a registered machine: id, interface, filter, status, bytes, local pcap path. Check this to cite an existing capture as evidence instead of re-capturing.",
 		obj(map[string]any{
 			"machine": str("registered machine name"),
 			"limit":   intp("default 10, max 100"),
