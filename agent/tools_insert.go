@@ -759,6 +759,8 @@ func (t *ToolSet) WorkerTools() []actool.CoreTool {
 		t.heapWatchTool(),
 		// OS-level target activity (file/process/registry) around triggers.
 		t.targetWatchTool(),
+		// crash-input minimizer (structure-aware, signature-preserving).
+		t.crashMinimizeTool(),
 		// The following tools are still [not given] to workers, reserved for
 		// planner/main (reading context, cross-work retrospection are planning duties; a
 		// worker only executes and writes back its single intent):

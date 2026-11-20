@@ -57,6 +57,10 @@ record_fact(intent_id=..., summary="heap overflow primitive in <function> via <s
 - Dedupe is by WER signature (P1-P7 tuple): same signature = same bug, skip.
 - If the crash survives WITHOUT page_heap: even better — record it as
   triggerable under default settings.
+- MINIMIZE before grooming (crash_minimize): structure-aware shrinking that
+  keeps the same signature — a 512-byte minimal repro pinpoints the offending
+  structure and makes every later grooming step dramatically cheaper. The
+  minimized file is the repro input for the whole chain going forward.
 
 ## 4. Loop discipline
 
