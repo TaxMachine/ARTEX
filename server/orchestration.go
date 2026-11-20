@@ -602,6 +602,7 @@ func (s *Server) seedOrchestrationTools() {
 	s.reseedWorkerPrompt()            // worker prompt: adds the evidence bar for negative conclusions (one-time)
 	s.reseedCompressedPrompts()       // all default prompts compressed (token diet) → old DBs append a new default version (one-time)
 	s.reseedConfirmStandardPrompts()  // executor prompts gain the primitives-vs-exploit-chain confirmation standard (one-time)
+	s.seedGroomingToolBindings()      // worker gains page_heap/heap_spray/list_vuln_classes (landed as mainagent-only, one-time)
 	s.seedReporterAgent()             // seeds the "report writer" agent + tool bindings + finding trigger (one-time)
 	s.upgradeReporterTriggerMessage() // backfill migration for old DBs: makes the reporter send evidence_version back (one-time)
 	s.seedFindingTrafficTools()       // adds optional evidence params and read-only evidence tools, preserving user config
@@ -1246,4 +1247,21 @@ func (s *Server) reseedConfirmStandardPrompts() {
 	push("worker", agent.BuiltinPromptSeeds()["worker"])
 	push("pentest", agent.BuiltinPromptSeeds()["pentest"])
 	push("retester", agent.RetesterDefaultPrompt)
+}
+
+// seedGroomingToolBindings repairs the bindings of the heap-grooming/taxonomy
+// tools: their first SeedTool registration captured the agent list before the
+// WorkerTools fix (mainagent+pentest only), so ToolResolve dropped them for
+// workers at runtime. One-time; fresh DBs seed the correct union directly.
+func (s *Server) seedGroomingToolBindings() {
+	const flag = "grooming_tools_worker_v1"
+	if v, _, _ := s.m.pg.GetSetting(flag); v == "true" {
+		return
+	}
+	defer func() { _ = s.m.pg.SetSetting(flag, "true") }()
+	if err := s.m.pg.AddAgentToToolBinding("worker", []string{"page_heap", "heap_spray", "list_vuln_classes"}); err != nil {
+		log.Printf("[tools] grooming tool bindings failed: %v", err)
+		return
+	}
+	log.Printf("[tools] worker bound to page_heap/heap_spray/list_vuln_classes (one-time)")
 }

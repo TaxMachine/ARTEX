@@ -103,7 +103,13 @@ func chatWorkDirSpec(workDir string) string {
 func chatSystem(agentKey, dataDir, workDir string) string {
 	body := renderSystem(agentKey, DefaultAssistantPrompt, chatVars{DataDir: dataDir, Now: nowStr()})
 	body += untrustedContentTail(body)
-	return body + chatWorkDirSpec(workDir) + noiseProfileBlock() + outputStyleTail(body)
+	sys := body + chatWorkDirSpec(workDir) + noiseProfileBlock() + outputStyleTail(body)
+	// The exploit-craft doctrine rides only on executor personas (pentest and
+	// retester re-verify/exploit), not platform operators or plain assistants.
+	if agentKey == "pentest" || agentKey == "retester" {
+		sys += exploitCraftTail(body)
+	}
+	return sys
 }
 
 // chatVars carries the runtime variables a custom agent's prompt may reference.

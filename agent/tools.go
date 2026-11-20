@@ -1461,18 +1461,18 @@ func (t *ToolSet) addFinding() actool.CoreTool {
 			return actool.Errorf(err.Error()), nil
 		}
 		vulnClass := a.VulnClass
-	if norm, ok := db.NormalizeVulnClass(vulnClass); ok {
-		vulnClass = norm
-	} else if strings.Contains(vulnClass, "/") || strings.Contains(vulnClass, "(") || len(vulnClass) > 48 {
-		// free-text drift: try harder (normalized form may match a synonym)
-		if norm, ok2 := db.NormalizeVulnClass(db.NormalizeSlug(vulnClass)); ok2 {
+		if norm, ok := db.NormalizeVulnClass(vulnClass); ok {
 			vulnClass = norm
+		} else if strings.Contains(vulnClass, "/") || strings.Contains(vulnClass, "(") || len(vulnClass) > 48 {
+			// free-text drift: try harder (normalized form may match a synonym)
+			if norm, ok2 := db.NormalizeVulnClass(db.NormalizeSlug(vulnClass)); ok2 {
+				vulnClass = norm
+			}
 		}
-	}
-	if _, ok := db.NormalizeVulnClass(vulnClass); !ok {
-		return actool.Errorf("vulnclass "+strconv.Quote(a.VulnClass)+" is not in the canonical taxonomy; pick the closest id from list_vuln_classes (e.g. memory-oob-write, rce-deserialization, dos-crash, access-privilege-escalation)"), nil
-	}
-	input := db.RecordFindingInput{TaskID: t.taskID, ExplorationID: t.ts.ID(), IntentID: pid(a.IntentID), VulnClass: vulnClass, Name: a.Name, Severity: a.Severity, Summary: a.Summary, Evidence: a.Evidence, Worker: t.worker, AssetIDs: pidList(a.AssetIDs), Counterevidence: a.Counterevidence, ConfidenceRationale: a.ConfidenceRationale, Category: db.NormalizeFindingCategory(a.Category)}
+		if _, ok := db.NormalizeVulnClass(vulnClass); !ok {
+			return actool.Errorf("vulnclass " + strconv.Quote(a.VulnClass) + " is not in the canonical taxonomy; pick the closest id from list_vuln_classes (e.g. memory-oob-write, rce-deserialization, dos-crash, access-privilege-escalation)"), nil
+		}
+		input := db.RecordFindingInput{TaskID: t.taskID, ExplorationID: t.ts.ID(), IntentID: pid(a.IntentID), VulnClass: vulnClass, Name: a.Name, Severity: a.Severity, Summary: a.Summary, Evidence: a.Evidence, Worker: t.worker, AssetIDs: pidList(a.AssetIDs), Counterevidence: a.Counterevidence, ConfidenceRationale: a.ConfidenceRationale, Category: db.NormalizeFindingCategory(a.Category)}
 		var recorded *db.RecordedFinding
 		if t.findingRecorder != nil {
 			recorded, err = t.findingRecorder.Record(ctx, input, refs)
