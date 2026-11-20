@@ -761,6 +761,10 @@ func (t *ToolSet) WorkerTools() []actool.CoreTool {
 		t.targetWatchTool(),
 		// crash-input minimizer (structure-aware, signature-preserving).
 		t.crashMinimizeTool(),
+		// knowledge graph (cross-task exploit-craft memory).
+		t.knowledgeAdd(), t.knowledgeSearch(),
+		// one-call write+run PowerShell script.
+		t.psScriptTool(),
 		// The following tools are still [not given] to workers, reserved for
 		// planner/main (reading context, cross-work retrospection are planning duties; a
 		// worker only executes and writes back its single intent):

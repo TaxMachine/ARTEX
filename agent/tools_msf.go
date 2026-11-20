@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/TaxMachine/ARTEX/machine"
 	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 )
 
@@ -30,6 +31,7 @@ type msfHandler struct {
 	Dir        string    `json:"dir"`
 	Started    time.Time `json:"started"`
 	Transcript string    `json:"transcript"`
+	captured   bool      // auto-pcap fired for the first session
 }
 
 var (
@@ -239,6 +241,30 @@ func (t *ToolSet) msfHandlerStatus() actool.CoreTool {
 		})
 }
 
+// msfAutoCapture: when a handler first sees a session open, start a packet
+// capture on each reachable registered machine so the proof automatically
+// carries its pcap — handler transcript + pcap is the complete RCE evidence
+// standard without the agent remembering capture_start. Best effort.
+func msfAutoCapture(port int) {
+	svc := machine.Default()
+	if svc == nil {
+		return
+	}
+	list, err := svc.List()
+	if err != nil {
+		return
+	}
+	filter := fmt.Sprintf("tcp port %d", port)
+	for i := range list {
+		m := list[i]
+		go func(name string) {
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+			defer cancel()
+			_, _ = svc.CaptureStart(ctx, 0, name, "", filter, "", 0)
+		}(m.Name)
+	}
+}
+
 func handlerStatus(h *msfHandler) map[string]any {
 	tail := ""
 	if b, err := os.ReadFile(h.Transcript); err == nil {
@@ -250,6 +276,10 @@ func handlerStatus(h *msfHandler) map[string]any {
 	}
 	session := strings.Contains(tail, "session") && strings.Contains(tail, "opened")
 	meterpreter := strings.Contains(tail, "Meterpreter session")
+	if session && !h.captured {
+		h.captured = true
+		msfAutoCapture(h.LPORT)
+	}
 	return map[string]any{
 		"id": h.ID, "payload": h.Payload, "lhost": h.LHOST, "lport": h.LPORT,
 		"started": h.Started.Format(time.RFC3339), "age_seconds": int(time.Since(h.Started).Seconds()),

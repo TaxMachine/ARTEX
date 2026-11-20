@@ -196,6 +196,9 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 		taskAgents:     map[string]*taskAgentBundle{}, archiveWake: make(chan struct{}, 1),
 		loginLimit: newLoginLimiter(time.Now), pwdLimit: newLoginLimiter(time.Now)}
 	s.llmHealth, s.llmHealthSync = newLLMHealthRegistry(ctx, m.pg)
+	// fuzz supervisor: watches detached campaigns on active tasks and
+	// auto-dispatches triage intents when new crash signatures land.
+	go (&fuzzSupervisor{s: s, lastSeen: map[string]int{}}).run(ctx)
 	for _, o := range opts {
 		o(s)
 	}
@@ -874,6 +877,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/machines/{name}/captures", s.listMachineCaptures)
 	mux.HandleFunc("GET /api/machine-captures", s.listAllMachineCaptures)
 	mux.HandleFunc("GET /api/vuln-classes", s.listVulnClasses)
+	mux.HandleFunc("GET /api/knowledge/vault", s.knowledgeVaultExport)
 	mux.HandleFunc("GET /api/machine-captures/{id}/download", s.downloadMachineCapture)
 	mux.HandleFunc("POST /api/machines/{name}/{action}", s.machineLifecycle)
 	mux.HandleFunc("GET /api/machine-events", s.listMachineEvents)

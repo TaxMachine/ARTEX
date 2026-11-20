@@ -546,3 +546,34 @@ func (s *MachineStore) AutostartCandidates() ([]Machine, error) {
 	}
 	return out, rows.Err()
 }
+
+// CapturesForTask lists a task's captures, newest first (PoC packaging: the
+// findings export bundles them as the pcap side of the evidence).
+func (s *MachineStore) CapturesForTask(taskID int64, limit int) ([]MachineCapture, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	rows, err := s.db.Query(`
+		SELECT id, machine_id, task_id, iface, bpf_filter, remote_path, local_path, pid_file,
+		       status, bytes, started_at, stopped_at, COALESCE(note,'')
+		FROM machine_captures WHERE task_id=$1 ORDER BY id DESC LIMIT $2`, taskID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []MachineCapture
+	for rows.Next() {
+		var c MachineCapture
+		var stopped sql.NullTime
+		if err := rows.Scan(&c.ID, &c.MachineID, &c.TaskID, &c.Iface, &c.BPFFilter,
+			&c.RemotePath, &c.LocalPath, &c.PIDFile, &c.Status, &c.Bytes, &c.StartedAt, &stopped, &c.Note); err != nil {
+			return nil, err
+		}
+		if stopped.Valid {
+			t := stopped.Time
+			c.StoppedAt = &t
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}

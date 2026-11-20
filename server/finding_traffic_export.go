@@ -41,6 +41,10 @@ func writeFindingsZipEntries(zw *zip.Writer, findings []*db.DBFinding, stage str
 		if _, err = io.WriteString(w, report.SingleFindingMarkdown(f, now)); err != nil {
 			return err
 		}
+		// PoC packaging: the finding's task pcaps ride along in the archive.
+		if exportPG != nil {
+			writeFindingPcaps(zw, f, exportPG)
+		}
 		for _, b := range f.TrafficBindings {
 			prefix := fmt.Sprintf("evidence/%d/%d/", f.ID, b.ID)
 			w, err := zw.Create(prefix + "manifest.json")

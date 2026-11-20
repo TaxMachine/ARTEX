@@ -52,6 +52,14 @@ export default function MachinesPage() {
   const [busy, setBusy] = React.useState<string>("");
   const [form, setForm] = React.useState<MachineInput>(EMPTY);
   const [editing, setEditing] = React.useState<Machine | null>(null);
+  // Machine-level SSH credential drafts (config.ssh_credentials): empty box on
+  // edit = keep what's stored; filled = replace. Password shown count only.
+  const [machineKeyDraft, setMachineKeyDraft] = React.useState("");
+  const [machinePassDraft, setMachinePassDraft] = React.useState("");
+  const sshCredCount = React.useMemo(
+    () => (Array.isArray(form.config?.ssh_credentials) ? form.config.ssh_credentials.length : 0),
+    [form.config],
+  );
   const load = React.useCallback(async () => {
     setLoading(true);
     try {
@@ -151,17 +159,26 @@ export default function MachinesPage() {
       setEditing(null);
       setForm(EMPTY);
     }
+    setMachineKeyDraft("");
+    setMachinePassDraft("");
   }
 
   async function save() {
     setBusy("save");
     try {
+      const config = { ...(form.config ?? {}) };
+      const defaultUser = typeof config.default_username === "string" ? config.default_username : "";
+      const creds: Array<Record<string, string>> = [];
+      if (machineKeyDraft.trim()) creds.push({ username: defaultUser || "administrator", secret_type: "key", private_key: machineKeyDraft.trim() });
+      if (machinePassDraft) creds.push({ username: defaultUser || "administrator", secret_type: "password", password: machinePassDraft });
+      if (creds.length) config.ssh_credentials = creds;
+      if (!config.default_username) delete config.default_username;
       const payload: MachineInput = {
         ...form,
         name: form.name.trim(),
         ssh_port: Number(form.ssh_port) || 22,
         tags: form.tags ?? [],
-        config: form.config ?? {},
+        config,
       };
       if (editing) await api.updateMachine(editing.id, payload);
       else await api.createMachine(payload);
@@ -367,6 +384,38 @@ export default function MachinesPage() {
                 <Label>SSH port</Label>
                 <Input type="number" value={form.ssh_port} onChange={(e) => setForm({ ...form, ssh_port: Number(e.target.value) })} />
               </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Default SSH user</Label>
+              <Input
+                value={(form.config?.default_username as string) ?? ""}
+                placeholder="taxmachine — auto-selected for every task on this machine"
+                onChange={(e) => setForm({ ...form, config: { ...form.config, default_username: e.target.value } })}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Machine-level SSH key</Label>
+              <textarea
+                className="field-sizing-content min-h-[72px] w-full rounded-md border bg-transparent px-2 py-1 font-mono text-xs"
+                rows={3}
+                placeholder={"Optional PEM key injected into every task on this machine — SSH works out of the box, no per-task credential attachment. Mutually exclusive with a machine-level password below."}
+                value={machineKeyDraft}
+                onChange={(e) => setMachineKeyDraft(e.target.value)}
+              />
+              {sshCredCount > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  {sshCredCount} machine-level credential(s) stored — leave the box empty to keep them
+                </div>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label>Machine-level SSH password</Label>
+              <Input
+                type="password"
+                placeholder="Optional — alternative to the key above"
+                value={machinePassDraft}
+                onChange={(e) => setMachinePassDraft(e.target.value)}
+              />
             </div>
             {form.kind === "libvirt" && (
               <div className="space-y-1">

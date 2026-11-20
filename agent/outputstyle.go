@@ -1,6 +1,9 @@
 package agent
 
-import "strings"
+import (
+	"encoding/base64"
+	"strings"
+)
 
 // outputStyleBlock is the code-owned token-discipline tail appended to every
 // agent system prompt (worker, planner, mainagent, every chat agent —
@@ -26,4 +29,9 @@ func outputStyleTail(body string) string {
 		return ""
 	}
 	return outputStyleBlock
+}
+
+// psEncode64Plain encodes raw bytes (script content) as std base64.
+func psEncode64Plain(s string) string {
+	return base64.StdEncoding.EncodeToString([]byte(s))
 }

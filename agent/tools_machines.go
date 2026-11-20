@@ -367,3 +367,55 @@ func preview(s string, n int) string {
 	}
 	return s[:n] + "..."
 }
+
+// psScriptTool: write a PowerShell script on the agent side and run it on the
+// machine in ONE call (upload+ps_file collapsed; EncodedCommand body so the
+// execution policy can't block it).
+func (t *ToolSet) psScriptTool() actool.CoreTool {
+	return writeTool("ps_script",
+		"Write a PowerShell script AND run it on a Windows machine in one call — the one-step replacement for ssh_upload+ssh_exec ps_file when iterating on harnesses/batch runners. The script body runs as a file-backed invocation (the server stages it to C:\\fuzz\\artex-scripts\\ and executes it), so multiline scripts, functions and loops all work; no execution-policy or cmd.exe quoting issues.",
+		obj(map[string]any{
+			"machine":         str("registered machine name"),
+			"script":          str("full PowerShell script source (param() blocks welcome)"),
+			"args":            str("optional: arguments line appended to the invocation"),
+			"username":        str("optional SSH username"),
+			"credential_id":   idp("optional task credential id"),
+			"timeout_seconds": intp("default 300, max 1800"),
+		}, "machine", "script"),
+		t.needMachines("ps_script", func(ctx context.Context, in json.RawMessage) (actool.Result, error) {
+			var a struct {
+				Machine      string `json:"machine"`
+				Script       string `json:"script"`
+				Args         string `json:"args"`
+				Username     string `json:"username"`
+				CredentialID int64  `json:"credential_id"`
+				Timeout      int    `json:"timeout_seconds"`
+			}
+			_ = json.Unmarshal(in, &a)
+			if strings.TrimSpace(a.Script) == "" {
+				return actool.Errorf("script is required"), nil
+			}
+			if strings.ContainsAny(a.Args, "\"&|><`") {
+				return actool.Errorf("args must not contain shell metacharacters"), nil
+			}
+			to := time.Duration(a.Timeout) * time.Second
+			if a.Timeout <= 0 {
+				to = 5 * time.Minute
+			}
+			// stage via SSH write (echo through EncodedCommand to survive quoting)
+			name := fmt.Sprintf("s%d.ps1", time.Now().UnixNano())
+			remote := `C:\fuzz\artex-scripts\` + name
+			writePS := fmt.Sprintf(`New-Item -ItemType Directory -Force -Path C:\fuzz\artex-scripts | Out-Null; [IO.File]::WriteAllBytes('%s', [Convert]::FromBase64String('%s')); Write-Output STAGED`, remote, psEncode64Plain(a.Script))
+			if ex, err := t.machines.Exec(ctx, t.taskID, a.Machine, a.Username, a.CredentialID,
+				"powershell -NoProfile -EncodedCommand "+psEncode64(writePS), 30*time.Second); err != nil || !strings.Contains(ex.Stdout, "STAGED") {
+				return actool.Errorf("stage failed: " + ex.Stdout), nil
+			}
+			runPS := fmt.Sprintf(`$code = Get-Content '%s' -Raw; $sb = [ScriptBlock]::Create($code); & $sb %s`, remote, strings.TrimSpace(a.Args))
+			res, err := t.machines.Exec(ctx, t.taskID, a.Machine, a.Username, a.CredentialID,
+				"powershell -NoProfile -EncodedCommand "+psEncode64(runPS), to)
+			if err != nil {
+				return jsonResult(map[string]any{"error": err.Error(), "result": res})
+			}
+			return jsonResult(map[string]any{"staged_as": remote, "result": res})
+		}))
+}
