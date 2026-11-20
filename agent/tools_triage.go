@@ -82,11 +82,12 @@ func (t *ToolSet) crashTriageAutoTool() actool.CoreTool {
 			if wc == nil {
 				return actool.Errorf("windbg MCP is not configured on this server (set ARTEX_WINDBG_URL + ARTEX_WINDBG_TOKEN)"), nil
 			}
-			sid, err := wc.initialize(ctx)
+			sidStr, err := wc.initialize(ctx)
 			if err != nil {
 				return actool.Errorf("windbg initialize failed: " + err.Error()), nil
 			}
-			defer wc.endSession(context.Background(), sid)
+			sid := &sidStr
+			defer wc.endSession(context.Background(), *sid)
 			// 3) launch; continue past the debugger's initial breakpoint, then
 			// wait for the actual crash. Each continue is execute g — on a
 			// page-heaped target the next stop IS the corruption.

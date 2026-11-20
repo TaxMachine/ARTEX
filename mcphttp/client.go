@@ -371,6 +371,23 @@ func (c *Client) wrap(rt remoteTool) actool.CoreTool {
 // for backend batch jobs (e.g. asset sync) that call MCP tools programmatically.
 func (c *Client) Call(ctx context.Context, tool string, args any) (string, error) {
 	raw, err := c.call(ctx, "tools/call", map[string]any{"name": tool, "arguments": args})
+	if err != nil && isSessionGoneErr(err) && ctx.Err() == nil {
+		// Self-heal: the remote MCP service restarted (or the transport
+		// blipped), invalidating our cached session id server-side. Every
+		// subsequent call would keep failing with "Session not found" until
+		// re-initialization — the exact failure mode that cost a worker run
+		// on the windbg server. Reset and re-init once, then replay.
+		c.mu.Lock()
+		wasInit := c.initialized
+		c.initialized = false
+		c.sessionID = ""
+		c.mu.Unlock()
+		if wasInit {
+			if ierr := c.initialize(ctx); ierr == nil {
+				raw, err = c.call(ctx, "tools/call", map[string]any{"name": tool, "arguments": args})
+			}
+		}
+	}
 	if err != nil {
 		return "", err
 	}
@@ -392,6 +409,19 @@ func (c *Client) Call(ctx context.Context, tool string, args any) (string, error
 		return text.String(), fmt.Errorf("mcp tool %q error: %s", tool, text.String())
 	}
 	return text.String(), nil
+}
+
+// isSessionGoneErr matches the session-loss signatures across servers: HTTP
+// 404 with "Session not found" (FastMCP-style), and the JSON-RPC error of the
+// same meaning some servers return in a 200 body.
+func isSessionGoneErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "Session not found") ||
+		strings.Contains(msg, "session not found") ||
+		(strings.Contains(msg, "mcp http 404") && strings.Contains(strings.ToLower(msg), "session"))
 }
 
 // Close terminates the MCP session best-effort (DELETE with the session id, per the

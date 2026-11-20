@@ -109,7 +109,35 @@ func (c *windbgClient) initialize(ctx context.Context) (string, error) {
 	return sid, nil
 }
 
-func (c *windbgClient) call(ctx context.Context, sid, tool string, args map[string]any, timeout time.Duration) (map[string]any, error) {
+// call runs a tools/call with self-healing: the windbg service on the VM
+// restarts occasionally (or the SSH tunnel blips), which invalidates every
+// session id server-side. A 404 "Session not found" is recovered by
+// re-initializing once and replaying the call — the failure mode that
+// produced an hour of dead "All windbg MCP calls return 404" worker runs.
+func (c *windbgClient) call(ctx context.Context, sid *string, tool string, args map[string]any, timeout time.Duration) (map[string]any, error) {
+	res, err := c.callOnce(ctx, *sid, tool, args, timeout)
+	if err == nil || !isSessionGone(err) || ctx.Err() != nil {
+		return res, err
+	}
+	newSid, ierr := c.initialize(ctx)
+	if ierr != nil {
+		return res, fmt.Errorf("%v (re-initialize after session loss also failed: %v)", err, ierr)
+	}
+	*sid = newSid
+	return c.callOnce(ctx, newSid, tool, args, timeout)
+}
+
+// isSessionGone matches the transport-level and MCP-level session-loss
+// signatures (HTTP 404 from the bridge, "Session not found" body).
+func isSessionGone(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "404") || strings.Contains(msg, "Session not found")
+}
+
+func (c *windbgClient) callOnce(ctx context.Context, sid string, tool string, args map[string]any, timeout time.Duration) (map[string]any, error) {
 	cctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	var out struct {
@@ -145,7 +173,7 @@ func (c *windbgClient) call(ctx context.Context, sid, tool string, args map[stri
 }
 
 func (c *windbgClient) endSession(ctx context.Context, sid string) {
-	_, _ = c.call(ctx, sid, "end_session", map[string]any{}, 30*time.Second)
+	_, _ = c.callOnce(ctx, sid, "end_session", map[string]any{}, 30*time.Second)
 }
 
 // moduleOffsetRE pulls "MODULE+0xOFFSET" tokens from triage text.

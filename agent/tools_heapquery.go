@@ -68,25 +68,29 @@ func (t *ToolSet) heapQueryTool() actool.CoreTool {
 			if appExe == "" {
 				appExe = app
 			}
+			if a.Session == "" {
+				var err error
+				sidStr, err := wc.initialize(ctx)
+				if err != nil {
+					return actool.Errorf("windbg initialize failed: " + err.Error()), nil
+				}
+				sid = sidStr
+				ownsSession = true
+				defer wc.endSession(context.Background(), sid)
+				launchOut, err := wc.call(ctx, &sid, "launch", map[string]any{"command_line": appExe}, 180*time.Second)
+				if err != nil {
+					return actool.Errorf("launch failed: " + err.Error()), nil
+				}
+				if e, ok := launchOut["is_error"].(bool); ok && e {
+					return actool.Errorf("launch failed: " + fmt.Sprint(launchOut["text"])), nil
+				}
+				// Symbols: the engine bundle + _NT_SYMBOL_PATH on the VM provide
+				// ntdll's pdb (verified); a short settle then break_in gives a
+				// post-startup snapshot instead of the empty initial-break heap.
+				time.Sleep(12 * time.Second)
+				_, _ = wc.call(ctx, &sid, "break_in", map[string]any{}, 120*time.Second)
+			}
 			var err error
-			sid, err = wc.initialize(ctx)
-			if err != nil {
-				return actool.Errorf("windbg initialize failed: " + err.Error()), nil
-			}
-			ownsSession = true
-			defer wc.endSession(context.Background(), sid)
-			launchOut, err := wc.call(ctx, sid, "launch", map[string]any{"command_line": appExe}, 180*time.Second)
-			if err != nil {
-				return actool.Errorf("launch failed: " + err.Error()), nil
-			}
-			if e, ok := launchOut["is_error"].(bool); ok && e {
-				return actool.Errorf("launch failed: " + fmt.Sprint(launchOut["text"])), nil
-			}
-			// Symbols: the engine bundle + _NT_SYMBOL_PATH on the VM provide
-			// ntdll's pdb (verified); a short settle then break_in gives a
-			// post-startup snapshot instead of the empty initial-break heap.
-			time.Sleep(12 * time.Second)
-			_, _ = wc.call(ctx, sid, "break_in", map[string]any{}, 120*time.Second)
 			toolArgs := map[string]any{}
 			var tool string
 			switch a.Action {
@@ -129,7 +133,7 @@ func (t *ToolSet) heapQueryTool() actool.CoreTool {
 			default:
 				return actool.Errorf("action must be list|census|allocations|chunk"), nil
 			}
-			out, err := wc.call(ctx, sid, tool, toolArgs, 180*time.Second)
+			out, err := wc.call(ctx, &sid, tool, toolArgs, 180*time.Second)
 			if err != nil {
 				return actool.Errorf(tool + " failed: " + err.Error()), nil
 			}
