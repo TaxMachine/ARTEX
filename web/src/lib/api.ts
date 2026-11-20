@@ -8,6 +8,9 @@ import { MOCK } from "@/lib/mock/enabled";
 import { mockHandle } from "@/lib/mock/handler";
 import type {
   ActiveFindingRetest,
+  KnowledgeEdge,
+  KnowledgeNode,
+  KnowledgeNodeDetail,
   Activity,
   Agent,
   AgentDetail,
@@ -343,6 +346,15 @@ export const api = {
     post<{ output: string }>(`/machines/${encodeURIComponent(name)}/snapshot`, { action, snapshot }),
   machineCaptures: (name: string) => get<MachineCapture[]>(`/machines/${encodeURIComponent(name)}/captures`).then((r) => arr(r)),
   vulnClasses: () => get<{ classes: { id: string; name: string }[]; total: number }>("/vuln-classes"),
+  knowledgeNodes: (params: { q?: string; kind?: string; tags?: string; limit?: number }) =>
+    get<{ nodes: KnowledgeNode[] }>(
+      `/knowledge/nodes?${new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v !== undefined && v !== "" && v !== null) as [string, string][],
+      ).toString()}`,
+    ).then((r) => r.nodes ?? []),
+  knowledgeNode: (id: number) => get<KnowledgeNodeDetail>(`/knowledge/node/${id}`),
+  knowledgeStats: () => get<Record<string, number>>("/knowledge/stats"),
+  knowledgeVaultUrl: () => "/api/knowledge/vault",
   machineCaptureList: (limit = 200) =>
     get<MachineCapture[]>(`/machine-captures?limit=${limit}`).then((r) => arr(r)),
   machineAutostart: (taskId?: number) =>

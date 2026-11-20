@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -111,4 +112,52 @@ func noteName(n db.KnowledgeNode) string {
 		return r
 	}, base)
 	return fmt.Sprintf("%s - %s", n.Kind, base)
+}
+
+// knowledgeListNodes: the browse API for the frontend page — search + kind
+// filter, same semantics as the kn_search agent tool.
+func (s *Server) knowledgeListNodes(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	limit, _ := strconv.Atoi(q.Get("limit"))
+	if limit <= 0 || limit > 200 {
+		limit = 100
+	}
+	tags := []string{}
+	for _, t := range strings.Split(q.Get("tags"), ",") {
+		if t = strings.TrimSpace(t); t != "" {
+			tags = append(tags, strings.ToLower(t))
+		}
+	}
+	nodes, err := s.m.pg.KnowledgeSearch(q.Get("q"), q.Get("kind"), tags, limit)
+	if err != nil {
+		writeErr(w, 500, err.Error())
+		return
+	}
+	writeJSON(w, 200, map[string]any{"nodes": nodes})
+}
+
+// knowledgeGetNode: one node with its neighbors + edges.
+func (s *Server) knowledgeGetNode(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil || id <= 0 {
+		writeErr(w, 400, "bad node id")
+		return
+	}
+	n, err := s.m.pg.KnowledgeGet(id)
+	if err != nil {
+		writeErr(w, 404, "node not found")
+		return
+	}
+	nodes, edges, _ := s.m.pg.KnowledgeNeighbors(id, "")
+	writeJSON(w, 200, map[string]any{"node": n, "neighbors": nodes, "edges": edges})
+}
+
+// knowledgeStats: kind counts for the page header.
+func (s *Server) knowledgeStats(w http.ResponseWriter, r *http.Request) {
+	stats, err := s.m.pg.KnowledgeStats()
+	if err != nil {
+		writeErr(w, 500, err.Error())
+		return
+	}
+	writeJSON(w, 200, stats)
 }

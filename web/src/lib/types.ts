@@ -1565,6 +1565,33 @@ export interface MachineBootResult {
   error?: string;
 }
 
+export interface KnowledgeNode {
+  id: number;
+  kind: string;
+  name: string;
+  body: string;
+  refs: Record<string, unknown>;
+  tags: string[];
+  dedupe_key: string;
+  source: string;
+  task_id?: number;
+  updated_at: string;
+}
+
+export interface KnowledgeEdge {
+  id: number;
+  src: number;
+  dst: number;
+  rel: string;
+  note: string;
+}
+
+export interface KnowledgeNodeDetail {
+  node: KnowledgeNode;
+  neighbors: KnowledgeNode[];
+  edges: KnowledgeEdge[];
+}
+
 export interface MachineCapture {
   id: number;
   machine_id: number;

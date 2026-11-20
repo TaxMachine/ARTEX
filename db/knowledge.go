@@ -210,3 +210,22 @@ FROM knowledge_nodes ORDER BY kind, name`)
 	}
 	return nodes, edges, nil
 }
+
+// KnowledgeStats: counts by kind for the browser page header.
+func (d *DB) KnowledgeStats() (map[string]int, error) {
+	rows, err := d.Query(`SELECT kind, COUNT(*) FROM knowledge_nodes GROUP BY kind`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]int{}
+	for rows.Next() {
+		var k string
+		var n int
+		if err := rows.Scan(&k, &n); err != nil {
+			return nil, err
+		}
+		out[k] = n
+	}
+	return out, rows.Err()
+}
