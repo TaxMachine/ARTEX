@@ -1254,7 +1254,7 @@ func (s *Server) reseedConfirmStandardPrompts() {
 // WorkerTools fix (mainagent+pentest only), so ToolResolve dropped them for
 // workers at runtime. One-time; fresh DBs seed the correct union directly.
 func (s *Server) seedGroomingToolBindings() {
-	const flag = "grooming_tools_worker_v5"
+	const flag = "grooming_tools_worker_v6"
 	if v, _, _ := s.m.pg.GetSetting(flag); v == "true" {
 		return
 	}
