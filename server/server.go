@@ -1882,7 +1882,8 @@ func (s *Server) createTask(w http.ResponseWriter, r *http.Request) {
 		taskNum, _ := strconv.ParseInt(t.ID, 10, 64)
 		for _, c := range req.Credentials {
 			if _, err := s.m.PG().UpsertTaskCredential(taskNum, db.TaskCredentialInput{
-				Domain: c.Domain, Username: c.Username, Password: c.Password,
+				Protocol: c.Protocol, Domain: c.Domain, Port: c.Port, Username: c.Username,
+				Password: c.Password, SecretType: c.SecretType, PrivateKey: c.PrivateKey,
 				Source: "user", Note: c.Note,
 			}); err != nil {
 				writeErr(w, 400, "invalid credential for "+c.Domain+": "+err.Error())
