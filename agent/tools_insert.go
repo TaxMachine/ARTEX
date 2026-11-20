@@ -745,6 +745,10 @@ func (t *ToolSet) WorkerTools() []actool.CoreTool {
 		// node_detail: once a worker has an intent_id/node id, it can look up that node's
 		// full detail (pairs with the review above).
 		t.nodeDetail(),
+		// canonical exploit-type taxonomy lookup for report_finding.
+		t.listVulnClasses(),
+		// heap-grooming PoC tooling: page heap + spray harness.
+		t.pageHeapTool(), t.heapSprayTool(),
 		// The following tools are still [not given] to workers, reserved for
 		// planner/main (reading context, cross-work retrospection are planning duties; a
 		// worker only executes and writes back its single intent):
@@ -781,6 +785,8 @@ func (t *ToolSet) MainAgentTools() []actool.CoreTool {
 		t.msfPayload(), t.msfHandlerStart(), t.msfHandlerStatus(), t.msfHandlerStop(),
 		// canonical exploit-type taxonomy lookup for report_finding.
 		t.listVulnClasses(),
+		// heap-grooming PoC tooling: page heap + spray harness.
+		t.pageHeapTool(), t.heapSprayTool(),
 	}
 }
 

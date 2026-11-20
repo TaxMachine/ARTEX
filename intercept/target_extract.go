@@ -57,6 +57,9 @@ var noTargetTools = toolSet(
 	"msf_payload", "msf_handler_start", "msf_handler_status", "msf_handler_stop",
 	// canonical taxonomy lookup: platform-static list, no target data.
 	"list_vuln_classes",
+	// heap-grooming: machine registry operations (gflags-equivalent + spray
+	// harness); the machine name is gated through machineTools above.
+	"page_heap", "heap_spray",
 )
 
 // machineTools are the native machine tools whose call reaches a registered
