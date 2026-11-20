@@ -20,7 +20,7 @@ type LLMProfile struct {
 	Proxy         string  `json:"proxy,omitempty"` // LLM outbound proxy (http/https/socks5); empty = use environment variables
 	Model         string  `json:"model"`
 	Provider      string  `json:"provider,omitempty"` // preset id (opencode-zen, nvidia-nim, openai, ...) or custom; powers the grouped LLM list
-	APIKey        string  `json:"-"` // never serialized to UI
+	APIKey        string  `json:"-"`                  // never serialized to UI
 	APIKeyHint    string  `json:"api_key_hint,omitempty"`
 	RatePerSecond float64 `json:"rate_per_second"`
 	RatePerMinute float64 `json:"rate_per_minute"`

@@ -107,7 +107,14 @@ FROM knowledge_nodes WHERE ` + strings.Join(where, " AND ") + ` ORDER BY updated
 		return nil, err
 	}
 	defer rows.Close()
-	return scanKnowledge(rows)
+	out, err := scanKnowledge(rows)
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
+		out = []KnowledgeNode{} // marshal as [], not null
+	}
+	return out, nil
 }
 
 // KnowledgeNeighbors returns a node's connected nodes + the edges.
