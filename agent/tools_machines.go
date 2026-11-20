@@ -3,6 +3,8 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/TaxMachine/ARTEX/db"
@@ -123,28 +125,58 @@ func (t *ToolSet) machineSnapshot() actool.CoreTool {
 
 func (t *ToolSet) sshExec() actool.CoreTool {
 	return writeTool("ssh_exec",
-		"Run one command on a registered machine over native SSH and record it as machine evidence. With the task's target gate on, the machine's SSH endpoint must be pinned (approved) first; an unpinned machine blocks with a target approval request, and the operator's approval pins it for the task. (command, stdout/stderr, exit code, duration, event id). The credential is resolved from this task's machine credentials (protocol=ssh, domain=machine host/name); pass credential_id to choose one explicitly, or username to disambiguate. A non-zero exit code is returned normally, not as a tool error.",
+		"Run a command on a registered machine over native SSH and record it as machine evidence. Two command modes — use ps= for PowerShell targets, it is CHEAPER AND SAFER than hand-writing prefixes: pass plain PowerShell source in ps (no 'powershell -Command', no escaping — the server transports it as an -EncodedCommand, immune to the cmd.exe/quote mangling that breaks hand-written prefixes) or a VM-side .ps1 path in ps_file (adds -ExecutionPolicy Bypass; runs scripts the policy blocks otherwise). Raw shell commands (dir, whoami, tar) still use command=. With the task's target gate on, the machine's SSH endpoint must be pinned first. The credential resolves from this task's machine credentials (protocol=ssh, domain=machine host/name); pass credential_id or username to disambiguate. Non-zero exit codes are returned normally, not as tool errors.",
 		obj(map[string]any{
 			"machine":         str("registered machine name"),
-			"command":         str("shell command to run on the target (runs through the target's shell)"),
+			"command":         str("raw shell command (cmd.exe on Windows, sh on Linux) — prefer ps= for PowerShell"),
+			"ps":              str("PowerShell source to run (server wraps it in -EncodedCommand: no prefix, no quote escaping needed)"),
+			"ps_file":         str("VM path of a .ps1 to execute (-ExecutionPolicy Bypass -File <path>); for scripts already uploaded"),
+			"ps_args":         str("optional arguments appended after ps_file"),
 			"username":        str("optional SSH username to select among stored credentials"),
 			"credential_id":   idp("optional task credential id to use (must be protocol=ssh)"),
 			"timeout_seconds": intp("command timeout, default 120, max 1800"),
-		}, "machine", "command"),
+		}, "machine"),
 		t.needMachines("ssh_exec", func(ctx context.Context, in json.RawMessage) (actool.Result, error) {
 			var a struct {
 				Machine      string `json:"machine"`
 				Command      string `json:"command"`
+				Ps           string `json:"ps"`
+				PsFile       string `json:"ps_file"`
+				PsArgs       string `json:"ps_args"`
 				Username     string `json:"username"`
 				CredentialID int64  `json:"credential_id"`
 				Timeout      int    `json:"timeout_seconds"`
 			}
 			_ = json.Unmarshal(in, &a)
+			cmd := a.Command
+			switch {
+			case a.Ps != "":
+				// Plain PowerShell source -> -EncodedCommand (UTF-16LE base64):
+				// the agent writes NO prefix and NO cmd.exe escaping; the
+				// transport survives the quote mangling that breaks
+				// hand-written 'powershell -Command "..."'.
+				cmd = "powershell -NoProfile -EncodedCommand " + psEncode64(a.Ps)
+			case a.PsFile != "":
+				safe := strings.TrimSpace(a.PsFile)
+				if !safeVMPath(safe) || !strings.HasSuffix(strings.ToLower(safe), ".ps1") {
+					return actool.Errorf("ps_file must be an absolute VM path to a .ps1"), nil
+				}
+				cmd = fmt.Sprintf("powershell -NoProfile -ExecutionPolicy Bypass -File %s", safe)
+				if args := strings.TrimSpace(a.PsArgs); args != "" {
+					if strings.ContainsAny(args, "\"&|><`") {
+						return actool.Errorf("ps_args must not contain shell metacharacters"), nil
+					}
+					cmd += " " + args
+				}
+			}
+			if strings.TrimSpace(cmd) == "" {
+				return actool.Errorf("one of command/ps/ps_file is required"), nil
+			}
 			to := time.Duration(a.Timeout) * time.Second
 			if a.Timeout <= 0 {
 				to = 2 * time.Minute
 			}
-			res, err := t.machines.Exec(ctx, t.taskID, a.Machine, a.Username, a.CredentialID, a.Command, to)
+			res, err := t.machines.Exec(ctx, t.taskID, a.Machine, a.Username, a.CredentialID, cmd, to)
 			if err != nil {
 				return jsonResult(map[string]any{"error": err.Error(), "result": res})
 			}

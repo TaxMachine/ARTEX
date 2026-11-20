@@ -8,6 +8,7 @@ package machine
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -99,6 +100,8 @@ func (s *Service) TaskScopeOf(ctx context.Context, taskID int64) int64 {
 // Credential resolves the SSH credential for a machine and task. An explicit id
 // wins; otherwise the newest task credential with protocol=ssh whose domain is
 // the machine host or name (and username, when supplied).
+func host0(m db.Machine) string { return strings.ToLower(strings.TrimSpace(m.Host)) }
+
 func (s *Service) Credential(taskID int64, m db.Machine, username string, credentialID int64) (db.TaskCredential, error) {
 	if taskID <= 0 {
 		return db.TaskCredential{}, errors.New("machine tools need a running task")
@@ -116,6 +119,50 @@ func (s *Service) Credential(taskID int64, m db.Machine, username string, creden
 	list, err := s.pg.TaskCredentials(taskID)
 	if err != nil {
 		return db.TaskCredential{}, err
+	}
+	// Machine-level credentials (config.ssh_credentials on the machine row):
+	// injected into every task touching that machine, so SSH works out of the
+	// box without re-attaching credentials per task. Explicit task
+	// credentials win (more specific).
+	// Shape: [{"username":"taxmachine","secret_type":"key","private_key":"...","password":"..."}]
+	if len(list) == 0 {
+		if raw, ok := m.Config["ssh_credentials"].([]any); ok {
+			type mc struct {
+				Username   string `json:"username"`
+				Password   string `json:"password"`
+				SecretType string `json:"secret_type"`
+				PrivateKey string `json:"private_key"`
+			}
+			for _, e := range raw {
+				b, err := json.Marshal(e)
+				if err != nil {
+					continue
+				}
+				var c mc
+				if json.Unmarshal(b, &c) != nil || c.Username == "" {
+					continue
+				}
+				if c.SecretType != "key" && c.SecretType != "password" && c.Password == "" && c.PrivateKey == "" {
+					continue
+				}
+				if strings.TrimSpace(username) != "" && !strings.EqualFold(c.Username, username) {
+					continue
+				}
+				if c.SecretType == "" {
+					if c.PrivateKey != "" {
+						c.SecretType = "key"
+					} else {
+						c.SecretType = "password"
+					}
+				}
+				return db.TaskCredential{
+					Protocol: "ssh", Domain: host0(m), Port: m.SSHPort,
+					Username: c.Username, Password: c.Password,
+					SecretType: c.SecretType, PrivateKey: c.PrivateKey,
+					Source: "machine", Note: "machine-level credential",
+				}, nil
+			}
+		}
 	}
 	// The operator can pin the default account per machine (lab VMs use the
 	// unprivileged lpeuser for LPE work; admin actions pass username explicitly).
