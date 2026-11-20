@@ -69,6 +69,12 @@ census before/after a heap_spray proves the spray landed in the size class
 you think it did; chunk at the corruption address shows exactly what the
 overflow will hit. Session reuse: pass the session id from a previous call.
 
+The delta loop (heap_watch) wraps this: snapshot -> spray/trigger -> diff
+returns exactly which size classes grew/shrank — e.g. '0x78-class +1900
+chunks' right after a 2000x0x78 spray is the groom landing; nothing moving
+means the spray went to the wrong heap/backend and the count/size needs
+adjusting.
+
 ## 4. Read the fault: windbg MCP
 
 When page_heap trips, attach (or open the dump) and read the corruption with

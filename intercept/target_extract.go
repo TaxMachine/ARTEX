@@ -59,7 +59,7 @@ var noTargetTools = toolSet(
 	"list_vuln_classes",
 	// heap-grooming: machine registry operations (gflags-equivalent + spray
 	// harness); the machine name is gated through machineTools above.
-	"page_heap", "heap_spray", "fuzz_campaign", "crash_triage_auto", "heap_query",
+	"page_heap", "heap_spray", "fuzz_campaign", "crash_triage_auto", "heap_query", "heap_watch",
 )
 
 // machineTools are the native machine tools whose call reaches a registered
