@@ -6,6 +6,9 @@ mcps: windbg
 
 # Heap grooming: from crash primitive to controlled write
 
+(Upstream: `fuzz_campaign` finds the crashes this skill turns into chains —
+see the fuzzing-triage skill for the find side.)
+
 Complex PoCs (Office document parsers, kernel pool sprays, UAF reclaims) fail
 as blind retries and succeed as a **loop**: instrument, groom, trigger, read
 the fault, adjust. This skill is that loop.
