@@ -40,6 +40,9 @@ type DBFinding struct {
 	TaskDescription    string // populated via LEFT JOIN on tasks
 
 	Counterevidence     string             // what was tested and did not work; optional, "" = not given
+	PoCStatus           string             // none | pending | ready | failed
+	PoCPath             string             // zip location under data/evidence/poc/ when ready
+	PoCNote             string             // package contents / failure reason
 	Primitives          []FindingPrimitive // single weaknesses the chain builds on (facts, not findings)
 	Chain               []FindingChainStep // composed exploit-chain steps; all confirmed = confirmed finding
 	ConfidenceRationale string             // why the conclusion holds; optional, "" = not given
@@ -197,6 +200,7 @@ const findingSelectCols = `f.id, f.task_id, f.node_id, f.vulnclass, COALESCE(f.n
 	       f.poe_level, COALESCE(f.verification_status, 'unverified'), COALESCE(f.verification_note, ''),
 	       f.counterevidence, f.confidence_rationale, COALESCE(f.category, 'others'),
 	       COALESCE(f.primitives, '[]'), COALESCE(f.chain, '[]'),
+	       COALESCE(f.poc_status, 'none'), COALESCE(f.poc_path, ''), COALESCE(f.poc_note, ''),
  (SELECT count(*) FROM finding_traffic_bindings b WHERE b.finding_id=f.id)`
 
 // scanFindings materializes rows selected via findingSelectCols.
@@ -210,7 +214,7 @@ func scanFindings(rows interface {
 		f := &DBFinding{}
 		var aidsJSON, primitivesJSON, chainJSON string
 		if err := rows.Scan(&f.ID, &f.TaskID, &f.NodeID, &f.VulnClass, &f.Name, &f.Severity,
-			&f.Summary, &f.Evidence, &f.Worker, &aidsJSON, &f.Status, &f.ReportState, &f.CreatedAt, &f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &primitivesJSON, &chainJSON, &f.TrafficCount); err != nil {
+			&f.Summary, &f.Evidence, &f.Worker, &aidsJSON, &f.Status, &f.ReportState, &f.CreatedAt, &f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &primitivesJSON, &chainJSON, &f.PoCStatus, &f.PoCPath, &f.PoCNote, &f.TrafficCount); err != nil {
 			return nil, err
 		}
 		_ = json.Unmarshal([]byte(aidsJSON), &f.AssetIDs)
@@ -639,7 +643,7 @@ func (d *DB) ListFindingsForExport(f FindingFilter, ids []int64) ([]*DBFinding, 
 		var aidsJSON, primitivesJSON, chainJSON string
 		if err := rows.Scan(&f.ID, &f.TaskID, &f.NodeID, &f.VulnClass, &f.Name, &f.Severity,
 			&f.Summary, &f.Evidence, &f.Worker, &aidsJSON, &f.Status, &f.ReportState, &f.CreatedAt,
-			&f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &primitivesJSON, &chainJSON, &f.TrafficCount, &f.Report); err != nil {
+			&f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &primitivesJSON, &chainJSON, &f.PoCStatus, &f.PoCPath, &f.PoCNote, &f.TrafficCount, &f.Report); err != nil {
 			return nil, err
 		}
 		_ = json.Unmarshal([]byte(aidsJSON), &f.AssetIDs)
@@ -837,7 +841,7 @@ func (d *DB) GetFinding(id int64) (*DBFinding, error) {
 		WHERE f.id = $1`, id).Scan(
 		&f.ID, &f.TaskID, &f.NodeID, &f.VulnClass, &f.Name, &f.Severity,
 		&f.Summary, &f.Evidence, &f.Worker, &aidsJSON, &f.Status, &f.ReportState, &f.CreatedAt,
-		&f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &primitivesJSON, &chainJSON, &f.TrafficCount, &f.Report)
+		&f.TaskDescription, &f.EvidenceVersion, &f.ReportEvidenceVersion, &f.PoELevel, &f.VerificationStatus, &f.VerificationNote, &f.Counterevidence, &f.ConfidenceRationale, &f.Category, &primitivesJSON, &chainJSON, &f.PoCStatus, &f.PoCPath, &f.PoCNote, &f.TrafficCount, &f.Report)
 	if err == nil {
 		_ = json.Unmarshal([]byte(aidsJSON), &f.AssetIDs)
 		_ = json.Unmarshal([]byte(primitivesJSON), &f.Primitives)
@@ -1159,4 +1163,11 @@ func (f *DBFinding) ChainConfirmed() bool {
 		}
 	}
 	return true
+}
+
+// SetFindingPoC records the outcome of a PoC package build (poc_package tool).
+func (d *DB) SetFindingPoC(id int64, status, path, note string) error {
+	_, err := d.Exec(`UPDATE findings SET poc_status=$2, poc_path=$3, poc_note=$4 WHERE id=$1`,
+		id, status, path, note)
+	return err
 }

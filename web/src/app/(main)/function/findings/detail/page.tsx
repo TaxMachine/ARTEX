@@ -5,7 +5,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-import { ArrowLeftIcon, ArrowUpRightIcon, ShieldAlertIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowUpRightIcon, FileArchiveIcon, ShieldAlertIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { ChainTypeBadge } from "@/components/chain-type-badge";
@@ -420,6 +420,26 @@ function FindingDetailInner() {
                     )}
                   </FieldRow>
                 )}
+
+                {/* PoC package: ready-to-run zip assembled by the agent (poc_package) */}
+                <FieldRow label="PoC package">
+                  {finding.poc_status === "ready" ? (
+                    <a href={api.findingPocUrl(id)} download className="inline-flex">
+                      <Button variant="outline" size="sm" className="gap-1">
+                        <FileArchiveIcon className="size-4" /> Download PoC (zip)
+                      </Button>
+                    </a>
+                  ) : finding.poc_status === "pending" ? (
+                    <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400">PoC building…</Badge>
+                  ) : finding.poc_status === "failed" ? (
+                    <Badge className="bg-red-500/15 text-red-700 dark:text-red-400">PoC build failed</Badge>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">no package yet (agent runs poc_package)</span>
+                  )}
+                  {finding.poc_note?.trim() && (
+                    <p className="text-muted-foreground text-xs">{finding.poc_note}</p>
+                  )}
+                </FieldRow>
 
                 {/* Vulnerability type */}
                 <FieldRow label="Vulnerability type">

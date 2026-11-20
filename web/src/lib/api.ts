@@ -355,6 +355,7 @@ export const api = {
   knowledgeNode: (id: number) => get<KnowledgeNodeDetail>(`/knowledge/node/${id}`),
   knowledgeStats: () => get<Record<string, number>>("/knowledge/stats"),
   knowledgeVaultUrl: () => "/api/knowledge/vault",
+  findingPocUrl: (id: string | number) => `/api/findings/${id}/poc`,
   machineCaptureList: (limit = 200) =>
     get<MachineCapture[]>(`/machine-captures?limit=${limit}`).then((r) => arr(r)),
   machineAutostart: (taskId?: number) =>

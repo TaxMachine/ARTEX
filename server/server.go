@@ -878,6 +878,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/machine-captures", s.listAllMachineCaptures)
 	mux.HandleFunc("GET /api/vuln-classes", s.listVulnClasses)
 	mux.HandleFunc("GET /api/knowledge/vault", s.knowledgeVaultExport)
+	mux.HandleFunc("GET /api/findings/{id}/poc", s.pocDownload)
 	mux.HandleFunc("GET /api/knowledge/nodes", s.knowledgeListNodes)
 	mux.HandleFunc("GET /api/knowledge/node/{id}", s.knowledgeGetNode)
 	mux.HandleFunc("GET /api/knowledge/stats", s.knowledgeStats)

@@ -2,7 +2,9 @@ package server
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -50,4 +52,31 @@ func writeFindingPcaps(zw *zip.Writer, f *db.DBFinding, pg *db.DB) {
 		_, _ = io.Copy(w, src)
 		src.Close()
 	}
+}
+
+// pocDownload streams a finding's ready PoC zip.
+func (s *Server) pocDownload(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil || id <= 0 {
+		writeErr(w, 400, "bad finding id")
+		return
+	}
+	f, err := s.m.pg.GetFinding(id)
+	if err != nil {
+		writeErr(w, 404, "finding not found")
+		return
+	}
+	if f.PoCStatus != "ready" || f.PoCPath == "" {
+		writeErr(w, 409, "no PoC package on this finding (status "+f.PoCStatus+")")
+		return
+	}
+	file, err := os.Open(f.PoCPath)
+	if err != nil {
+		writeErr(w, 500, "PoC zip missing on the server: "+err.Error())
+		return
+	}
+	defer file.Close()
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"poc-finding-%d.zip\"", id))
+	_, _ = io.Copy(w, file)
 }

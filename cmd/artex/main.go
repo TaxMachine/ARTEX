@@ -4,6 +4,8 @@
 package main
 
 import (
+	"github.com/TaxMachine/ARTEX/db"
+
 	"context"
 	"flag"
 	"fmt"
@@ -87,6 +89,9 @@ func run() int {
 		log.Fatalf("open stores: %v", err)
 	}
 	defer mgr.Close()
+	// PoC zip store under <data>/evidence/poc (finding download endpoint +
+	// the poc_package agent tool share it).
+	agent.SetPoCStore(db.NewPoCStore(*dataDir))
 
 	// Boot the machines that active tasks depend on BEFORE the engine resumes
 	// tasks, so the first SSH tool call does not race a cold guest. Sequential

@@ -332,6 +332,10 @@ type FindingDTO struct {
 	Primitives []db.FindingPrimitive `json:"primitives"`
 	Chain      []db.FindingChainStep `json:"chain"`
 
+	// PoC package: ready-to-run zip state (poc_package tool, download endpoint).
+	PoCStatus string `json:"poc_status,omitempty"`
+	PoCNote   string `json:"poc_note,omitempty"`
+
 	ID          string `json:"id"`
 	FindingID   string `json:"finding_id,omitempty"` // standalone findings-table id — the handle for status updates
 	VulnClass   string `json:"vulnclass"`
@@ -482,6 +486,7 @@ func findingFromDB(f *db.DBFinding, assets map[int64]*db.Asset) FindingDTO {
 		PoELevel: f.PoELevel, VerificationStatus: f.VerificationStatus, VerificationNote: f.VerificationNote,
 		Counterevidence: f.Counterevidence, ConfidenceRationale: f.ConfidenceRationale,
 		Primitives: f.Primitives, Chain: f.Chain,
+		PoCStatus: f.PoCStatus, PoCNote: f.PoCNote,
 		VulnClass:   f.VulnClass,
 		Name:        f.Name,
 		Category:    f.Category,

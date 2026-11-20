@@ -525,6 +525,8 @@ export interface Finding {
   summary: string;
   evidence: string;
   report?: string; // detailed report (Markdown); returned only by the detail endpoint, empty in lists
+  poc_status?: "none" | "pending" | "ready" | "failed"; // ready-to-run PoC zip state (poc_package tool)
+  poc_note?: string; // package contents / failure reason
   intent_id?: string;
   param_id?: string;
   task_id?: string;

@@ -250,6 +250,7 @@ func wireTools(pg *db.DB, domainReg map[string]actool.CoreTool) {
 	const bashInteractiveShellNote = "\n\nPrograms that need [interactive input] (msfconsole / interactive ssh login / REPLs like mysql, psql, python / password or yes/no prompts / nc reverse shells) must not use Bash (it has no stdin and would hang); open an interactive session with shell_open instead (and shell_close when done). One-shot, non-interactive commands still use Bash."
 	// Knowledge graph store: same PG handle as everything else.
 	agent.SetKnowledgeRepo(pg)
+
 	// Findings export pcap bundling shares the handle.
 	SetFindingsExportPG(pg)
 

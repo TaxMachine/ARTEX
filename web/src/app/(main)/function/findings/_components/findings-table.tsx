@@ -7,6 +7,7 @@ import Link from "next/link";
 import {
   ArrowUpRightIcon,
   ChevronRightIcon,
+  FileArchiveIcon,
   FileTextIcon,
   FlaskConicalIcon,
   RotateCcwIcon,
@@ -47,9 +48,40 @@ import type {
   Severity,
   VerificationStatus,
 } from "@/lib/types";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export const SEVERITIES: Severity[] = ["critical", "high", "medium", "low"];
+
+// PoCBadge: the ready-to-run PoC zip state; ready rows carry a download link.
+export function PoCBadge({ finding }: { finding: Pick<Finding, "finding_id" | "poc_status" | "poc_note"> }) {
+  if (!finding.poc_status || finding.poc_status === "none") return null;
+  if (finding.poc_status === "ready" && finding.finding_id) {
+    return (
+      <a
+        href={api.findingPocUrl(finding.finding_id)}
+        download
+        onClick={(e) => e.stopPropagation()}
+        title={finding.poc_note || "Download the ready-to-run PoC package (zip)"}
+        className="inline-flex"
+      >
+        <Badge className="cursor-pointer gap-1 bg-emerald-600/15 text-emerald-700 hover:bg-emerald-600/25 dark:text-emerald-400">
+          <FileArchiveIcon className="size-3" /> PoC
+        </Badge>
+      </a>
+    );
+  }
+  const label = finding.poc_status === "pending" ? "PoC building" : "PoC failed";
+  const cls =
+    finding.poc_status === "pending"
+      ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+      : "bg-red-500/15 text-red-700 dark:text-red-400";
+  return (
+    <Badge className={cls} title={finding.poc_note || undefined}>
+      {label}
+    </Badge>
+  );
+}
 
 export const CATEGORIES: FindingCategory[] = [
   "operating-systems",
@@ -311,6 +343,7 @@ export function FindingsTable({
                     <div className="flex flex-wrap items-center gap-1">
                       <Badge variant="outline">Traffic evidence: {f.traffic_count ?? 0}</Badge>
                       <VerificationBadge finding={f} />
+                      <PoCBadge finding={f} />
                     </div>
                   </div>
                 </TableCell>

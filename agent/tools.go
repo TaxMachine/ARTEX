@@ -143,6 +143,7 @@ type ToolSet struct {
 	cs              *db.CompanyStore // company store (optional)
 	ts              *db.ExplorationStore
 	machines        *machine.Service // native VM/SSH backend (nil = machine tools unavailable)
+	pocStore        *db.PoCStore     // PoC zip store (nil = poc_package unavailable)
 	worker          string
 	taskID          int64  // PG tasks.id; 0 when unknown (tests / orchestrator cross-task reads)
 	artifactDir     string // run-scoped dir for generated artifacts (msf payloads...); "" = os.TempDir fallback
@@ -1512,7 +1513,11 @@ func (t *ToolSet) addFinding() actool.CoreTool {
 			}
 		}
 		raw, _ := json.Marshal(result)
-		return actool.Text(fmt.Sprintf("finding recorded: %d\n%s", recorded.NodeID, raw)), nil
+		pocNote := ""
+		if defaultPoCStore != nil {
+			pocNote = fmt.Sprintf("\nPoC package REQUIRED: run poc_package with finding_id=%d next — the operator downloads this zip from the finding's page. Assemble README.md (runbook), the VM-side artifacts (crash input / minimized repro / payload), and run.ps1 steps.", recorded.FindingID)
+		}
+		return actool.Text(fmt.Sprintf("finding recorded: %d\n%s%s", recorded.NodeID, raw, pocNote)), nil
 	})
 }
 
