@@ -177,6 +177,11 @@ func (t *ToolSet) sshExec() actool.CoreTool {
 				to = 2 * time.Minute
 			}
 			res, err := t.machines.Exec(ctx, t.taskID, a.Machine, a.Username, a.CredentialID, cmd, to)
+			// Token-saver nudge: a hand-written PowerShell prefix in command= is
+			// the exact pattern ps= exists to replace.
+			if a.Ps == "" && a.PsFile == "" && strings.Contains(cmd, "powershell -NoProfile -Command") {
+				res.Stdout = strings.TrimRight(res.Stdout, "\r\n") + "\n[note: hand-written powershell prefix detected - use the ps= parameter with plain PowerShell source next time: no prefix, no escaping, cheaper]"
+			}
 			if err != nil {
 				return jsonResult(map[string]any{"error": err.Error(), "result": res})
 			}
