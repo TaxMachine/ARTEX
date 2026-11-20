@@ -116,7 +116,8 @@ func (c *windbgClient) call(ctx context.Context, sid, tool string, args map[stri
 		Content []struct {
 			Text string `json:"text"`
 		} `json:"content"`
-		IsError bool `json:"isError"`
+		StructuredContent map[string]any `json:"structuredContent"`
+		IsError           bool           `json:"isError"`
 	}
 	callBody := map[string]any{"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": map[string]any{"name": tool, "arguments": args}}
 	if err := c.post(cctx, callBody, sid, &out); err != nil {
@@ -129,6 +130,9 @@ func (c *windbgClient) call(ctx context.Context, sid, tool string, args map[stri
 	res := map[string]any{"text": strings.Join(texts, "\n")}
 	if out.IsError {
 		res["is_error"] = true
+	}
+	if out.StructuredContent != nil {
+		res["structuredContent"] = out.StructuredContent
 	}
 	// try to parse the text as JSON (some tools return structured text)
 	var nested map[string]any

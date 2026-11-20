@@ -57,7 +57,19 @@ heap_spray(machine="office-vm", action="clear")
   in the middle for the victim to land in), **UAF reclaim** (free the victim,
   spray the size class so your block takes the slot).
 
-## 3. Read the fault: windbg MCP
+## 3. Measure the heap: heap_query
+
+Data-driven grooming instead of eyeball debugging:
+```
+heap_query(machine="office-vm", action="census")           # size classes, heaviest first
+heap_query(machine="office-vm", action="allocations", size="0x78", state="busy")
+heap_query(machine="office-vm", action="chunk", address="0x...")  # victim chunk + neighbours + stacks
+```
+census before/after a heap_spray proves the spray landed in the size class
+you think it did; chunk at the corruption address shows exactly what the
+overflow will hit. Session reuse: pass the session id from a previous call.
+
+## 4. Read the fault: windbg MCP
 
 When page_heap trips, attach (or open the dump) and read the corruption with
 the windbg tools: faulting instruction, registers, and — the heap views —
@@ -65,7 +77,7 @@ the windbg tools: faulting instruction, registers, and — the heap views —
 overwrote it), `!heap -stat`, `!heap -flt s <size>`. This tells you WHERE the
 write landed and HOW FAR it went; adjust count/size/filler accordingly.
 
-## 4. The loop and when to stop
+## 5. The loop and when to stop
 
 ```
 enable page_heap → spray → trigger → read fault → adjust → repeat

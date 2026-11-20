@@ -329,8 +329,8 @@ type FindingDTO struct {
 	// Primitives vs chain: the explicit distinction. primitives are the single
 	// weaknesses (facts) the chain builds on; chain is the composed exploit path
 	// whose steps each carry a result (empty result = assumed step = hypothesis).
-	Primitives             []db.FindingPrimitive  `json:"primitives"`
-	Chain                  []db.FindingChainStep  `json:"chain"`
+	Primitives []db.FindingPrimitive `json:"primitives"`
+	Chain      []db.FindingChainStep `json:"chain"`
 
 	ID          string `json:"id"`
 	FindingID   string `json:"finding_id,omitempty"` // standalone findings-table id — the handle for status updates

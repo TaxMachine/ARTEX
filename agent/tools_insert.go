@@ -753,6 +753,8 @@ func (t *ToolSet) WorkerTools() []actool.CoreTool {
 		t.fuzzCampaignTool(),
 		// automated crash triage: crashing input -> structured primitive.
 		t.crashTriageAutoTool(),
+		// structured heap inspection for data-driven grooming.
+		t.heapQueryTool(),
 		// The following tools are still [not given] to workers, reserved for
 		// planner/main (reading context, cross-work retrospection are planning duties; a
 		// worker only executes and writes back its single intent):
