@@ -14,6 +14,24 @@ question the map answers.
 
 Tools (MCP `crossmap`, bound to every pentest role):
 
+## 0. Missing module? Index it yourself — `map_harvest`
+
+If `map_binaries` shows your target module is NOT in the map (a crash in an
+unindexed DLL, a new component of the attack surface), do not wait for the
+operator:
+
+```
+map_harvest(binary="msxml6.dll", vm_path="C:/Windows/System32/msxml6.dll")
+map_harvest_status(job="h1-...")   # poll: queued|scp|analyze|index|done|error
+```
+
+This stages the binary from the VM, runs IDA batch analysis (idat -B —
+MINUTES TO HOURS for big binaries like EXCEL.EXE/WWLIB.DLL; start it early and
+do other work), extracts the function graph and ingests into crossmap. Poll
+periodically; when done, the module is queryable by every map tool and crash
+offsets symbolize automatically. Dedup: a running job for the same binary is
+returned instead of a second one.
+
 ## 1. Find functions — `map_search`
 
 ```
