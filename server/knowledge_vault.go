@@ -38,6 +38,9 @@ func (s *Server) knowledgeVaultExport(w http.ResponseWriter, r *http.Request) {
 		var b strings.Builder
 		b.WriteString("---\n")
 		fmt.Fprintf(&b, "kind: %s\n", n.Kind)
+		if n.Domain != "" {
+			fmt.Fprintf(&b, "domain: %s\n", n.Domain)
+		}
 		fmt.Fprintf(&b, "tags: [%s]\n", strings.Join(n.Tags, ", "))
 		fmt.Fprintf(&b, "dedupe_key: %s\n", n.DedupeKey)
 		fmt.Fprintf(&b, "updated: %s\n", n.UpdatedAt.Format(time.RFC3339))
@@ -86,6 +89,22 @@ func (s *Server) knowledgeVaultExport(w http.ResponseWriter, r *http.Request) {
 	}
 	var overview strings.Builder
 	overview.WriteString("# Knowledge graph\n\n")
+	// domain section first: craft is domain-scoped
+	domains := map[string][]db.KnowledgeNode{}
+	for _, n := range nodes {
+		dom := n.Domain
+		if dom == "" {
+			dom = "general"
+		}
+		domains[dom] = append(domains[dom], n)
+	}
+	for _, dom := range sortedKeys(domains) {
+		fmt.Fprintf(&overview, "## %s (%d)\n\n", dom, len(domains[dom]))
+		for _, n := range domains[dom] {
+			fmt.Fprintf(&overview, "- [[%s]]\n", noteName(n))
+		}
+		overview.WriteString("\n")
+	}
 	for kind, ns := range kinds {
 		var idx strings.Builder
 		fmt.Fprintf(&idx, "# %s (%d)\n\n", kind, len(ns))
@@ -128,7 +147,7 @@ func (s *Server) knowledgeListNodes(w http.ResponseWriter, r *http.Request) {
 			tags = append(tags, strings.ToLower(t))
 		}
 	}
-	nodes, err := s.m.pg.KnowledgeSearch(q.Get("q"), q.Get("kind"), tags, limit)
+	nodes, err := s.m.pg.KnowledgeSearch(q.Get("q"), q.Get("kind"), q.Get("domain"), tags, limit)
 	if err != nil {
 		writeErr(w, 500, err.Error())
 		return
@@ -152,12 +171,31 @@ func (s *Server) knowledgeGetNode(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, map[string]any{"node": n, "neighbors": nodes, "edges": edges})
 }
 
-// knowledgeStats: kind counts for the page header.
+// knowledgeStats: kind + domain counts for the page header.
 func (s *Server) knowledgeStats(w http.ResponseWriter, r *http.Request) {
 	stats, err := s.m.pg.KnowledgeStats()
 	if err != nil {
 		writeErr(w, 500, err.Error())
 		return
 	}
-	writeJSON(w, 200, stats)
+	doms, err := s.m.pg.KnowledgeDomainStats()
+	if err != nil {
+		writeErr(w, 500, err.Error())
+		return
+	}
+	writeJSON(w, 200, map[string]any{"kinds": stats, "domains": doms})
+}
+
+// sortedKeys: deterministic map iteration for the vault overview.
+func sortedKeys(m map[string][]db.KnowledgeNode) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	for i := 1; i < len(out); i++ {
+		for j := i; j > 0 && out[j] < out[j-1]; j-- {
+			out[j], out[j-1] = out[j-1], out[j]
+		}
+	}
+	return out
 }

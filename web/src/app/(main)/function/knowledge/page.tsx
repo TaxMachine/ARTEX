@@ -37,10 +37,11 @@ function errText(e: unknown) {
 
 export default function KnowledgePage() {
   const [nodes, setNodes] = React.useState<KnowledgeNode[]>([]);
-  const [stats, setStats] = React.useState<Record<string, number>>({});
+  const [stats, setStats] = React.useState<{ kinds: Record<string, number>; domains: Record<string, number> }>({ kinds: {}, domains: {} });
   const [loading, setLoading] = React.useState(true);
   const [q, setQ] = React.useState("");
   const [kind, setKind] = React.useState("");
+  const [domain, setDomain] = React.useState("");
   const [selected, setSelected] = React.useState<KnowledgeNode | null>(null);
   const [detail, setDetail] = React.useState<{ neighbors: KnowledgeNode[]; edges: KnowledgeEdge[] } | null>(null);
   const [detailLoading, setDetailLoading] = React.useState(false);
@@ -49,7 +50,7 @@ export default function KnowledgePage() {
     setLoading(true);
     try {
       const [ns, st] = await Promise.all([
-        api.knowledgeNodes({ q, kind, limit: 200 }),
+        api.knowledgeNodes({ q, kind, domain, limit: 200 }),
         api.knowledgeStats(),
       ]);
       setNodes(ns);
@@ -59,7 +60,7 @@ export default function KnowledgePage() {
     } finally {
       setLoading(false);
     }
-  }, [q, kind]);
+  }, [q, kind, domain]);
 
   React.useEffect(() => {
     void load();
@@ -86,7 +87,9 @@ export default function KnowledgePage() {
     }
   }
 
-  const total = Object.values(stats).reduce((a, b) => a + b, 0);
+  const kinds = stats.kinds ?? {};
+  const domains = stats.domains ?? {};
+  const total = Object.values(kinds).reduce((a, b) => a + b, 0);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
@@ -111,9 +114,25 @@ export default function KnowledgePage() {
         </div>
       </div>
 
-      {Object.keys(stats).length > 0 && (
+      {Object.keys(domains).length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {Object.entries(stats)
+          <span className="text-sm text-muted-foreground">domain:</span>
+          {Object.entries(domains)
+            .sort((a, b) => b[1] - a[1])
+            .map(([k, n]) => (
+              <button key={k} type="button" onClick={() => setDomain(domain === k ? "" : k)} className="cursor-pointer">
+                <Badge variant={domain === k ? "default" : "secondary"} className="gap-1">
+                  {k} · {n}
+                </Badge>
+              </button>
+            ))}
+        </div>
+      )}
+
+      {Object.keys(kinds).length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <span className="text-sm text-muted-foreground">kind:</span>
+          {Object.entries(kinds)
             .sort((a, b) => b[1] - a[1])
             .map(([k, n]) => (
               <button key={k} type="button" onClick={() => setKind(kind === k ? "" : k)} className="cursor-pointer">
@@ -133,6 +152,7 @@ export default function KnowledgePage() {
                 <ArrowLeftIcon className="size-4" />
               </Button>
               <Badge className={kindColor[selected.kind] ?? ""}>{selected.kind}</Badge>
+              {selected.domain && <Badge variant="outline">{selected.domain}</Badge>}
               <span>{selected.name}</span>
             </CardTitle>
           </CardHeader>
@@ -217,6 +237,17 @@ export default function KnowledgePage() {
                   </option>
                 ))}
               </select>
+              <select
+                className="h-9 rounded-md border bg-transparent px-2 text-sm"
+                value={domain}
+                onChange={(e) => setDomain(e.target.value)}
+              >
+                {["", "memory", "web", "crypto", "access", "general"].map((dm) => (
+                  <option key={dm} value={dm}>
+                    {dm === "" ? "all domains" : dm}
+                  </option>
+                ))}
+              </select>
             </div>
             <DataTableShell
               toolbar={
@@ -243,7 +274,14 @@ export default function KnowledgePage() {
                   {nodes.map((n) => (
                     <TableRow key={n.id} className="cursor-pointer" onClick={() => void openNode(n)}>
                       <TableCell>
-                        <Badge className={kindColor[n.kind] ?? ""}>{n.kind}</Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge className={kindColor[n.kind] ?? ""}>{n.kind}</Badge>
+                          {n.domain && (
+                            <Badge variant="outline" className="text-[10px]">
+                              {n.domain}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="max-w-[380px] truncate font-medium">{n.name}</TableCell>
                       <TableCell className="max-w-[180px] truncate text-xs text-muted-foreground">

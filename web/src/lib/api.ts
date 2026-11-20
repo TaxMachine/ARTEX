@@ -346,14 +346,14 @@ export const api = {
     post<{ output: string }>(`/machines/${encodeURIComponent(name)}/snapshot`, { action, snapshot }),
   machineCaptures: (name: string) => get<MachineCapture[]>(`/machines/${encodeURIComponent(name)}/captures`).then((r) => arr(r)),
   vulnClasses: () => get<{ classes: { id: string; name: string }[]; total: number }>("/vuln-classes"),
-  knowledgeNodes: (params: { q?: string; kind?: string; tags?: string; limit?: number }) =>
+  knowledgeNodes: (params: { q?: string; kind?: string; domain?: string; tags?: string; limit?: number }) =>
     get<{ nodes: KnowledgeNode[] }>(
       `/knowledge/nodes?${new URLSearchParams(
         Object.entries(params).filter(([, v]) => v !== undefined && v !== "" && v !== null) as [string, string][],
       ).toString()}`,
     ).then((r) => r.nodes ?? []),
   knowledgeNode: (id: number) => get<KnowledgeNodeDetail>(`/knowledge/node/${id}`),
-  knowledgeStats: () => get<Record<string, number>>("/knowledge/stats"),
+  knowledgeStats: () => get<{ kinds: Record<string, number>; domains: Record<string, number> }>("/knowledge/stats"),
   knowledgeVaultUrl: () => "/api/knowledge/vault",
   findingPocUrl: (id: string | number) => `/api/findings/${id}/poc`,
   machineCaptureList: (limit = 200) =>

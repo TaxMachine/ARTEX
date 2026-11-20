@@ -14,6 +14,7 @@ import (
 type KnowledgeNode struct {
 	ID        int64          `json:"id"`
 	Kind      string         `json:"kind"`
+	Domain    string         `json:"domain"` // memory | web | crypto | access | kernel | general
 	Name      string         `json:"name"`
 	Body      string         `json:"body"`
 	Refs      map[string]any `json:"refs"`
@@ -34,7 +35,48 @@ type KnowledgeEdge struct {
 
 // KnowledgeUpsert inserts or updates a node by dedupe_key (body/refs/tags
 // merge: non-empty incoming wins) and returns the id.
+// DeriveKnowledgeDomain maps taxonomy prefixes/tags to an exploit domain so
+// knowledge stays scoped: web/crypto agents never wade through heap-grooming
+// craft and vice versa. Explicit Domain wins; empty = derived.
+func DeriveKnowledgeDomain(n KnowledgeNode) string {
+	if n.Domain != "" {
+		return n.Domain
+	}
+	hay := strings.ToLower(n.Kind + " " + n.Name + " " + n.Body + " " + strings.Join(n.Tags, " "))
+	for _, t := range n.Tags {
+		t = strings.ToLower(t)
+		switch {
+		case strings.HasPrefix(t, "memory-") || strings.HasPrefix(t, "rce-memory") || strings.HasPrefix(t, "driver-") || strings.HasPrefix(t, "kernel-") || strings.HasPrefix(t, "hypervisor-"):
+			return "memory"
+		case strings.HasPrefix(t, "crypto-"):
+			return "crypto"
+		}
+	}
+	// keyword fallback over name/body/tags
+	switch {
+	case strings.Contains(hay, "heap") || strings.Contains(hay, "use-after-free") || strings.Contains(hay, "oob") ||
+		strings.Contains(hay, "buffer overflow") || strings.Contains(hay, "page_heap") || strings.Contains(hay, "rop") ||
+		strings.Contains(hay, "windbg") || strings.Contains(hay, "type confusion") || strings.Contains(hay, "shellcode") ||
+		strings.Contains(hay, "spray") || strings.Contains(hay, "fuzz") || strings.Contains(hay, "crash") ||
+		strings.Contains(hay, "winword") || strings.Contains(hay, "excel") || strings.Contains(hay, "msxml") ||
+		strings.Contains(hay, "http.sys") || strings.Contains(hay, "tcpip") || strings.Contains(hay, "afd.sys") || strings.Contains(hay, "clfs"):
+		return "memory"
+	case strings.Contains(hay, "sqli") || strings.Contains(hay, "xss") || strings.Contains(hay, "xxe") ||
+		strings.Contains(hay, "ssrf") || strings.Contains(hay, "csrf") || strings.Contains(hay, "wordpress") ||
+		strings.Contains(hay, "admin-ajax") || strings.Contains(hay, "web") || strings.Contains(hay, "deserialization in web"):
+		return "web"
+	case strings.Contains(hay, "crypt") || strings.Contains(hay, "cipher") || strings.Contains(hay, "padding oracle") ||
+		strings.Contains(hay, "hash") || strings.Contains(hay, "jwt"):
+		return "crypto"
+	case strings.Contains(hay, "lpe") || strings.Contains(hay, "privesc") || strings.Contains(hay, "wnf") ||
+		strings.Contains(hay, "appcontainer") || strings.Contains(hay, "authorization") || strings.Contains(hay, "netntlm"):
+		return "access"
+	}
+	return "general"
+}
+
 func (d *DB) KnowledgeUpsert(n KnowledgeNode) (int64, error) {
+	n.Domain = DeriveKnowledgeDomain(n)
 	tags, _ := json.Marshal(n.Tags)
 	if len(tags) == 0 || string(tags) == "null" {
 		tags = []byte(`[]`)
@@ -49,16 +91,17 @@ func (d *DB) KnowledgeUpsert(n KnowledgeNode) (int64, error) {
 	}
 	var id int64
 	err := d.QueryRow(`
-INSERT INTO knowledge_nodes (kind, name, body, refs, tags, dedupe_key, source, task_id)
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+INSERT INTO knowledge_nodes (kind, name, body, refs, tags, dedupe_key, source, task_id, domain)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
 ON CONFLICT (dedupe_key) DO UPDATE SET
   name = EXCLUDED.name,
+  domain = EXCLUDED.domain,
   body = CASE WHEN EXCLUDED.body = '' THEN knowledge_nodes.body ELSE EXCLUDED.body END,
   refs = knowledge_nodes.refs || EXCLUDED.refs,
   tags = (SELECT ARRAY(SELECT DISTINCT unnest(knowledge_nodes.tags || EXCLUDED.tags))),
   updated_at = now()
 RETURNING id`,
-		n.Kind, n.Name, n.Body, string(refs), string(tags), n.DedupeKey, n.Source, taskID).Scan(&id)
+		n.Kind, n.Name, n.Body, string(refs), string(tags), n.DedupeKey, n.Source, taskID, n.Domain).Scan(&id)
 	return id, err
 }
 
@@ -82,12 +125,16 @@ ON CONFLICT (src, dst, rel) DO UPDATE SET note = EXCLUDED.note`, src, dst, rel)
 }
 
 // KnowledgeSearch: full-text over name+body with kind/tag filters.
-func (d *DB) KnowledgeSearch(q, kind string, tags []string, limit int) ([]KnowledgeNode, error) {
+func (d *DB) KnowledgeSearch(q, kind, domain string, tags []string, limit int) ([]KnowledgeNode, error) {
 	where := []string{"TRUE"}
 	args := []any{}
 	if kind != "" {
 		args = append(args, kind)
 		where = append(where, fmt.Sprintf("kind = $%d", len(args)))
+	}
+	if domain := strings.TrimSpace(domain); domain != "" {
+		args = append(args, domain)
+		where = append(where, fmt.Sprintf("domain = $%d", len(args)))
 	}
 	if strings.TrimSpace(q) != "" {
 		pat := "%" + strings.ToLower(strings.TrimSpace(q)) + "%"
@@ -100,7 +147,7 @@ func (d *DB) KnowledgeSearch(q, kind string, tags []string, limit int) ([]Knowle
 		where = append(where, fmt.Sprintf("tags @> $%d", len(args)))
 	}
 	args = append(args, limit)
-	qs := `SELECT id, kind, name, COALESCE(body,''), COALESCE(refs::text,'{}'), COALESCE(tags::text,'[]'), dedupe_key, source, updated_at
+	qs := `SELECT id, kind, name, COALESCE(body,''), COALESCE(refs::text,'{}'), COALESCE(tags::text,'[]'), dedupe_key, source, updated_at, COALESCE(domain,'general')
 FROM knowledge_nodes WHERE ` + strings.Join(where, " AND ") + ` ORDER BY updated_at DESC LIMIT $` + fmt.Sprint(len(args))
 	rows, err := d.Query(qs, args...)
 	if err != nil {
@@ -156,7 +203,7 @@ FROM knowledge_edges e WHERE e.src=$1 OR e.dst=$1`
 
 // KnowledgeGet fetches one node by id.
 func (d *DB) KnowledgeGet(id int64) (KnowledgeNode, error) {
-	row := d.QueryRow(`SELECT id, kind, name, COALESCE(body,''), COALESCE(refs::text,'{}'), COALESCE(tags::text,'[]'), dedupe_key, source, updated_at
+	row := d.QueryRow(`SELECT id, kind, name, COALESCE(body,''), COALESCE(refs::text,'{}'), COALESCE(tags::text,'[]'), dedupe_key, source, updated_at, COALESCE(domain,'general')
 FROM knowledge_nodes WHERE id=$1`, id)
 	return scanKnowledgeRow(row)
 }
@@ -176,7 +223,7 @@ func scanKnowledge(rows *sql.Rows) ([]KnowledgeNode, error) {
 func scanKnowledgeRow(sc interface{ Scan(...any) error }) (KnowledgeNode, error) {
 	var n KnowledgeNode
 	var refs, tags string
-	if err := sc.Scan(&n.ID, &n.Kind, &n.Name, &n.Body, &refs, &tags, &n.DedupeKey, &n.Source, &n.UpdatedAt); err != nil {
+	if err := sc.Scan(&n.ID, &n.Kind, &n.Name, &n.Body, &refs, &tags, &n.DedupeKey, &n.Source, &n.UpdatedAt, &n.Domain); err != nil {
 		return n, err
 	}
 	_ = json.Unmarshal([]byte(refs), &n.Refs)
@@ -192,7 +239,7 @@ func scanKnowledgeRow(sc interface{ Scan(...any) error }) (KnowledgeNode, error)
 
 // KnowledgeAllForExport returns every node+edge for the Obsidian vault export.
 func (d *DB) KnowledgeAllForExport() ([]KnowledgeNode, []KnowledgeEdge, error) {
-	rows, err := d.Query(`SELECT id, kind, name, COALESCE(body,''), COALESCE(refs::text,'{}'), COALESCE(tags::text,'[]'), dedupe_key, source, updated_at
+	rows, err := d.Query(`SELECT id, kind, name, COALESCE(body,''), COALESCE(refs::text,'{}'), COALESCE(tags::text,'[]'), dedupe_key, source, updated_at, COALESCE(domain,'general')
 FROM knowledge_nodes ORDER BY kind, name`)
 	if err != nil {
 		return nil, nil, err
@@ -221,6 +268,25 @@ FROM knowledge_nodes ORDER BY kind, name`)
 // KnowledgeStats: counts by kind for the browser page header.
 func (d *DB) KnowledgeStats() (map[string]int, error) {
 	rows, err := d.Query(`SELECT kind, COUNT(*) FROM knowledge_nodes GROUP BY kind`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]int{}
+	for rows.Next() {
+		var k string
+		var n int
+		if err := rows.Scan(&k, &n); err != nil {
+			return nil, err
+		}
+		out[k] = n
+	}
+	return out, rows.Err()
+}
+
+// KnowledgeDomainStats: node counts per exploit domain.
+func (d *DB) KnowledgeDomainStats() (map[string]int, error) {
+	rows, err := d.Query(`SELECT COALESCE(domain,'general'), COUNT(*) FROM knowledge_nodes GROUP BY 1`)
 	if err != nil {
 		return nil, err
 	}

@@ -82,10 +82,11 @@ func (t *ToolSet) knowledgeAdd() actool.CoreTool {
 
 func (t *ToolSet) knowledgeSearch() actool.CoreTool {
 	return readTool("kn_search",
-		"Search the knowledge graph (cross-task exploit-craft memory). Call it when starting work on a target or bug class — prior primitives, techniques that worked, crash signatures already seen (avoid re-triaging), environment gotchas. Full-text over name+body, or filter by kind/tags. neighbors=<id> expands a node's edges (what it requires/yields/evolves to).",
+		"Search the knowledge graph (cross-task exploit-craft memory, domain-scoped: memory | web | crypto | access | general). Call it when starting work on a target or bug class — prior primitives, techniques that worked, crash signatures already seen (avoid re-triaging), environment gotchas. Full-text over name+body, or filter by kind/domain/tags. neighbors=<id> expands a node's edges (what it requires/yields/evolves to).",
 		obj(map[string]any{
 			"q":         str("free-text query over name+body"),
 			"kind":      str("optional: primitive|technique|crash_signature|binary|function|environment|lesson"),
+			"domain":    str("optional exploit domain filter: memory | web | crypto | access | general — memory-corruption craft is scoped away from web/crypto work and vice versa"),
 			"tags":      str("optional: comma-separated tag filter"),
 			"neighbors": map[string]any{"type": "integer", "description": "node id to expand edges for"},
 			"limit":     map[string]any{"type": "integer", "description": "default 10"},
@@ -94,6 +95,7 @@ func (t *ToolSet) knowledgeSearch() actool.CoreTool {
 			var a struct {
 				Q         string `json:"q"`
 				Kind      string `json:"kind"`
+				Domain    string `json:"domain"`
 				Tags      string `json:"tags"`
 				Neighbors int64  `json:"neighbors"`
 				Limit     int    `json:"limit"`
@@ -109,7 +111,7 @@ func (t *ToolSet) knowledgeSearch() actool.CoreTool {
 				}
 				return jsonResult(map[string]any{"center": a.Neighbors, "nodes": nodes, "edges": edges})
 			}
-			nodes, err := knowledgeRepo.d.KnowledgeSearch(a.Q, a.Kind, splitTags(a.Tags), a.Limit)
+			nodes, err := knowledgeRepo.d.KnowledgeSearch(a.Q, a.Kind, a.Domain, splitTags(a.Tags), a.Limit)
 			if err != nil {
 				return actool.Errorf(err.Error()), nil
 			}

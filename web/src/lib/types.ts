@@ -1570,6 +1570,7 @@ export interface MachineBootResult {
 export interface KnowledgeNode {
   id: number;
   kind: string;
+  domain?: string; // memory | web | crypto | access | general
   name: string;
   body: string;
   refs: Record<string, unknown>;
