@@ -44,6 +44,9 @@ services:
       ARTEX_UPDATE_CHECK: ${ARTEX_UPDATE_CHECK:-}
       # Cross-binary function map (labkit/apps/crossmap) for project graphs.
       ARTEX_CROSSMAP_URL: ${ARTEX_CROSSMAP_URL:-http://172.17.0.1:13060}
+      # windbg MCP bridge (crash_triage_auto drives it directly)
+      ARTEX_WINDBG_URL: http://172.17.0.1:13012/mcp
+      ARTEX_WINDBG_TOKEN: ${WINDBG_MCP_TOKEN:-}
       # Noise profile for target requests: off (default) | quiet | balanced | aggressive.
       ARTEX_NOISE_PROFILE: ${ARTEX_NOISE_PROFILE:-}
       ARTEX_TARGET_USER_AGENT: ${ARTEX_TARGET_USER_AGENT:-}
