@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -52,14 +53,31 @@ func (t *ToolSet) fuzzCampaignTool() actool.CoreTool {
 			const fuzzerPS = "C:\\fuzz\\artex-fuzzer.ps1"
 			switch a.Action {
 			case "deploy":
-				// The script ships embedded in the binary and is written to the VM
-				// (base64 -EncodedCommand free: write via a here-doc through powershell).
-				ps := fmt.Sprintf(`New-Item -ItemType Directory -Force -Path C:\fuzz\seeds | Out-Null; [IO.File]::WriteAllBytes('%s', [Convert]::FromBase64String('%s')); Write-Output ('DEPLOYED ' + (Get-Item '%s').Length + ' bytes')`,
-					fuzzerPS, b64(fuzzScript), fuzzerPS)
+				// Deploy over SFTP (temp file -> Upload): the old
+				// base64-inside-EncodedCommand transport silently truncated on
+				// multi-KB scripts. Size-verify after write.
+				tmp, terr := os.CreateTemp("", "artex-fuzzer-*.ps1")
+				if terr != nil {
+					return actool.Errorf("staging failed: " + terr.Error()), nil
+				}
+				tmpName := tmp.Name()
+				defer os.Remove(tmpName)
+				if _, terr = tmp.WriteString(fuzzScript); terr != nil {
+					tmp.Close()
+					return actool.Errorf("staging failed: " + terr.Error()), nil
+				}
+				tmp.Close()
+				if _, uerr := t.machines.Upload(ctx, t.taskID, a.Machine, a.Username, 0, tmpName, fuzzerPS); uerr != nil {
+					return actool.Errorf("deploy failed: " + uerr.Error()), nil
+				}
+				checkPS := fmt.Sprintf(`New-Item -ItemType Directory -Force -Path C:\fuzz\seeds | Out-Null; $len = (Get-Item '%s').Length; if ($len -ne %d) { Write-Output ('SIZE_MISMATCH ' + $len) } else { Write-Output ('DEPLOYED ' + $len + ' bytes') }`, fuzzerPS, len(fuzzScript))
 				out, err := t.machines.Exec(ctx, t.taskID, a.Machine, a.Username, 0,
-					"powershell -NoProfile -EncodedCommand "+psEncode64(ps), 30*time.Second)
+					"powershell -NoProfile -EncodedCommand "+psEncode64(checkPS), 30*time.Second)
 				if err != nil {
-					return actool.Errorf("deploy failed: " + err.Error()), nil
+					return actool.Errorf("deploy verify failed: " + err.Error()), nil
+				}
+				if strings.Contains(out.Stdout, "SIZE_MISMATCH") {
+					return actool.Errorf("deploy size mismatch: " + out.Stdout), nil
 				}
 				return jsonResult(map[string]any{"action": "deploy", "output": out.Stdout})
 
@@ -138,9 +156,4 @@ func (t *ToolSet) fuzzCampaignTool() actool.CoreTool {
 				return actool.Errorf("action must be deploy|start|status|stop|crashes"), nil
 			}
 		}))
-}
-
-// b64 is a tiny helper (std base64 of a string).
-func b64(s string) string {
-	return base64Std([]byte(s))
 }

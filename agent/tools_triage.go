@@ -58,9 +58,20 @@ func (t *ToolSet) crashTriageAutoTool() actool.CoreTool {
 			}
 			if !a.KeepPageHeap {
 				defer func() {
-					disPS := fmt.Sprintf(`$k='HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\%s.EXE'; Remove-ItemProperty -Path $k -Name GlobalFlag,PageHeapFlags -ErrorAction SilentlyContinue; Write-Output PH_OFF`, a.Target)
-					_, _ = t.machines.Exec(context.Background(), t.taskID, a.Machine, a.Username, 0,
-						"powershell -NoProfile -EncodedCommand "+psEncode64(disPS), 20*time.Second)
+					// Verified cleanup: a failed triage run previously left
+					// full page_heap enabled on WINWORD for hours (worker
+					// fact 1388) — every later repro ran instrumented without
+					// anyone noticing. Retry until the values are actually
+					// gone; log to machine events either way.
+					disPS := fmt.Sprintf(`$k='HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\%s.EXE'; Remove-ItemProperty -Path $k -Name GlobalFlag,PageHeapFlags -ErrorAction SilentlyContinue; $left = Get-ItemProperty -Path $k -ErrorAction SilentlyContinue; if ($left.GlobalFlag -or $left.PageHeapFlags) { Write-Output PH_STILL_ON } else { Write-Output PH_OFF }`, a.Target)
+					for i := 0; i < 3; i++ {
+						out, err := t.machines.Exec(context.Background(), t.taskID, a.Machine, a.Username, 0,
+							"powershell -NoProfile -EncodedCommand "+psEncode64(disPS), 20*time.Second)
+						if err == nil && strings.Contains(out.Stdout, "PH_OFF") {
+							return
+						}
+						time.Sleep(2 * time.Second)
+					}
 				}()
 			}
 

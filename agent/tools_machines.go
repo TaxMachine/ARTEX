@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -177,10 +178,15 @@ func (t *ToolSet) sshExec() actool.CoreTool {
 				to = 2 * time.Minute
 			}
 			res, err := t.machines.Exec(ctx, t.taskID, a.Machine, a.Username, a.CredentialID, cmd, to)
-			// Token-saver nudge: a hand-written PowerShell prefix in command= is
-			// the exact pattern ps= exists to replace.
-			if a.Ps == "" && a.PsFile == "" && strings.Contains(cmd, "powershell -NoProfile -Command") {
-				res.Stdout = strings.TrimRight(res.Stdout, "\r\n") + "\n[note: hand-written powershell prefix detected - use the ps= parameter with plain PowerShell source next time: no prefix, no escaping, cheaper]"
+			// Token-saver nudge: hand-written PowerShell prefixes in command= are
+			// the exact patterns ps=/ps_file= exist to replace.
+			if a.Ps == "" && a.PsFile == "" {
+				switch {
+				case strings.Contains(cmd, "powershell -NoProfile -Command"):
+					res.Stdout = strings.TrimRight(res.Stdout, "\r\n") + "\n[note: hand-written powershell -Command detected - use the ps= parameter with plain PowerShell source next time: no prefix, no escaping, cheaper]"
+				case strings.Contains(cmd, "powershell -NoProfile -ExecutionPolicy Bypass -File") || strings.Contains(cmd, "powershell -NoProfile -File"):
+					res.Stdout = strings.TrimRight(res.Stdout, "\r\n") + "\n[note: hand-written powershell -File detected - use ps_file=<vm path> (+ps_args) instead; it adds -ExecutionPolicy Bypass itself]"
+				}
 			}
 			if err != nil {
 				return jsonResult(map[string]any{"error": err.Error(), "result": res})
@@ -407,13 +413,28 @@ func (t *ToolSet) psScriptTool() actool.CoreTool {
 			if a.Timeout <= 0 {
 				to = 5 * time.Minute
 			}
-			// stage via SSH write (echo through EncodedCommand to survive quoting)
+			// Stage over SFTP (temp file -> Upload): base64-inside-
+			// EncodedCommand silently truncates on multi-KB scripts, which
+			// made staged scripts empty and the run a confusing no-op.
 			name := fmt.Sprintf("s%d.ps1", time.Now().UnixNano())
 			remote := `C:\fuzz\artex-scripts\` + name
-			writePS := fmt.Sprintf(`New-Item -ItemType Directory -Force -Path C:\fuzz\artex-scripts | Out-Null; [IO.File]::WriteAllBytes('%s', [Convert]::FromBase64String('%s')); Write-Output STAGED`, remote, psEncode64Plain(a.Script))
-			if ex, err := t.machines.Exec(ctx, t.taskID, a.Machine, a.Username, a.CredentialID,
-				"powershell -NoProfile -EncodedCommand "+psEncode64(writePS), 30*time.Second); err != nil || !strings.Contains(ex.Stdout, "STAGED") {
-				return actool.Errorf("stage failed: " + ex.Stdout), nil
+			if _, err := t.machines.Exec(ctx, t.taskID, a.Machine, a.Username, a.CredentialID,
+				"powershell -NoProfile -EncodedCommand "+psEncode64(`New-Item -ItemType Directory -Force -Path C:\fuzz\artex-scripts | Out-Null; Write-Output DIR_OK`), 20*time.Second); err != nil {
+				return actool.Errorf("stage dir failed: " + err.Error()), nil
+			}
+			tmp, terr := os.CreateTemp("", "artex-script-*.ps1")
+			if terr != nil {
+				return actool.Errorf("staging failed: " + terr.Error()), nil
+			}
+			tmpName := tmp.Name()
+			defer os.Remove(tmpName)
+			if _, terr = tmp.WriteString(a.Script); terr != nil {
+				tmp.Close()
+				return actool.Errorf("staging failed: " + terr.Error()), nil
+			}
+			tmp.Close()
+			if _, uerr := t.machines.Upload(ctx, t.taskID, a.Machine, a.Username, a.CredentialID, tmpName, remote); uerr != nil {
+				return actool.Errorf("stage failed: " + uerr.Error()), nil
 			}
 			runPS := fmt.Sprintf(`$code = Get-Content '%s' -Raw; $sb = [ScriptBlock]::Create($code); & $sb %s`, remote, strings.TrimSpace(a.Args))
 			res, err := t.machines.Exec(ctx, t.taskID, a.Machine, a.Username, a.CredentialID,

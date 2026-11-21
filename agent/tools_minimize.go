@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -53,11 +54,27 @@ func (t *ToolSet) crashMinimizeTool() actool.CoreTool {
 			if steps <= 0 {
 				steps = 60
 			}
-			// deploy the minimizer once (content-addressed: skip when present)
-			deploy := fmt.Sprintf(`if (-not (Test-Path 'C:\fuzz\artex-minimize.ps1')) { [IO.File]::WriteAllBytes('C:\fuzz\artex-minimize.ps1', [Convert]::FromBase64String('%s')) }; Write-Output READY`, psEncode64(minimizeScript))
-			if ex, err := t.machines.Exec(ctx, t.taskID, a.Machine, a.Username, 0,
-				"powershell -NoProfile -EncodedCommand "+psEncode64(deploy), 30*time.Second); err != nil || !strings.Contains(ex.Stdout, "READY") {
-				return actool.Errorf("minimizer deploy failed: " + ex.Stdout), nil
+			// Deploy the minimizer over SFTP (temp file -> Upload). The
+			// original base64-inside-EncodedCommand transport silently
+			// truncated on multi-KB bodies — a 0-byte script on disk made
+			// every run a no-op. SFTP is byte-exact.
+			check, cerr := t.machines.Exec(ctx, t.taskID, a.Machine, a.Username, 0,
+				"powershell -NoProfile -EncodedCommand "+psEncode64(`if ((Get-Item 'C:\fuzz\artex-minimize.ps1' -ErrorAction SilentlyContinue).Length -eq `+fmt.Sprint(len(minimizeScript))+`) { Write-Output PRESENT } else { Write-Output MISSING }`), 20*time.Second)
+			if cerr != nil || !strings.Contains(check.Stdout, "PRESENT") {
+				tmp, terr := os.CreateTemp("", "artex-minimize-*.ps1")
+				if terr != nil {
+					return actool.Errorf("minimizer staging failed: " + terr.Error()), nil
+				}
+				tmpName := tmp.Name()
+				defer os.Remove(tmpName)
+				if _, terr = tmp.WriteString(minimizeScript); terr != nil {
+					tmp.Close()
+					return actool.Errorf("minimizer staging failed: " + terr.Error()), nil
+				}
+				tmp.Close()
+				if _, uerr := t.machines.Upload(ctx, t.taskID, a.Machine, a.Username, 0, tmpName, `C:\fuzz\artex-minimize.ps1`); uerr != nil {
+					return actool.Errorf("minimizer deploy failed: " + uerr.Error()), nil
+				}
 			}
 			// -File execution is policy-blocked on the VM; -Command with the
 			// script body (deployed to disk) sidesteps it entirely.
