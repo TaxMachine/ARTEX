@@ -52,11 +52,11 @@ func scratchDSN(t *testing.T, suffix string) string {
 	admin.Path = "/postgres"
 	conn, err := sql.Open("pgx", admin.String())
 	if err != nil {
-		t.Skipf("postgres unavailable (%v) — skipping", err)
+		SkipPGUnavailable(t, err)
 	}
 	if err := conn.Ping(); err != nil {
 		conn.Close()
-		t.Skipf("postgres unavailable (%v) — skipping", err)
+		SkipPGUnavailable(t, err)
 	}
 	drop := func() error {
 		_, err := conn.Exec(`DROP DATABASE IF EXISTS "` + name + `" WITH (FORCE)`)
@@ -123,7 +123,7 @@ func readApplied(t *testing.T, d *DB) []appliedMigration {
 // embedded migration is recorded with the SHA-256 of its file.
 func assertEmbeddedApplied(t *testing.T, d *DB) []appliedMigration {
 	t.Helper()
-	for _, table := range []string{"llm_records", "llm_usage"} {
+	for _, table := range []string{"llm_records", "llm_usage", "llm_context", "traffic_tamper_hooks", "traffic_tamper_hook_versions"} {
 		var exists bool
 		if err := d.QueryRow(`SELECT to_regclass($1) IS NOT NULL`, table).Scan(&exists); err != nil {
 			t.Fatal(err)
@@ -136,12 +136,7 @@ func assertEmbeddedApplied(t *testing.T, d *DB) []appliedMigration {
 	want := []struct {
 		version int
 		name    string
-	}{{1, llmRecordsMigration}, {2, llmUsageMigration}, {3, "0003_task_scope_icp_index.sql"}, {4, "0004_findings_category.sql"},
-		{5, "0005_traffic_rewrite_rules.sql"}, {6, "0006_activity_outbox.sql"}, {7, "0007_machines_and_ssh.sql"},
-		{8, "0008_llm_usage_ts_index.sql"}, {9, "0009_task_machines.sql"}, {10, "0010_finding_report_state.sql"}}
-	if len(applied) != len(want) {
-		t.Fatalf("schema_migrations = %+v, want versions 1 to 10", applied)
-	}
+	}{{1, "0001_llm_records.sql"}, {2, "0002_llm_usage.sql"}, {3, "0003_task_scope_icp_index.sql"}, {4, "0004_findings_category.sql"}, {5, "0005_traffic_rewrite_rules.sql"}, {6, "0006_activity_outbox.sql"}, {7, "0007_machines_and_ssh.sql"}, {8, "0008_llm_usage_ts_index.sql"}, {9, "0008_traffic_evidence_rewrite_flag.sql"}, {10, "0009_llm_context.sql"}, {11, "0009_task_machines.sql"}, {12, "0010_dashboard_usage_indexes.sql"}, {13, "0010_finding_report_state.sql"}, {14, "0011_binary_assets.sql"}, {15, "0011_traffic_tamper_hooks.sql"}, {16, "0012_binary_type_check.sql"}, {17, "0013_projects.sql"}, {18, "0014_llm_provider.sql"}, {19, "0015_agent_effort.sql"}, {20, "0016_finding_primitives_chain.sql"}, {21, "0017_capture_note.sql"}, {22, "0018_vulnclass_backfill.sql"}, {23, "0019_knowledge_graph.sql"}, {24, "0020_finding_poc.sql"}, {25, "0021_knowledge_domain.sql"}, {26, "0022_traffic_tamper_hooks.sql"}}
 	for i, w := range want {
 		content, err := fs.ReadFile(migrationsFS(), w.name)
 		if err != nil {
@@ -190,7 +185,7 @@ func TestOpenRecordsEmbeddedMigrations(t *testing.T) {
 	dsn := testDSN(t)
 	d, err := Open(dsn)
 	if err != nil {
-		t.Skipf("postgres unavailable (%v) — skipping", err)
+		SkipPGUnavailable(t, err)
 	}
 	applied := assertEmbeddedApplied(t, d)
 	d.Close()

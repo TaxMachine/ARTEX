@@ -27,6 +27,7 @@ import (
 	"github.com/TaxMachine/ARTEX/third_party/norma/compaction"
 	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 	acperm "github.com/TaxMachine/ARTEX/third_party/norma/permission"
+	actool "github.com/TaxMachine/ARTEX/third_party/norma/tool"
 	"github.com/TaxMachine/ARTEX/third_party/norma/transcript"
 )
 
@@ -648,6 +649,7 @@ func TestConnection(ctx context.Context, c Config) (time.Duration, string, error
 	reply, err := agentcore.Run(ctx, agentcore.Options{
 		Provider:       prov,
 		SystemPrompt:   []string{"You are a connection test. Just output the two characters OK — no thinking, no explanation, nothing else."},
+		Tools:          []actool.CoreTool{}, // not nil: nil means the SDK's unconfined file and shell tools
 		PermissionMode: acperm.ModeBypass,
 		MaxTurns:       1,
 		MaxTokens:      8192,

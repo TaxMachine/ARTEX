@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/TaxMachine/ARTEX/agent"
+	"github.com/TaxMachine/ARTEX/db"
 )
 
 func TestEngineDeleteBarrierRejectsNewTaskOperations(t *testing.T) {
@@ -147,7 +148,7 @@ func TestTaskLifecycleRechecksDeleteBarrierAfterConcLock(t *testing.T) {
 func TestAbortTaskDeleteUsesPersistedPauseAndQueueState(t *testing.T) {
 	m, err := NewManager(t.TempDir(), "")
 	if err != nil {
-		t.Skipf("postgres unavailable (%v) - skipping", err)
+		db.SkipPGUnavailable(t, err)
 	}
 	defer m.Close()
 	task, err := m.CreateTask("delete abort state", "restore persisted barrier", nil, 0, 0)

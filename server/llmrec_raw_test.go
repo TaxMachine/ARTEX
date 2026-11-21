@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/TaxMachine/ARTEX/agent"
+	"github.com/TaxMachine/ARTEX/db"
 	"github.com/TaxMachine/ARTEX/llmrec"
 	"github.com/TaxMachine/ARTEX/third_party/norma/llm"
 	"github.com/TaxMachine/ARTEX/third_party/norma/transcript"
@@ -21,7 +22,7 @@ import (
 func TestRecorderPersistsRawWireBodies(t *testing.T) {
 	m, err := NewManager(t.TempDir(), "")
 	if err != nil {
-		t.Skipf("postgres unavailable (%v) — skipping", err)
+		db.SkipPGUnavailable(t, err)
 	}
 	defer m.Close()
 	pg := m.PG()
@@ -73,6 +74,7 @@ func TestRecorderPersistsRawWireBodies(t *testing.T) {
 		if _, err := pg.Exec(`DELETE FROM llm_records WHERE session_id = $1`, session); err != nil {
 			t.Logf("cleanup: %v", err)
 		}
+		_, _ = pg.Exec(`DELETE FROM llm_usage WHERE task_id = '999999' AND profile_name = 'raw-test-profile'`)
 	}()
 
 	ctx := transcript.WithSessionID(context.Background(), session)
