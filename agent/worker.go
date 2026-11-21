@@ -673,10 +673,15 @@ func (w *Worker) execute(ctx context.Context, name string, taskID int64, as *db.
 		// full output preserved on disk, in cmd-output/ or in the task's spill
 		// directory (spill.go). The truncation cap uses the SDK default (30000 chars).
 		ToolOutputDir: TaskToolOutputDir(w.workDir, taskID, runDir),
-		Compaction:    compactionConfig(w.compactionWindow()), // long tool-heavy runs stay within the window
-		Todos:         actool.NewTodoStore(),                  // session-level scratch todos (TodoWrite), pure planning, discarded on exit
-		NonStreaming:  w.nonStreaming(),                       // when this profile selects non-streaming, use Provider.Complete
-		MaxTokens:     w.maxTokens(),                          // 0 = send no cap; the server default decides
+		// Local-model lever: shrink per-tool output when ARTEX_TOOL_OUT_CHARS is
+		// set (0 = SDK default 30000). Spill files keep full output on disk.
+		MaxToolOutputChars: toolOutputChars(),
+		// Local-model lever: force an earlier compaction window via
+		// ARTEX_COMPACTION_K so long tool-heavy runs summarize aggressively.
+		Compaction:   compactionConfig(localWindowOverride(w.compactionWindow())), // long tool-heavy runs stay within the window
+		Todos:        actool.NewTodoStore(),                                       // session-level scratch todos (TodoWrite), pure planning, discarded on exit
+		NonStreaming: w.nonStreaming(),                                            // when this profile selects non-streaming, use Provider.Complete
+		MaxTokens:    w.maxTokens(),                                               // 0 = send no cap; the server default decides
 
 		// On by default; ARTEX_UNTRUSTED_BOUNDARY=0 opts out: nonce-frame tool output as untrusted data.
 		UntrustedOutputBoundary: untrustedBoundaryEnabled(),

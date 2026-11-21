@@ -181,7 +181,15 @@ func applyToolRAG(ctx context.Context, agentKey string, tools []actool.CoreTool,
 		k = toolRAGDefaultK
 	}
 	query, _ := ctx.Value(toolQueryKey{}).(string)
-	out, projected, err := projectTools(query, tools, toolRAGKeep(deferred), k, score)
+	keep := toolRAGKeep(deferred)
+	// Local-model escape hatch: ARTEX_WORKER_GLOBAL_TOOLS pins extra tools the
+	// projection must never hide (e.g. kn_search for cross-task memory).
+	for n, on := range workerKeepTools() {
+		if on {
+			keep[n] = true
+		}
+	}
+	out, projected, err := projectTools(query, tools, keep, k, score)
 	if err != nil {
 		log.Printf("[tool-rag] %s: scoring failed, using full catalog (%d tools): %v", agentKey, len(tools), err)
 	} else if !projected {

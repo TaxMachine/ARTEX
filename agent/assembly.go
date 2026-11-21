@@ -85,12 +85,42 @@ func AugmentTools(ctx context.Context, agentKey string, base []actool.CoreTool) 
 	}
 	// Tool RAG (off by default): lexical projection of the bound list; only removes.
 	out = applyToolRAG(ctx, agentKey, out, def.Deferred, bm25Score)
+	out = slimToolSchemas(out)
 	out, def.FindingGuidance = findingWorkflowTools(agentKey, out)
 	for i, t := range out {
 		out[i] = guardPanic(t)
 	}
 	return out, def, cleanup
 }
+
+// slimToolSchemas caps tool descriptions (and nested parameter descriptions)
+// at ARTEX_TOOL_DESC_MAX characters. Local-model lever: the full text stays in
+// the tools table; only the model-visible schema shrinks. The cap keeps the
+// first sentences (the instruction) and appends a truncation notice, so the
+// model still knows the guidance continues elsewhere.
+func slimToolSchemas(tools []actool.CoreTool) []actool.CoreTool {
+	max := toolDescMax()
+	if max <= 0 || len(tools) == 0 {
+		return tools
+	}
+	out := make([]actool.CoreTool, len(tools))
+	for i, t := range tools {
+		if len(t.Description()) > max {
+			out[i] = &slimmedTool{CoreTool: t, desc: t.Description()[:max] + " …[description capped for context economy; full guidance in the tools table]"}
+			continue
+		}
+		out[i] = t
+	}
+	return out
+}
+
+// slimmedTool overlays a capped description on an unchanged tool.
+type slimmedTool struct {
+	actool.CoreTool
+	desc string
+}
+
+func (s *slimmedTool) Description() string { return s.desc }
 
 // guardPanic turns a panicking tool handler into an ordinary tool error. The
 // harness runs each tool on its own goroutine, so a panic inside a handler can't

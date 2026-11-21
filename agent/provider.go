@@ -217,6 +217,18 @@ func compactionConfig(windowTokens int) *compaction.Config {
 	return &compaction.Config{ContextWindow: windowTokens}
 }
 
+// localWindowOverride applies the ARTEX_COMPACTION_K local-model override to
+// the resolved per-agent window (min of the two: never widen).
+func localWindowOverride(windowTokens int) int {
+	if k := localCompactionWindowK(); k > 0 {
+		w := k * 1000
+		if windowTokens <= 0 || w < windowTokens {
+			return w
+		}
+	}
+	return windowTokens
+}
+
 // FromEnv resolves the LLM provider config:
 //
 //	ARTEX_LLM_PROVIDER = anthropic|openai|openai-responses|ollama (default: inferred from keys)
