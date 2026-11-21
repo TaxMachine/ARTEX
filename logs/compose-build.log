@@ -1,0 +1,1936 @@
+ Image postgres:16-alpine Pulling 
+ b7106f8586ee Pulling fs layer 0B
+ 881fc932939e Pulling fs layer 0B
+ 86cc7190d1c0 Pulling fs layer 0B
+ 41713cbe7496 Pulling fs layer 0B
+ f85a33377d83 Pulling fs layer 0B
+ f997efa53d88 Pulling fs layer 0B
+ ea98517a315c Pulling fs layer 0B
+ a2d17f5b24d5 Pulling fs layer 0B
+ 5959c7ea857a Pulling fs layer 0B
+ 6bceb0db2fd1 Pulling fs layer 0B
+ 5788ee6f91dc Pulling fs layer 0B
+ 881fc932939e Already exists 0B
+ 6bceb0db2fd1 Download complete 0B
+ b7106f8586ee Download complete 0B
+ f997efa53d88 Download complete 0B
+ 41713cbe7496 Download complete 0B
+ f85a33377d83 Download complete 0B
+ 86cc7190d1c0 Download complete 0B
+ ea98517a315c Download complete 0B
+ a2d17f5b24d5 Downloading 2.097MB
+ 5788ee6f91dc Download complete 0B
+ 5959c7ea857a Download complete 0B
+ 41713cbe7496 Extracting 1B
+ ea98517a315c Pull complete 0B
+ a2d17f5b24d5 Downloading 5.243MB
+ 89872578f4c5 Download complete 0B
+ f997efa53d88 Pull complete 0B
+ 41713cbe7496 Pull complete 0B
+ 5788ee6f91dc Pull complete 0B
+ a2d17f5b24d5 Downloading 9.437MB
+ df1cd84c95ef Download complete 0B
+ a2d17f5b24d5 Downloading 14.68MB
+ a2d17f5b24d5 Downloading 18.87MB
+ a2d17f5b24d5 Downloading 24.12MB
+ a2d17f5b24d5 Downloading 29.36MB
+ a2d17f5b24d5 Downloading 34.6MB
+ a2d17f5b24d5 Downloading 38.8MB
+ a2d17f5b24d5 Downloading 45.09MB
+ a2d17f5b24d5 Downloading 49.28MB
+ a2d17f5b24d5 Downloading 53.48MB
+ a2d17f5b24d5 Downloading 59.77MB
+ a2d17f5b24d5 Downloading 65.01MB
+ a2d17f5b24d5 Downloading 69.21MB
+ a2d17f5b24d5 Downloading 74.45MB
+ a2d17f5b24d5 Downloading 79.69MB
+ a2d17f5b24d5 Downloading 84.93MB
+ a2d17f5b24d5 Downloading 91.23MB
+ a2d17f5b24d5 Downloading 96.47MB
+ a2d17f5b24d5 Downloading 100.7MB
+ a2d17f5b24d5 Downloading 104.9MB
+ a2d17f5b24d5 Downloading 109.1MB
+ a2d17f5b24d5 Download complete 0B
+ a2d17f5b24d5 Extracting 1B
+ a2d17f5b24d5 Extracting 1B
+ a2d17f5b24d5 Extracting 1B
+ a2d17f5b24d5 Extracting 1B
+ a2d17f5b24d5 Extracting 1B
+ a2d17f5b24d5 Extracting 1B
+ a2d17f5b24d5 Extracting 1B
+ a2d17f5b24d5 Extracting 1B
+ 6bceb0db2fd1 Pull complete 0B
+ b7106f8586ee Pull complete 0B
+ f85a33377d83 Pull complete 0B
+ 86cc7190d1c0 Pull complete 0B
+ 5959c7ea857a Pull complete 0B
+ a2d17f5b24d5 Pull complete 0B
+ Image postgres:16-alpine Pulled 
+ Image artex:local Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 548B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 10.49kB done
+#2 DONE 0.0s
+
+#3 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#3 DONE 0.5s
+
+#4 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#4 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#4 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 3.15MB / 14.28MB 0.2s
+#4 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 9.44MB / 14.28MB 0.3s
+#4 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 14.28MB / 14.28MB 0.4s done
+#4 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 0.1s done
+#4 DONE 0.5s
+
+#5 [internal] load metadata for docker.io/library/python:3.12-slim-bookworm
+#5 ...
+
+#6 [internal] load metadata for docker.io/library/golang:1.26-bookworm
+#6 DONE 0.5s
+
+#5 [internal] load metadata for docker.io/library/python:3.12-slim-bookworm
+#5 DONE 0.5s
+
+#7 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#7 DONE 0.5s
+
+#8 [internal] load metadata for docker.io/library/debian:bookworm-slim
+#8 DONE 0.5s
+
+#9 [internal] load .dockerignore
+#9 transferring context:
+#9 transferring context: 333B done
+#9 DONE 0.0s
+
+#10 [internal] load build context
+#10 transferring context: 13.97MB 0.1s done
+#10 DONE 0.1s
+
+#11 [tools 1/3] FROM docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc
+#11 resolve docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc 0.0s done
+#11 sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3 3.15MB / 28.25MB 0.2s
+#11 sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3 8.39MB / 28.25MB 0.3s
+#11 sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3 15.73MB / 28.25MB 0.5s
+#11 sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3 18.87MB / 28.25MB 0.6s
+#11 sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3 28.25MB / 28.25MB 0.8s done
+#11 extracting sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3
+#11 extracting sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3 0.3s done
+#11 DONE 1.2s
+
+#12 [stage-3  1/13] FROM docker.io/library/python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df
+#12 resolve docker.io/library/python:3.12-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df 0.0s done
+#12 sha256:88d15687540999237909e04714b1393c610db9dc2e13d82acd6356fa9bf8f092 249B / 249B 0.1s done
+#12 sha256:8691b22c22a3e005c632ab6bc07b085b98dae9cc02d1d84de175849f997439c7 3.15MB / 13.68MB 0.9s
+#12 sha256:a47be7bff94f52aefb243d8b245b01c74976150bb88de60875c5eb7ac964f91e 2.10MB / 3.34MB 0.9s
+#12 sha256:8691b22c22a3e005c632ab6bc07b085b98dae9cc02d1d84de175849f997439c7 4.19MB / 13.68MB 1.1s
+#12 sha256:a47be7bff94f52aefb243d8b245b01c74976150bb88de60875c5eb7ac964f91e 3.34MB / 3.34MB 1.0s done
+#12 sha256:8691b22c22a3e005c632ab6bc07b085b98dae9cc02d1d84de175849f997439c7 6.29MB / 13.68MB 1.2s
+#12 extracting sha256:a47be7bff94f52aefb243d8b245b01c74976150bb88de60875c5eb7ac964f91e 0.1s done
+#12 sha256:8691b22c22a3e005c632ab6bc07b085b98dae9cc02d1d84de175849f997439c7 7.34MB / 13.68MB 1.4s
+#12 sha256:8691b22c22a3e005c632ab6bc07b085b98dae9cc02d1d84de175849f997439c7 9.44MB / 13.68MB 1.5s
+#12 sha256:8691b22c22a3e005c632ab6bc07b085b98dae9cc02d1d84de175849f997439c7 10.49MB / 13.68MB 1.7s
+#12 sha256:8691b22c22a3e005c632ab6bc07b085b98dae9cc02d1d84de175849f997439c7 11.53MB / 13.68MB 1.8s
+#12 sha256:8691b22c22a3e005c632ab6bc07b085b98dae9cc02d1d84de175849f997439c7 13.68MB / 13.68MB 1.9s done
+#12 extracting sha256:8691b22c22a3e005c632ab6bc07b085b98dae9cc02d1d84de175849f997439c7
+#12 extracting sha256:8691b22c22a3e005c632ab6bc07b085b98dae9cc02d1d84de175849f997439c7 0.1s done
+#12 extracting sha256:88d15687540999237909e04714b1393c610db9dc2e13d82acd6356fa9bf8f092 0.0s done
+#12 DONE 2.3s
+
+#13 [web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
+#13 resolve docker.io/library/node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee 0.0s done
+#13 sha256:cce880541c96dc730321857781d113e3c75c0cb383f9510300922762006d734e 448B / 448B 0.1s done
+#13 sha256:aa4e8910862263c3bad50c754fb555bbbb7661c41e35ba703ae082ec6749c175 1.71MB / 1.71MB 1.0s done
+#13 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 49.90MB / 49.90MB 1.5s done
+#13 sha256:076cba098ace87d6950e8fa4cc530bfe59834eba28f30061e8526d6f00bf52c8 3.31kB / 3.31kB 0.1s done
+#13 extracting sha256:076cba098ace87d6950e8fa4cc530bfe59834eba28f30061e8526d6f00bf52c8 0.0s done
+#13 extracting sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79
+#13 extracting sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 0.4s done
+#13 extracting sha256:aa4e8910862263c3bad50c754fb555bbbb7661c41e35ba703ae082ec6749c175 0.0s done
+#13 DONE 2.8s
+
+#14 [build 1/7] FROM docker.io/library/golang:1.26-bookworm@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0
+#14 resolve docker.io/library/golang:1.26-bookworm@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0 0.0s done
+#14 sha256:6da9d21223e35007a7dcb4245c0ccab62343582da7878c7ad750c13c682365d8 124B / 124B 0.1s done
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 2.10MB / 92.63MB 1.4s
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 1.05MB / 64.43MB 1.4s
+#14 sha256:338554e9113fa6731ba588cb8f45e85b3e3fe7ada531ee7d7b0bc9291d616727 4.19MB / 23.87MB 0.6s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 0B / 48.53MB 0.3s
+#14 ...
+
+#13 [web 1/6] FROM docker.io/library/node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
+#13 extracting sha256:cce880541c96dc730321857781d113e3c75c0cb383f9510300922762006d734e 0.0s done
+#13 DONE 2.8s
+
+#15 [web 2/6] WORKDIR /src/web
+#15 DONE 0.1s
+
+#14 [build 1/7] FROM docker.io/library/golang:1.26-bookworm@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0
+#14 ...
+
+#16 [web 3/6] COPY web/package.json web/package-lock.json ./
+#16 DONE 0.0s
+
+#14 [build 1/7] FROM docker.io/library/golang:1.26-bookworm@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0
+#14 sha256:338554e9113fa6731ba588cb8f45e85b3e3fe7ada531ee7d7b0bc9291d616727 8.39MB / 23.87MB 0.9s
+#14 sha256:338554e9113fa6731ba588cb8f45e85b3e3fe7ada531ee7d7b0bc9291d616727 12.58MB / 23.87MB 1.1s
+#14 sha256:338554e9113fa6731ba588cb8f45e85b3e3fe7ada531ee7d7b0bc9291d616727 16.78MB / 23.87MB 1.2s
+#14 sha256:338554e9113fa6731ba588cb8f45e85b3e3fe7ada531ee7d7b0bc9291d616727 20.97MB / 23.87MB 1.4s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 3.15MB / 48.53MB 1.1s
+#14 sha256:338554e9113fa6731ba588cb8f45e85b3e3fe7ada531ee7d7b0bc9291d616727 23.87MB / 23.87MB 1.5s done
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 7.34MB / 92.63MB 2.4s
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 5.24MB / 64.43MB 2.6s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 6.29MB / 48.53MB 1.5s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 9.44MB / 48.53MB 1.8s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 12.58MB / 48.53MB 2.1s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 12.58MB / 92.63MB 3.2s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 15.73MB / 48.53MB 2.4s
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 9.44MB / 64.43MB 3.6s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 19.92MB / 48.53MB 2.9s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 17.83MB / 92.63MB 3.9s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 23.07MB / 48.53MB 3.2s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 27.26MB / 48.53MB 3.8s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 23.07MB / 92.63MB 5.3s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 30.41MB / 48.53MB 4.4s
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 13.63MB / 64.43MB 5.6s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 33.55MB / 48.53MB 4.7s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 36.70MB / 48.53MB 5.0s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 40.89MB / 48.53MB 5.3s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 28.31MB / 92.63MB 6.5s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 47.19MB / 48.53MB 5.7s
+#14 sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 48.53MB / 48.53MB 5.8s done
+#14 extracting sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0
+#14 extracting sha256:69245854ad5855991d16224f6abf55855d2d73922785206adea9c5c5988434a0 0.5s done
+#14 extracting sha256:338554e9113fa6731ba588cb8f45e85b3e3fe7ada531ee7d7b0bc9291d616727
+#14 extracting sha256:338554e9113fa6731ba588cb8f45e85b3e3fe7ada531ee7d7b0bc9291d616727 0.2s done
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 17.83MB / 64.43MB 7.7s
+#14 ...
+
+#17 [tools 2/3] RUN apt-get update && apt-get install -y --no-install-recommends       ca-certificates curl git unzip     && rm -rf /var/lib/apt/lists/*
+#17 0.458 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#17 0.642 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#17 0.735 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+#17 0.779 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+#17 2.695 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+#17 2.718 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [372 kB]
+#17 3.197 Fetched 9411 kB in 3s (3209 kB/s)
+#17 3.197 Reading package lists...
+#17 3.423 Reading package lists...
+#17 3.661 Building dependency tree...
+#17 3.715 Reading state information...
+#17 3.774 The following additional packages will be installed:
+#17 3.774   git-man libbrotli1 libcurl3-gnutls libcurl4 liberror-perl libexpat1
+#17 3.774   libgdbm-compat4 libgdbm6 libgssapi-krb5-2 libk5crypto3 libkeyutils1
+#17 3.774   libkrb5-3 libkrb5support0 libldap-2.5-0 libnghttp2-14 libperl5.36 libpsl5
+#17 3.774   librtmp1 libsasl2-2 libsasl2-modules-db libssh2-1 libssl3 openssl perl
+#17 3.774   perl-modules-5.36
+#17 3.775 Suggested packages:
+#17 3.775   gettext-base git-daemon-run | git-daemon-sysvinit git-doc git-email git-gui
+#17 3.775   gitk gitweb git-cvs git-mediawiki git-svn gdbm-l10n krb5-doc krb5-user
+#17 3.775   sensible-utils perl-doc libterm-readline-gnu-perl
+#17 3.775   | libterm-readline-perl-perl make libtap-harness-archive-perl zip
+#17 3.775 Recommended packages:
+#17 3.775   patch less ssh-client krb5-locales libldap-common publicsuffix
+#17 3.775   libsasl2-modules netbase
+#17 3.832 The following NEW packages will be installed:
+#17 3.832   ca-certificates curl git git-man libbrotli1 libcurl3-gnutls libcurl4
+#17 3.832   liberror-perl libexpat1 libgdbm-compat4 libgdbm6 libgssapi-krb5-2
+#17 3.832   libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libldap-2.5-0
+#17 3.832   libnghttp2-14 libperl5.36 libpsl5 librtmp1 libsasl2-2 libsasl2-modules-db
+#17 3.832   libssh2-1 libssl3 openssl perl perl-modules-5.36 unzip
+#17 4.009 0 upgraded, 29 newly installed, 0 to remove and 0 not upgraded.
+#17 4.009 Need to get 23.2 MB of archives.
+#17 4.009 After this operation, 113 MB of additional disk space will be used.
+#17 4.009 Get:1 http://deb.debian.org/debian-security bookworm-security/main amd64 perl-modules-5.36 all 5.36.0-7+deb12u4 [2817 kB]
+#17 4.504 Get:2 http://deb.debian.org/debian bookworm/main amd64 libgdbm6 amd64 1.23-3 [72.2 kB]
+#17 4.505 Get:3 http://deb.debian.org/debian bookworm/main amd64 libgdbm-compat4 amd64 1.23-3 [48.2 kB]
+#17 4.506 Get:4 http://deb.debian.org/debian-security bookworm-security/main amd64 libperl5.36 amd64 5.36.0-7+deb12u4 [4208 kB]
+#17 4.653 Get:5 http://deb.debian.org/debian-security bookworm-security/main amd64 perl amd64 5.36.0-7+deb12u4 [239 kB]
+#17 4.655 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 libssl3 amd64 3.0.22-1~deb12u2 [2040 kB]
+#17 4.714 Get:7 http://deb.debian.org/debian-security bookworm-security/main amd64 openssl amd64 3.0.22-1~deb12u2 [1442 kB]
+#17 4.821 Get:8 http://deb.debian.org/debian-security bookworm-security/main amd64 ca-certificates all 20250419~deb12u2 [161 kB]
+#17 4.822 Get:9 http://deb.debian.org/debian-security bookworm-security/main amd64 libbrotli1 amd64 1.0.9-2+deb12u1 [275 kB]
+#17 4.824 Get:10 http://deb.debian.org/debian bookworm/main amd64 libkrb5support0 amd64 1.20.1-2+deb12u5 [33.2 kB]
+#17 4.824 Get:11 http://deb.debian.org/debian bookworm/main amd64 libk5crypto3 amd64 1.20.1-2+deb12u5 [79.7 kB]
+#17 4.825 Get:12 http://deb.debian.org/debian bookworm/main amd64 libkeyutils1 amd64 1.6.3-2 [8808 B]
+#17 4.825 Get:13 http://deb.debian.org/debian bookworm/main amd64 libkrb5-3 amd64 1.20.1-2+deb12u5 [332 kB]
+#17 4.826 Get:14 http://deb.debian.org/debian bookworm/main amd64 libgssapi-krb5-2 amd64 1.20.1-2+deb12u5 [135 kB]
+#17 4.827 Get:15 http://deb.debian.org/debian-security bookworm-security/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg-10+deb12u1 [20.5 kB]
+#17 4.827 Get:16 http://deb.debian.org/debian-security bookworm-security/main amd64 libsasl2-2 amd64 2.1.28+dfsg-10+deb12u1 [59.9 kB]
+#17 4.861 Get:17 http://deb.debian.org/debian bookworm/main amd64 libldap-2.5-0 amd64 2.5.13+dfsg-5 [183 kB]
+#17 4.887 Get:18 http://deb.debian.org/debian bookworm/main amd64 libnghttp2-14 amd64 1.52.0-1+deb12u3 [72.4 kB]
+#17 4.888 Get:19 http://deb.debian.org/debian bookworm/main amd64 libpsl5 amd64 0.21.2-1 [58.7 kB]
+#17 4.889 Get:20 http://deb.debian.org/debian bookworm/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2+b2 [60.8 kB]
+#17 4.929 Get:21 http://deb.debian.org/debian-security bookworm-security/main amd64 libssh2-1 amd64 1.10.0-3+deb12u1 [176 kB]
+#17 4.951 Get:22 http://deb.debian.org/debian bookworm/main amd64 libcurl4 amd64 7.88.1-10+deb12u15 [392 kB]
+#17 5.021 Get:23 http://deb.debian.org/debian bookworm/main amd64 curl amd64 7.88.1-10+deb12u15 [316 kB]
+#17 5.029 Get:24 http://deb.debian.org/debian bookworm/main amd64 libcurl3-gnutls amd64 7.88.1-10+deb12u15 [386 kB]
+#17 5.036 Get:25 http://deb.debian.org/debian-security bookworm-security/main amd64 libexpat1 amd64 2.5.0-1+deb12u5 [108 kB]
+#17 5.038 Get:26 http://deb.debian.org/debian bookworm/main amd64 liberror-perl all 0.17029-2 [29.0 kB]
+#17 5.078 Get:27 http://deb.debian.org/debian bookworm/main amd64 git-man all 1:2.39.5-0+deb12u3 [2053 kB]
+#17 5.210 Get:28 http://deb.debian.org/debian bookworm/main amd64 git amd64 1:2.39.5-0+deb12u3 [7264 kB]
+#17 5.385 Get:29 http://deb.debian.org/debian-security bookworm-security/main amd64 unzip amd64 6.0-28+deb12u1 [167 kB]
+#17 5.449 debconf: delaying package configuration, since apt-utils is not installed
+#17 5.461 Fetched 23.2 MB in 2s (14.9 MB/s)
+#17 5.469 Selecting previously unselected package perl-modules-5.36.
+#17 5.469 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 6096 files and directories currently installed.)
+#17 5.472 Preparing to unpack .../00-perl-modules-5.36_5.36.0-7+deb12u4_all.deb ...
+#17 5.611 Unpacking perl-modules-5.36 (5.36.0-7+deb12u4) ...
+#17 5.801 Selecting previously unselected package libgdbm6:amd64.
+#17 5.802 Preparing to unpack .../01-libgdbm6_1.23-3_amd64.deb ...
+#17 5.804 Unpacking libgdbm6:amd64 (1.23-3) ...
+#17 5.819 Selecting previously unselected package libgdbm-compat4:amd64.
+#17 5.820 Preparing to unpack .../02-libgdbm-compat4_1.23-3_amd64.deb ...
+#17 5.822 Unpacking libgdbm-compat4:amd64 (1.23-3) ...
+#17 5.837 Selecting previously unselected package libperl5.36:amd64.
+#17 5.837 Preparing to unpack .../03-libperl5.36_5.36.0-7+deb12u4_amd64.deb ...
+#17 5.839 Unpacking libperl5.36:amd64 (5.36.0-7+deb12u4) ...
+#17 6.012 Selecting previously unselected package perl.
+#17 6.013 Preparing to unpack .../04-perl_5.36.0-7+deb12u4_amd64.deb ...
+#17 6.016 Unpacking perl (5.36.0-7+deb12u4) ...
+#17 6.046 Selecting previously unselected package libssl3:amd64.
+#17 6.047 Preparing to unpack .../05-libssl3_3.0.22-1~deb12u2_amd64.deb ...
+#17 6.049 Unpacking libssl3:amd64 (3.0.22-1~deb12u2) ...
+#17 6.133 Selecting previously unselected package openssl.
+#17 6.134 Preparing to unpack .../06-openssl_3.0.22-1~deb12u2_amd64.deb ...
+#17 6.136 Unpacking openssl (3.0.22-1~deb12u2) ...
+#17 6.204 Selecting previously unselected package ca-certificates.
+#17 6.205 Preparing to unpack .../07-ca-certificates_20250419~deb12u2_all.deb ...
+#17 6.206 Unpacking ca-certificates (20250419~deb12u2) ...
+#17 6.233 Selecting previously unselected package libbrotli1:amd64.
+#17 6.234 Preparing to unpack .../08-libbrotli1_1.0.9-2+deb12u1_amd64.deb ...
+#17 6.236 Unpacking libbrotli1:amd64 (1.0.9-2+deb12u1) ...
+#17 6.262 Selecting previously unselected package libkrb5support0:amd64.
+#17 6.262 Preparing to unpack .../09-libkrb5support0_1.20.1-2+deb12u5_amd64.deb ...
+#17 6.264 Unpacking libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+#17 6.278 Selecting previously unselected package libk5crypto3:amd64.
+#17 6.279 Preparing to unpack .../10-libk5crypto3_1.20.1-2+deb12u5_amd64.deb ...
+#17 6.280 Unpacking libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+#17 6.297 Selecting previously unselected package libkeyutils1:amd64.
+#17 6.298 Preparing to unpack .../11-libkeyutils1_1.6.3-2_amd64.deb ...
+#17 6.299 Unpacking libkeyutils1:amd64 (1.6.3-2) ...
+#17 6.314 Selecting previously unselected package libkrb5-3:amd64.
+#17 6.315 Preparing to unpack .../12-libkrb5-3_1.20.1-2+deb12u5_amd64.deb ...
+#17 6.316 Unpacking libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+#17 6.347 Selecting previously unselected package libgssapi-krb5-2:amd64.
+#17 6.348 Preparing to unpack .../13-libgssapi-krb5-2_1.20.1-2+deb12u5_amd64.deb ...
+#17 6.349 Unpacking libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+#17 6.368 Selecting previously unselected package libsasl2-modules-db:amd64.
+#17 6.369 Preparing to unpack .../14-libsasl2-modules-db_2.1.28+dfsg-10+deb12u1_amd64.deb ...
+#17 6.371 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg-10+deb12u1) ...
+#17 6.385 Selecting previously unselected package libsasl2-2:amd64.
+#17 6.385 Preparing to unpack .../15-libsasl2-2_2.1.28+dfsg-10+deb12u1_amd64.deb ...
+#17 6.387 Unpacking libsasl2-2:amd64 (2.1.28+dfsg-10+deb12u1) ...
+#17 6.403 Selecting previously unselected package libldap-2.5-0:amd64.
+#17 6.405 Preparing to unpack .../16-libldap-2.5-0_2.5.13+dfsg-5_amd64.deb ...
+#17 6.406 Unpacking libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+#17 6.431 Selecting previously unselected package libnghttp2-14:amd64.
+#17 6.431 Preparing to unpack .../17-libnghttp2-14_1.52.0-1+deb12u3_amd64.deb ...
+#17 6.434 Unpacking libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+#17 6.450 Selecting previously unselected package libpsl5:amd64.
+#17 6.451 Preparing to unpack .../18-libpsl5_0.21.2-1_amd64.deb ...
+#17 6.453 Unpacking libpsl5:amd64 (0.21.2-1) ...
+#17 6.469 Selecting previously unselected package librtmp1:amd64.
+#17 6.470 Preparing to unpack .../19-librtmp1_2.4+20151223.gitfa8646d.1-2+b2_amd64.deb ...
+#17 6.471 Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+#17 6.487 Selecting previously unselected package libssh2-1:amd64.
+#17 6.488 Preparing to unpack .../20-libssh2-1_1.10.0-3+deb12u1_amd64.deb ...
+#17 6.490 Unpacking libssh2-1:amd64 (1.10.0-3+deb12u1) ...
+#17 6.511 Selecting previously unselected package libcurl4:amd64.
+#17 6.512 Preparing to unpack .../21-libcurl4_7.88.1-10+deb12u15_amd64.deb ...
+#17 6.513 Unpacking libcurl4:amd64 (7.88.1-10+deb12u15) ...
+#17 6.539 Selecting previously unselected package curl.
+#17 6.540 Preparing to unpack .../22-curl_7.88.1-10+deb12u15_amd64.deb ...
+#17 6.541 Unpacking curl (7.88.1-10+deb12u15) ...
+#17 6.566 Selecting previously unselected package libcurl3-gnutls:amd64.
+#17 6.567 Preparing to unpack .../23-libcurl3-gnutls_7.88.1-10+deb12u15_amd64.deb ...
+#17 6.569 Unpacking libcurl3-gnutls:amd64 (7.88.1-10+deb12u15) ...
+#17 6.596 Selecting previously unselected package libexpat1:amd64.
+#17 6.597 Preparing to unpack .../24-libexpat1_2.5.0-1+deb12u5_amd64.deb ...
+#17 6.598 Unpacking libexpat1:amd64 (2.5.0-1+deb12u5) ...
+#17 6.723 Selecting previously unselected package liberror-perl.
+#17 6.724 Preparing to unpack .../25-liberror-perl_0.17029-2_all.deb ...
+#17 6.725 Unpacking liberror-perl (0.17029-2) ...
+#17 6.739 Selecting previously unselected package git-man.
+#17 6.739 Preparing to unpack .../26-git-man_1%3a2.39.5-0+deb12u3_all.deb ...
+#17 6.741 Unpacking git-man (1:2.39.5-0+deb12u3) ...
+#17 6.809 Selecting previously unselected package git.
+#17 6.810 Preparing to unpack .../27-git_1%3a2.39.5-0+deb12u3_amd64.deb ...
+#17 6.814 Unpacking git (1:2.39.5-0+deb12u3) ...
+#17 6.991 Selecting previously unselected package unzip.
+#17 6.992 Preparing to unpack .../28-unzip_6.0-28+deb12u1_amd64.deb ...
+#17 6.993 Unpacking unzip (6.0-28+deb12u1) ...
+#17 7.016 Setting up libexpat1:amd64 (2.5.0-1+deb12u5) ...
+#17 7.026 Setting up libkeyutils1:amd64 (1.6.3-2) ...
+#17 7.039 Setting up libpsl5:amd64 (0.21.2-1) ...
+#17 7.044 Setting up unzip (6.0-28+deb12u1) ...
+#17 7.052 Setting up libbrotli1:amd64 (1.0.9-2+deb12u1) ...
+#17 7.059 Setting up libssl3:amd64 (3.0.22-1~deb12u2) ...
+#17 7.063 Setting up libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+#17 7.068 Setting up libkrb5support0:amd64 (1.20.1-2+deb12u5) ...
+#17 7.072 Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg-10+deb12u1) ...
+#17 7.076 Setting up perl-modules-5.36 (5.36.0-7+deb12u4) ...
+#17 7.080 Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+#17 7.085 Setting up libk5crypto3:amd64 (1.20.1-2+deb12u5) ...
+#17 7.089 Setting up libsasl2-2:amd64 (2.1.28+dfsg-10+deb12u1) ...
+#17 7.094 Setting up git-man (1:2.39.5-0+deb12u3) ...
+#17 7.098 Setting up libssh2-1:amd64 (1.10.0-3+deb12u1) ...
+#17 7.102 Setting up libkrb5-3:amd64 (1.20.1-2+deb12u5) ...
+#17 7.107 Setting up openssl (3.0.22-1~deb12u2) ...
+#17 7.113 Setting up libgdbm6:amd64 (1.23-3) ...
+#17 7.118 Setting up libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+#17 7.123 Setting up ca-certificates (20250419~deb12u2) ...
+#17 7.163 debconf: unable to initialize frontend: Dialog
+#17 7.163 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#17 7.163 debconf: falling back to frontend: Readline
+#17 7.166 debconf: unable to initialize frontend: Readline
+#17 7.166 debconf: (This frontend requires a controlling tty.)
+#17 7.166 debconf: falling back to frontend: Teletype
+#17 7.367 Updating certificates in /etc/ssl/certs...
+#17 7.696 148 added, 0 removed; done.
+#17 7.709 Setting up libgssapi-krb5-2:amd64 (1.20.1-2+deb12u5) ...
+#17 7.714 Setting up libgdbm-compat4:amd64 (1.23-3) ...
+#17 7.719 Setting up libcurl4:amd64 (7.88.1-10+deb12u15) ...
+#17 7.723 Setting up curl (7.88.1-10+deb12u15) ...
+#17 7.727 Setting up libperl5.36:amd64 (5.36.0-7+deb12u4) ...
+#17 7.732 Setting up libcurl3-gnutls:amd64 (7.88.1-10+deb12u15) ...
+#17 7.736 Setting up perl (5.36.0-7+deb12u4) ...
+#17 7.745 Setting up liberror-perl (0.17029-2) ...
+#17 7.749 Setting up git (1:2.39.5-0+deb12u3) ...
+#17 7.757 Processing triggers for libc-bin (2.36-9+deb12u14) ...
+#17 7.765 Processing triggers for ca-certificates (20250419~deb12u2) ...
+#17 7.768 Updating certificates in /etc/ssl/certs...
+#17 8.022 0 added, 0 removed; done.
+#17 8.022 Running hooks in /etc/ca-certificates/update.d...
+#17 8.023 done.
+#17 DONE 8.3s
+
+#14 [build 1/7] FROM docker.io/library/golang:1.26-bookworm@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0
+#14 ...
+
+#18 [stage-3  2/13] RUN apt-get update && apt-get install -y --no-install-recommends       ca-certificates ripgrep curl wget vim git jq unzip xz-utils       dnsutils iputils-ping netcat-openbsd inetutils-telnet whois nmap     && rm -rf /var/lib/apt/lists/*
+#18 0.145 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#18 0.187 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#18 0.202 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+#18 0.225 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+#18 0.678 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+#18 0.679 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [372 kB]
+#18 1.135 Fetched 9411 kB in 1s (9236 kB/s)
+#18 1.135 Reading package lists...
+#18 1.370 Reading package lists...
+#18 1.611 Building dependency tree...
+#18 1.668 Reading state information...
+#18 1.729 ca-certificates is already the newest version (20250419~deb12u2).
+#18 1.729 The following additional packages will be installed:
+#18 1.729   bind9-dnsutils bind9-host bind9-libs git-man libblas3 libbrotli1 libbsd0
+#18 1.729   libcap2-bin libcurl3-gnutls libcurl4 libdbus-1-3 libedit2 liberror-perl
+#18 1.729   libexpat1 libfstrm0 libgdbm-compat4 libgpm2 libicu72 libjemalloc2 libjq1
+#18 1.729   libjson-c5 libldap-2.5-0 liblinear4 liblmdb0 liblua5.3-0 libmaxminddb0
+#18 1.729   libnghttp2-14 libonig5 libpcap0.8 libpcre3 libperl5.36 libprotobuf-c1
+#18 1.730   libpsl5 librtmp1 libsasl2-2 libsasl2-modules-db libsodium23 libssh2-1 libuv1
+#18 1.730   libxml2 lua-lpeg nmap-common perl perl-modules-5.36 vim-common vim-runtime
+#18 1.730 Suggested packages:
+#18 1.730   gettext-base git-daemon-run | git-daemon-sysvinit git-doc git-email git-gui
+#18 1.730   gitk gitweb git-cvs git-mediawiki git-svn gpm liblinear-tools liblinear-dev
+#18 1.730   mmdb-bin sensible-utils ncat ndiff zenmap perl-doc libterm-readline-gnu-perl
+#18 1.730   | libterm-readline-perl-perl make libtap-harness-archive-perl zip ctags
+#18 1.730   vim-doc vim-scripts
+#18 1.730 Recommended packages:
+#18 1.730   patch less ssh-client libpam-cap dbus libldap-common publicsuffix
+#18 1.730   libsasl2-modules xxd
+#18 1.858 The following NEW packages will be installed:
+#18 1.858   bind9-dnsutils bind9-host bind9-libs curl dnsutils git git-man
+#18 1.858   inetutils-telnet iputils-ping jq libblas3 libbrotli1 libbsd0 libcap2-bin
+#18 1.858   libcurl3-gnutls libcurl4 libdbus-1-3 libedit2 liberror-perl libexpat1
+#18 1.858   libfstrm0 libgdbm-compat4 libgpm2 libicu72 libjemalloc2 libjq1 libjson-c5
+#18 1.858   libldap-2.5-0 liblinear4 liblmdb0 liblua5.3-0 libmaxminddb0 libnghttp2-14
+#18 1.859   libonig5 libpcap0.8 libpcre3 libperl5.36 libprotobuf-c1 libpsl5 librtmp1
+#18 1.859   libsasl2-2 libsasl2-modules-db libsodium23 libssh2-1 libuv1 libxml2 lua-lpeg
+#18 1.859   netcat-openbsd nmap nmap-common perl perl-modules-5.36 ripgrep unzip vim
+#18 1.859   vim-common vim-runtime wget whois xz-utils
+#18 2.027 0 upgraded, 60 newly installed, 0 to remove and 0 not upgraded.
+#18 2.027 Need to get 50.6 MB of archives.
+#18 2.027 After this operation, 230 MB of additional disk space will be used.
+#18 2.027 Get:1 http://deb.debian.org/debian-security bookworm-security/main amd64 perl-modules-5.36 all 5.36.0-7+deb12u4 [2817 kB]
+#18 2.943 Get:2 http://deb.debian.org/debian bookworm/main amd64 libgdbm-compat4 amd64 1.23-3 [48.2 kB]
+#18 3.005 Get:3 http://deb.debian.org/debian-security bookworm-security/main amd64 libperl5.36 amd64 5.36.0-7+deb12u4 [4208 kB]
+#18 4.581 Get:4 http://deb.debian.org/debian-security bookworm-security/main amd64 perl amd64 5.36.0-7+deb12u4 [239 kB]
+#18 4.652 Get:5 http://deb.debian.org/debian bookworm/main amd64 libcap2-bin amd64 1:2.66-4+deb12u3+b1 [35.2 kB]
+#18 4.663 Get:6 http://deb.debian.org/debian bookworm/main amd64 iputils-ping amd64 3:20221126-1+deb12u1 [47.2 kB]
+#18 4.698 Get:7 http://deb.debian.org/debian bookworm/main amd64 vim-common all 2:9.0.1378-2+deb12u2 [125 kB]
+#18 4.729 Get:8 http://deb.debian.org/debian bookworm/main amd64 libuv1 amd64 1.44.2-1+deb12u1 [136 kB]
+#18 4.775 Get:9 http://deb.debian.org/debian bookworm/main amd64 libfstrm0 amd64 0.6.1-1 [21.6 kB]
+#18 4.823 Get:10 http://deb.debian.org/debian bookworm/main amd64 libjemalloc2 amd64 5.3.0-1 [275 kB]
+#18 4.937 Get:11 http://deb.debian.org/debian bookworm/main amd64 libjson-c5 amd64 0.16-2 [44.1 kB]
+#18 4.970 Get:12 http://deb.debian.org/debian bookworm/main amd64 liblmdb0 amd64 0.9.24-1 [45.0 kB]
+#18 4.982 Get:13 http://deb.debian.org/debian bookworm/main amd64 libmaxminddb0 amd64 1.7.1-1 [29.8 kB]
+#18 4.985 Get:14 http://deb.debian.org/debian bookworm/main amd64 libnghttp2-14 amd64 1.52.0-1+deb12u3 [72.4 kB]
+#18 5.020 Get:15 http://deb.debian.org/debian bookworm/main amd64 libprotobuf-c1 amd64 1.4.1-1+b1 [27.5 kB]
+#18 5.050 Get:16 http://deb.debian.org/debian bookworm/main amd64 libicu72 amd64 72.1-3+deb12u1 [9376 kB]
+#18 ...
+
+#14 [build 1/7] FROM docker.io/library/golang:1.26-bookworm@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 33.55MB / 92.63MB 8.9s
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 22.02MB / 64.43MB 10.1s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 38.80MB / 92.63MB 11.1s
+#14 ...
+
+#19 [web 4/6] RUN npm ci --ignore-scripts
+#19 ...
+
+#14 [build 1/7] FROM docker.io/library/golang:1.26-bookworm@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 26.21MB / 64.43MB 12.2s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 45.09MB / 92.63MB 12.5s
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 30.41MB / 64.43MB 12.8s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 51.38MB / 92.63MB 13.1s
+#14 ...
+
+#19 [web 4/6] RUN npm ci --ignore-scripts
+#19 11.36 
+#19 11.36 added 717 packages, and audited 718 packages in 11s
+#19 11.36 
+#19 11.36 225 packages are looking for funding
+#19 11.36   run `npm fund` for details
+#19 11.38 
+#19 11.38 22 vulnerabilities (1 low, 8 moderate, 12 high, 1 critical)
+#19 11.38 
+#19 11.38 To address issues that do not require attention, run:
+#19 11.38   npm audit fix
+#19 11.38 
+#19 11.38 To address all issues (including breaking changes), run:
+#19 11.38   npm audit fix --force
+#19 11.38 
+#19 11.38 Run `npm audit` for details.
+#19 11.38 npm notice
+#19 11.38 npm notice New major version of npm available! 10.9.9 -> 12.2.2
+#19 11.38 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+#19 11.38 npm notice To update run: npm install -g npm@12.2.2
+#19 11.38 npm notice
+#19 DONE 11.5s
+
+#14 [build 1/7] FROM docker.io/library/golang:1.26-bookworm@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0
+#14 ...
+
+#20 [web 5/6] COPY web/ ./
+#20 DONE 0.3s
+
+#14 [build 1/7] FROM docker.io/library/golang:1.26-bookworm@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 34.60MB / 64.43MB 13.2s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 56.62MB / 92.63MB 13.4s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 61.87MB / 92.63MB 13.7s
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 38.80MB / 64.43MB 13.5s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 67.11MB / 92.63MB 14.0s
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 44.04MB / 64.43MB 14.0s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 73.40MB / 92.63MB 14.3s
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 48.23MB / 64.43MB 14.3s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 79.69MB / 92.63MB 14.6s
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 53.48MB / 64.43MB 14.6s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 91.23MB / 92.63MB 15.0s
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 58.72MB / 64.43MB 14.9s
+#14 sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 92.63MB / 92.63MB 15.0s done
+#14 sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 64.43MB / 64.43MB 15.1s done
+#14 DONE 16.5s
+
+#18 [stage-3  2/13] RUN apt-get update && apt-get install -y --no-install-recommends       ca-certificates ripgrep curl wget vim git jq unzip xz-utils       dnsutils iputils-ping netcat-openbsd inetutils-telnet whois nmap     && rm -rf /var/lib/apt/lists/*
+#18 7.842 Get:17 http://deb.debian.org/debian bookworm/main amd64 libxml2 amd64 2.9.14+dfsg-1.3~deb12u6 [689 kB]
+#18 8.017 Get:18 http://deb.debian.org/debian-security bookworm-security/main amd64 bind9-libs amd64 1:9.18.49-1~deb12u3 [1186 kB]
+#18 8.379 Get:19 http://deb.debian.org/debian-security bookworm-security/main amd64 bind9-host amd64 1:9.18.49-1~deb12u3 [57.6 kB]
+#18 8.414 Get:20 http://deb.debian.org/debian bookworm/main amd64 libbsd0 amd64 0.11.7-2 [117 kB]
+#18 8.423 Get:21 http://deb.debian.org/debian bookworm/main amd64 libedit2 amd64 3.1-20221030-2 [93.0 kB]
+#18 8.450 Get:22 http://deb.debian.org/debian-security bookworm-security/main amd64 bind9-dnsutils amd64 1:9.18.49-1~deb12u3 [158 kB]
+#18 8.508 Get:23 http://deb.debian.org/debian bookworm/main amd64 inetutils-telnet amd64 2:2.4-2+deb12u3 [121 kB]
+#18 8.517 Get:24 http://deb.debian.org/debian bookworm/main amd64 libpsl5 amd64 0.21.2-1 [58.7 kB]
+#18 8.525 Get:25 http://deb.debian.org/debian bookworm/main amd64 wget amd64 1.21.3-1+deb12u1 [937 kB]
+#18 8.712 Get:26 http://deb.debian.org/debian-security bookworm-security/main amd64 xz-utils amd64 5.4.1-1+deb12u2 [471 kB]
+#18 8.824 Get:27 http://deb.debian.org/debian-security bookworm-security/main amd64 libbrotli1 amd64 1.0.9-2+deb12u1 [275 kB]
+#18 8.923 Get:28 http://deb.debian.org/debian-security bookworm-security/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg-10+deb12u1 [20.5 kB]
+#18 8.925 Get:29 http://deb.debian.org/debian-security bookworm-security/main amd64 libsasl2-2 amd64 2.1.28+dfsg-10+deb12u1 [59.9 kB]
+#18 8.999 Get:30 http://deb.debian.org/debian bookworm/main amd64 libldap-2.5-0 amd64 2.5.13+dfsg-5 [183 kB]
+#18 9.038 Get:31 http://deb.debian.org/debian bookworm/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2+b2 [60.8 kB]
+#18 9.069 Get:32 http://deb.debian.org/debian-security bookworm-security/main amd64 libssh2-1 amd64 1.10.0-3+deb12u1 [176 kB]
+#18 9.110 Get:33 http://deb.debian.org/debian bookworm/main amd64 libcurl4 amd64 7.88.1-10+deb12u15 [392 kB]
+#18 9.190 Get:34 http://deb.debian.org/debian bookworm/main amd64 curl amd64 7.88.1-10+deb12u15 [316 kB]
+#18 9.267 Get:35 http://deb.debian.org/debian-security bookworm-security/main amd64 dnsutils all 1:9.18.49-1~deb12u3 [14.2 kB]
+#18 9.294 Get:36 http://deb.debian.org/debian bookworm/main amd64 libcurl3-gnutls amd64 7.88.1-10+deb12u15 [386 kB]
+#18 9.374 Get:37 http://deb.debian.org/debian-security bookworm-security/main amd64 libexpat1 amd64 2.5.0-1+deb12u5 [108 kB]
+#18 9.416 Get:38 http://deb.debian.org/debian bookworm/main amd64 liberror-perl all 0.17029-2 [29.0 kB]
+#18 9.422 Get:39 http://deb.debian.org/debian bookworm/main amd64 git-man all 1:2.39.5-0+deb12u3 [2053 kB]
+#18 10.06 Get:40 http://deb.debian.org/debian bookworm/main amd64 git amd64 1:2.39.5-0+deb12u3 [7264 kB]
+#18 11.14 Get:41 http://deb.debian.org/debian bookworm/main amd64 libonig5 amd64 6.9.8-1 [188 kB]
+#18 11.15 Get:42 http://deb.debian.org/debian-security bookworm-security/main amd64 libjq1 amd64 1.6-2.1+deb12u3 [136 kB]
+#18 11.16 Get:43 http://deb.debian.org/debian-security bookworm-security/main amd64 jq amd64 1.6-2.1+deb12u3 [64.4 kB]
+#18 11.16 Get:44 http://deb.debian.org/debian bookworm/main amd64 libblas3 amd64 3.11.0-2 [149 kB]
+#18 11.18 Get:45 http://deb.debian.org/debian bookworm/main amd64 libdbus-1-3 amd64 1.14.10-1~deb12u1 [201 kB]
+#18 11.19 Get:46 http://deb.debian.org/debian bookworm/main amd64 libgpm2 amd64 1.20.7-10+b1 [14.2 kB]
+#18 11.19 Get:47 http://deb.debian.org/debian bookworm/main amd64 liblinear4 amd64 2.3.0+dfsg-5 [43.6 kB]
+#18 11.20 Get:48 http://deb.debian.org/debian bookworm/main amd64 liblua5.3-0 amd64 5.3.6-2 [123 kB]
+#18 11.22 Get:49 http://deb.debian.org/debian bookworm/main amd64 libpcap0.8 amd64 1.10.3-1 [157 kB]
+#18 11.24 Get:50 http://deb.debian.org/debian bookworm/main amd64 libpcre3 amd64 2:8.39-15 [341 kB]
+#18 11.27 Get:51 http://deb.debian.org/debian bookworm/main amd64 libsodium23 amd64 1.0.18-1+deb12u1 [162 kB]
+#18 11.27 Get:52 http://deb.debian.org/debian bookworm/main amd64 lua-lpeg amd64 1.0.2-2 [37.7 kB]
+#18 11.27 Get:53 http://deb.debian.org/debian bookworm/main amd64 netcat-openbsd amd64 1.219-1 [41.5 kB]
+#18 11.29 Get:54 http://deb.debian.org/debian bookworm/main amd64 nmap-common all 7.93+dfsg1-1 [4148 kB]
+#18 11.64 Get:55 http://deb.debian.org/debian bookworm/main amd64 nmap amd64 7.93+dfsg1-1 [1897 kB]
+#18 11.89 Get:56 http://deb.debian.org/debian bookworm/main amd64 ripgrep amd64 13.0.0-4+b2 [1253 kB]
+#18 12.03 Get:57 http://deb.debian.org/debian-security bookworm-security/main amd64 unzip amd64 6.0-28+deb12u1 [167 kB]
+#18 12.05 Get:58 http://deb.debian.org/debian bookworm/main amd64 vim-runtime all 2:9.0.1378-2+deb12u2 [7027 kB]
+#18 13.16 Get:59 http://deb.debian.org/debian bookworm/main amd64 vim amd64 2:9.0.1378-2+deb12u2 [1568 kB]
+#18 13.46 Get:60 http://deb.debian.org/debian bookworm/main amd64 whois amd64 5.5.17 [70.8 kB]
+#18 13.53 debconf: delaying package configuration, since apt-utils is not installed
+#18 13.55 Fetched 50.6 MB in 12s (4357 kB/s)
+#18 13.56 Selecting previously unselected package perl-modules-5.36.
+#18 13.56 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 6701 files and directories currently installed.)
+#18 13.56 Preparing to unpack .../00-perl-modules-5.36_5.36.0-7+deb12u4_all.deb ...
+#18 13.60 Unpacking perl-modules-5.36 (5.36.0-7+deb12u4) ...
+#18 13.92 Selecting previously unselected package libgdbm-compat4:amd64.
+#18 13.92 Preparing to unpack .../01-libgdbm-compat4_1.23-3_amd64.deb ...
+#18 13.92 Unpacking libgdbm-compat4:amd64 (1.23-3) ...
+#18 13.95 Selecting previously unselected package libperl5.36:amd64.
+#18 13.95 Preparing to unpack .../02-libperl5.36_5.36.0-7+deb12u4_amd64.deb ...
+#18 13.95 Unpacking libperl5.36:amd64 (5.36.0-7+deb12u4) ...
+#18 14.16 Selecting previously unselected package perl.
+#18 14.16 Preparing to unpack .../03-perl_5.36.0-7+deb12u4_amd64.deb ...
+#18 14.17 Unpacking perl (5.36.0-7+deb12u4) ...
+#18 14.20 Selecting previously unselected package libcap2-bin.
+#18 14.20 Preparing to unpack .../04-libcap2-bin_1%3a2.66-4+deb12u3+b1_amd64.deb ...
+#18 14.20 Unpacking libcap2-bin (1:2.66-4+deb12u3+b1) ...
+#18 14.22 Selecting previously unselected package iputils-ping.
+#18 14.22 Preparing to unpack .../05-iputils-ping_3%3a20221126-1+deb12u1_amd64.deb ...
+#18 14.22 Unpacking iputils-ping (3:20221126-1+deb12u1) ...
+#18 14.26 Selecting previously unselected package vim-common.
+#18 14.27 Preparing to unpack .../06-vim-common_2%3a9.0.1378-2+deb12u2_all.deb ...
+#18 14.27 Unpacking vim-common (2:9.0.1378-2+deb12u2) ...
+#18 14.29 Selecting previously unselected package libuv1:amd64.
+#18 14.29 Preparing to unpack .../07-libuv1_1.44.2-1+deb12u1_amd64.deb ...
+#18 14.29 Unpacking libuv1:amd64 (1.44.2-1+deb12u1) ...
+#18 14.32 Selecting previously unselected package libfstrm0:amd64.
+#18 14.32 Preparing to unpack .../08-libfstrm0_0.6.1-1_amd64.deb ...
+#18 14.32 Unpacking libfstrm0:amd64 (0.6.1-1) ...
+#18 14.34 Selecting previously unselected package libjemalloc2:amd64.
+#18 14.34 Preparing to unpack .../09-libjemalloc2_5.3.0-1_amd64.deb ...
+#18 14.35 Unpacking libjemalloc2:amd64 (5.3.0-1) ...
+#18 14.38 Selecting previously unselected package libjson-c5:amd64.
+#18 14.38 Preparing to unpack .../10-libjson-c5_0.16-2_amd64.deb ...
+#18 14.38 Unpacking libjson-c5:amd64 (0.16-2) ...
+#18 14.41 Selecting previously unselected package liblmdb0:amd64.
+#18 14.41 Preparing to unpack .../11-liblmdb0_0.9.24-1_amd64.deb ...
+#18 14.42 Unpacking liblmdb0:amd64 (0.9.24-1) ...
+#18 14.52 Selecting previously unselected package libmaxminddb0:amd64.
+#18 14.52 Preparing to unpack .../12-libmaxminddb0_1.7.1-1_amd64.deb ...
+#18 14.52 Unpacking libmaxminddb0:amd64 (1.7.1-1) ...
+#18 14.54 Selecting previously unselected package libnghttp2-14:amd64.
+#18 14.54 Preparing to unpack .../13-libnghttp2-14_1.52.0-1+deb12u3_amd64.deb ...
+#18 14.54 Unpacking libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+#18 14.57 Selecting previously unselected package libprotobuf-c1:amd64.
+#18 14.57 Preparing to unpack .../14-libprotobuf-c1_1.4.1-1+b1_amd64.deb ...
+#18 14.57 Unpacking libprotobuf-c1:amd64 (1.4.1-1+b1) ...
+#18 14.59 Selecting previously unselected package libicu72:amd64.
+#18 14.59 Preparing to unpack .../15-libicu72_72.1-3+deb12u1_amd64.deb ...
+#18 14.60 Unpacking libicu72:amd64 (72.1-3+deb12u1) ...
+#18 14.97 Selecting previously unselected package libxml2:amd64.
+#18 14.97 Preparing to unpack .../16-libxml2_2.9.14+dfsg-1.3~deb12u6_amd64.deb ...
+#18 14.98 Unpacking libxml2:amd64 (2.9.14+dfsg-1.3~deb12u6) ...
+#18 15.02 Selecting previously unselected package bind9-libs:amd64.
+#18 15.03 Preparing to unpack .../17-bind9-libs_1%3a9.18.49-1~deb12u3_amd64.deb ...
+#18 15.03 Unpacking bind9-libs:amd64 (1:9.18.49-1~deb12u3) ...
+#18 15.10 Selecting previously unselected package bind9-host.
+#18 15.10 Preparing to unpack .../18-bind9-host_1%3a9.18.49-1~deb12u3_amd64.deb ...
+#18 15.10 Unpacking bind9-host (1:9.18.49-1~deb12u3) ...
+#18 15.13 Selecting previously unselected package libbsd0:amd64.
+#18 15.13 Preparing to unpack .../19-libbsd0_0.11.7-2_amd64.deb ...
+#18 15.13 Unpacking libbsd0:amd64 (0.11.7-2) ...
+#18 15.15 Selecting previously unselected package libedit2:amd64.
+#18 15.15 Preparing to unpack .../20-libedit2_3.1-20221030-2_amd64.deb ...
+#18 15.15 Unpacking libedit2:amd64 (3.1-20221030-2) ...
+#18 15.17 Selecting previously unselected package bind9-dnsutils.
+#18 15.18 Preparing to unpack .../21-bind9-dnsutils_1%3a9.18.49-1~deb12u3_amd64.deb ...
+#18 15.18 Unpacking bind9-dnsutils (1:9.18.49-1~deb12u3) ...
+#18 15.20 Selecting previously unselected package inetutils-telnet.
+#18 15.20 Preparing to unpack .../22-inetutils-telnet_2%3a2.4-2+deb12u3_amd64.deb ...
+#18 15.20 Unpacking inetutils-telnet (2:2.4-2+deb12u3) ...
+#18 15.23 Selecting previously unselected package libpsl5:amd64.
+#18 15.23 Preparing to unpack .../23-libpsl5_0.21.2-1_amd64.deb ...
+#18 15.23 Unpacking libpsl5:amd64 (0.21.2-1) ...
+#18 15.25 Selecting previously unselected package wget.
+#18 15.25 Preparing to unpack .../24-wget_1.21.3-1+deb12u1_amd64.deb ...
+#18 15.25 Unpacking wget (1.21.3-1+deb12u1) ...
+#18 15.31 Selecting previously unselected package xz-utils.
+#18 15.31 Preparing to unpack .../25-xz-utils_5.4.1-1+deb12u2_amd64.deb ...
+#18 15.31 Unpacking xz-utils (5.4.1-1+deb12u2) ...
+#18 15.35 Selecting previously unselected package libbrotli1:amd64.
+#18 15.35 Preparing to unpack .../26-libbrotli1_1.0.9-2+deb12u1_amd64.deb ...
+#18 15.36 Unpacking libbrotli1:amd64 (1.0.9-2+deb12u1) ...
+#18 15.39 Selecting previously unselected package libsasl2-modules-db:amd64.
+#18 15.40 Preparing to unpack .../27-libsasl2-modules-db_2.1.28+dfsg-10+deb12u1_amd64.deb ...
+#18 15.40 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg-10+deb12u1) ...
+#18 15.41 Selecting previously unselected package libsasl2-2:amd64.
+#18 15.42 Preparing to unpack .../28-libsasl2-2_2.1.28+dfsg-10+deb12u1_amd64.deb ...
+#18 15.42 Unpacking libsasl2-2:amd64 (2.1.28+dfsg-10+deb12u1) ...
+#18 15.44 Selecting previously unselected package libldap-2.5-0:amd64.
+#18 15.44 Preparing to unpack .../29-libldap-2.5-0_2.5.13+dfsg-5_amd64.deb ...
+#18 15.44 Unpacking libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+#18 15.46 Selecting previously unselected package librtmp1:amd64.
+#18 15.46 Preparing to unpack .../30-librtmp1_2.4+20151223.gitfa8646d.1-2+b2_amd64.deb ...
+#18 15.47 Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+#18 15.49 Selecting previously unselected package libssh2-1:amd64.
+#18 15.49 Preparing to unpack .../31-libssh2-1_1.10.0-3+deb12u1_amd64.deb ...
+#18 15.49 Unpacking libssh2-1:amd64 (1.10.0-3+deb12u1) ...
+#18 15.52 Selecting previously unselected package libcurl4:amd64.
+#18 15.52 Preparing to unpack .../32-libcurl4_7.88.1-10+deb12u15_amd64.deb ...
+#18 15.52 Unpacking libcurl4:amd64 (7.88.1-10+deb12u15) ...
+#18 15.58 Selecting previously unselected package curl.
+#18 15.58 Preparing to unpack .../33-curl_7.88.1-10+deb12u15_amd64.deb ...
+#18 15.58 Unpacking curl (7.88.1-10+deb12u15) ...
+#18 15.61 Selecting previously unselected package dnsutils.
+#18 15.61 Preparing to unpack .../34-dnsutils_1%3a9.18.49-1~deb12u3_all.deb ...
+#18 15.61 Unpacking dnsutils (1:9.18.49-1~deb12u3) ...
+#18 15.62 Selecting previously unselected package libcurl3-gnutls:amd64.
+#18 15.63 Preparing to unpack .../35-libcurl3-gnutls_7.88.1-10+deb12u15_amd64.deb ...
+#18 15.63 Unpacking libcurl3-gnutls:amd64 (7.88.1-10+deb12u15) ...
+#18 15.66 Selecting previously unselected package libexpat1:amd64.
+#18 15.66 Preparing to unpack .../36-libexpat1_2.5.0-1+deb12u5_amd64.deb ...
+#18 15.66 Unpacking libexpat1:amd64 (2.5.0-1+deb12u5) ...
+#18 15.68 Selecting previously unselected package liberror-perl.
+#18 15.68 Preparing to unpack .../37-liberror-perl_0.17029-2_all.deb ...
+#18 15.68 Unpacking liberror-perl (0.17029-2) ...
+#18 15.70 Selecting previously unselected package git-man.
+#18 15.70 Preparing to unpack .../38-git-man_1%3a2.39.5-0+deb12u3_all.deb ...
+#18 15.71 Unpacking git-man (1:2.39.5-0+deb12u3) ...
+#18 15.77 Selecting previously unselected package git.
+#18 15.78 Preparing to unpack .../39-git_1%3a2.39.5-0+deb12u3_amd64.deb ...
+#18 15.78 Unpacking git (1:2.39.5-0+deb12u3) ...
+#18 15.97 Selecting previously unselected package libonig5:amd64.
+#18 15.97 Preparing to unpack .../40-libonig5_6.9.8-1_amd64.deb ...
+#18 15.97 Unpacking libonig5:amd64 (6.9.8-1) ...
+#18 16.00 Selecting previously unselected package libjq1:amd64.
+#18 16.00 Preparing to unpack .../41-libjq1_1.6-2.1+deb12u3_amd64.deb ...
+#18 16.00 Unpacking libjq1:amd64 (1.6-2.1+deb12u3) ...
+#18 16.02 Selecting previously unselected package jq.
+#18 16.02 Preparing to unpack .../42-jq_1.6-2.1+deb12u3_amd64.deb ...
+#18 16.02 Unpacking jq (1.6-2.1+deb12u3) ...
+#18 16.04 Selecting previously unselected package libblas3:amd64.
+#18 16.04 Preparing to unpack .../43-libblas3_3.11.0-2_amd64.deb ...
+#18 16.04 Unpacking libblas3:amd64 (3.11.0-2) ...
+#18 16.06 Selecting previously unselected package libdbus-1-3:amd64.
+#18 16.06 Preparing to unpack .../44-libdbus-1-3_1.14.10-1~deb12u1_amd64.deb ...
+#18 16.06 Unpacking libdbus-1-3:amd64 (1.14.10-1~deb12u1) ...
+#18 16.09 Selecting previously unselected package libgpm2:amd64.
+#18 16.09 Preparing to unpack .../45-libgpm2_1.20.7-10+b1_amd64.deb ...
+#18 16.09 Unpacking libgpm2:amd64 (1.20.7-10+b1) ...
+#18 16.10 Selecting previously unselected package liblinear4:amd64.
+#18 16.11 Preparing to unpack .../46-liblinear4_2.3.0+dfsg-5_amd64.deb ...
+#18 16.11 Unpacking liblinear4:amd64 (2.3.0+dfsg-5) ...
+#18 16.13 Selecting previously unselected package liblua5.3-0:amd64.
+#18 16.13 Preparing to unpack .../47-liblua5.3-0_5.3.6-2_amd64.deb ...
+#18 16.13 Unpacking liblua5.3-0:amd64 (5.3.6-2) ...
+#18 16.17 Selecting previously unselected package libpcap0.8:amd64.
+#18 16.18 Preparing to unpack .../48-libpcap0.8_1.10.3-1_amd64.deb ...
+#18 16.18 Unpacking libpcap0.8:amd64 (1.10.3-1) ...
+#18 16.20 Selecting previously unselected package libpcre3:amd64.
+#18 16.20 Preparing to unpack .../49-libpcre3_2%3a8.39-15_amd64.deb ...
+#18 16.20 Unpacking libpcre3:amd64 (2:8.39-15) ...
+#18 16.23 Selecting previously unselected package libsodium23:amd64.
+#18 16.23 Preparing to unpack .../50-libsodium23_1.0.18-1+deb12u1_amd64.deb ...
+#18 16.24 Unpacking libsodium23:amd64 (1.0.18-1+deb12u1) ...
+#18 16.26 Selecting previously unselected package lua-lpeg:amd64.
+#18 16.26 Preparing to unpack .../51-lua-lpeg_1.0.2-2_amd64.deb ...
+#18 16.26 Unpacking lua-lpeg:amd64 (1.0.2-2) ...
+#18 16.28 Selecting previously unselected package netcat-openbsd.
+#18 16.28 Preparing to unpack .../52-netcat-openbsd_1.219-1_amd64.deb ...
+#18 16.28 Unpacking netcat-openbsd (1.219-1) ...
+#18 16.30 Selecting previously unselected package nmap-common.
+#18 16.30 Preparing to unpack .../53-nmap-common_7.93+dfsg1-1_all.deb ...
+#18 16.30 Unpacking nmap-common (7.93+dfsg1-1) ...
+#18 16.49 Selecting previously unselected package nmap.
+#18 16.50 Preparing to unpack .../54-nmap_7.93+dfsg1-1_amd64.deb ...
+#18 16.50 Unpacking nmap (7.93+dfsg1-1) ...
+#18 16.61 Selecting previously unselected package ripgrep.
+#18 16.61 Preparing to unpack .../55-ripgrep_13.0.0-4+b2_amd64.deb ...
+#18 16.62 Unpacking ripgrep (13.0.0-4+b2) ...
+#18 16.69 Selecting previously unselected package unzip.
+#18 16.69 Preparing to unpack .../56-unzip_6.0-28+deb12u1_amd64.deb ...
+#18 16.70 Unpacking unzip (6.0-28+deb12u1) ...
+#18 16.73 Selecting previously unselected package vim-runtime.
+#18 16.73 Preparing to unpack .../57-vim-runtime_2%3a9.0.1378-2+deb12u2_all.deb ...
+#18 16.74 Adding 'diversion of /usr/share/vim/vim90/doc/help.txt to /usr/share/vim/vim90/doc/help.txt.vim-tiny by vim-runtime'
+#18 16.74 Adding 'diversion of /usr/share/vim/vim90/doc/tags to /usr/share/vim/vim90/doc/tags.vim-tiny by vim-runtime'
+#18 16.75 Unpacking vim-runtime (2:9.0.1378-2+deb12u2) ...
+#18 17.02 Selecting previously unselected package vim.
+#18 17.02 Preparing to unpack .../58-vim_2%3a9.0.1378-2+deb12u2_amd64.deb ...
+#18 17.02 Unpacking vim (2:9.0.1378-2+deb12u2) ...
+#18 17.09 Selecting previously unselected package whois.
+#18 17.10 Preparing to unpack .../59-whois_5.5.17_amd64.deb ...
+#18 17.10 Unpacking whois (5.5.17) ...
+#18 17.12 Setting up libexpat1:amd64 (2.5.0-1+deb12u5) ...
+#18 17.12 Setting up liblmdb0:amd64 (0.9.24-1) ...
+#18 17.13 Setting up lua-lpeg:amd64 (1.0.2-2) ...
+#18 17.13 Setting up libpsl5:amd64 (0.21.2-1) ...
+#18 17.14 Setting up libsodium23:amd64 (1.0.18-1+deb12u1) ...
+#18 17.14 Setting up libgpm2:amd64 (1.20.7-10+b1) ...
+#18 17.14 Setting up libicu72:amd64 (72.1-3+deb12u1) ...
+#18 17.15 Setting up wget (1.21.3-1+deb12u1) ...
+#18 17.15 Setting up whois (5.5.17) ...
+#18 17.16 Setting up libmaxminddb0:amd64 (1.7.1-1) ...
+#18 17.16 Setting up unzip (6.0-28+deb12u1) ...
+#18 17.17 Setting up libbrotli1:amd64 (1.0.9-2+deb12u1) ...
+#18 17.17 Setting up libfstrm0:amd64 (0.6.1-1) ...
+#18 17.18 Setting up libnghttp2-14:amd64 (1.52.0-1+deb12u3) ...
+#18 17.18 Setting up inetutils-telnet (2:2.4-2+deb12u3) ...
+#18 17.19 update-alternatives: using /usr/bin/inetutils-telnet to provide /usr/bin/telnet (telnet) in auto mode
+#18 17.19 update-alternatives: warning: skip creation of /usr/share/man/man1/telnet.1.gz because associated file /usr/share/man/man1/inetutils-telnet.1.gz (of link group telnet) doesn't exist
+#18 17.19 Setting up libjemalloc2:amd64 (5.3.0-1) ...
+#18 17.19 Setting up libprotobuf-c1:amd64 (1.4.1-1+b1) ...
+#18 17.20 Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg-10+deb12u1) ...
+#18 17.20 Setting up libcap2-bin (1:2.66-4+deb12u3+b1) ...
+#18 17.21 Setting up libpcre3:amd64 (2:8.39-15) ...
+#18 17.21 Setting up perl-modules-5.36 (5.36.0-7+deb12u4) ...
+#18 17.21 Setting up libblas3:amd64 (3.11.0-2) ...
+#18 17.22 update-alternatives: using /usr/lib/x86_64-linux-gnu/blas/libblas.so.3 to provide /usr/lib/x86_64-linux-gnu/libblas.so.3 (libblas.so.3-x86_64-linux-gnu) in auto mode
+#18 ...
+
+#21 [tools 3/3] RUN set -eux;     case "amd64" in       amd64) PD_ARCH=amd64; FFUF_ARCH=amd64; DALFOX_ARCH=x86_64 ;;       arm64) PD_ARCH=arm64; FFUF_ARCH=arm64; DALFOX_ARCH=aarch64 ;;       *) echo "unsupported architecture: amd64" >&2; exit 1 ;;     esac;     mkdir -p /out;     fetch() { base="$1"; asset="$2"; sums="$3"; name="$4";       rm -rf /tmp/t; mkdir -p /tmp/t/x;       curl -fsSL "$base/$asset" -o "/tmp/t/$asset";       curl -fsSL "$base/$sums" -o /tmp/t/sums.txt;       want="$(awk -v a="$asset" '$2 == a || $2 == "*" a { print $1 }' /tmp/t/sums.txt)";       if [ -z "$want" ]; then echo "no checksum entry for $asset" >&2; exit 1; fi;       got="$(sha256sum "/tmp/t/$asset" | cut -d' ' -f1)";       if [ "$want" != "$got" ]; then echo "checksum mismatch for $asset: want $want got $got" >&2; exit 1; fi;       case "$asset" in *.zip) unzip -q "/tmp/t/$asset" -d /tmp/t/x ;; *) tar -xzf "/tmp/t/$asset" -C /tmp/t/x ;; esac;       find /tmp/t/x -type f -name "$name" -exec install -m 0755 {} /out/ ; ;       [ -x "/out/$name" ] || { echo "$name not found in $asset" >&2; exit 1; };       rm -rf /tmp/t; };     gh="https://github.com";     fetch "$gh/projectdiscovery/nuclei/releases/download/v3.11.1"       "nuclei_3.11.1_linux_${PD_ARCH}.zip" "nuclei_3.11.1_checksums.txt" nuclei;     fetch "$gh/projectdiscovery/httpx/releases/download/v1.12.0"       "httpx_1.12.0_linux_${PD_ARCH}.zip" "httpx_1.12.0_checksums.txt" httpx;     fetch "$gh/projectdiscovery/subfinder/releases/download/v2.17.0"       "subfinder_2.17.0_linux_${PD_ARCH}.zip" "subfinder_2.17.0_checksums.txt" subfinder;     fetch "$gh/projectdiscovery/katana/releases/download/v1.8.0"       "katana_1.8.0_linux_${PD_ARCH}.zip" "katana-1.8.0-checksums.txt" katana;     fetch "$gh/ffuf/ffuf/releases/download/v2.3.0"       "ffuf_2.3.0_linux_${FFUF_ARCH}.tar.gz" "ffuf_2.3.0_checksums.txt" ffuf;     fetch "$gh/hahwul/dalfox/releases/download/v3.2.4"       "dalfox-v3.2.4-linux-${DALFOX_ARCH}-musl.tar.gz" "dalfox-v3.2.4-linux-${DALFOX_ARCH}-musl.tar.gz.sha256" dalfox;     git clone --quiet --depth 1 --branch "1.9.9" https://github.com/sqlmapproject/sqlmap /opt/sqlmap;     commit="$(git -C /opt/sqlmap rev-parse HEAD)";     if [ "$commit" != "cceda39208b5aad478de2c3f731df4239d9881f6" ]; then echo "sqlmap commit mismatch: want cceda39208b5aad478de2c3f731df4239d9881f6 got $commit" >&2; exit 1; fi;     rm -rf /opt/sqlmap/.git
+#21 0.129 + PD_ARCH=amd64
+#21 0.129 + FFUF_ARCH=amd64
+#21 0.129 + DALFOX_ARCH=x86_64
+#21 0.129 + mkdir -p /out
+#21 0.130 + gh=https://github.com
+#21 0.130 + fetch https://github.com/projectdiscovery/nuclei/releases/download/v3.11.1 nuclei_3.11.1_linux_amd64.zip nuclei_3.11.1_checksums.txt nuclei
+#21 0.130 + base=https://github.com/projectdiscovery/nuclei/releases/download/v3.11.1
+#21 0.130 + asset=nuclei_3.11.1_linux_amd64.zip
+#21 0.130 + sums=nuclei_3.11.1_checksums.txt
+#21 0.130 + name=nuclei
+#21 0.130 + rm -rf /tmp/t
+#21 0.131 + mkdir -p /tmp/t/x
+#21 0.131 + curl -fsSL https://github.com/projectdiscovery/nuclei/releases/download/v3.11.1/nuclei_3.11.1_linux_amd64.zip -o /tmp/t/nuclei_3.11.1_linux_amd64.zip
+#21 3.336 + curl -fsSL https://github.com/projectdiscovery/nuclei/releases/download/v3.11.1/nuclei_3.11.1_checksums.txt -o /tmp/t/sums.txt
+#21 3.609 + awk -v a=nuclei_3.11.1_linux_amd64.zip $2 == a || $2 == "*" a { print $1 } /tmp/t/sums.txt
+#21 3.609 + want=ea63d4ae232808cd7c6bc00d0142428e231fab59dae01042246097d195835ab6
+#21 3.609 + [ -z ea63d4ae232808cd7c6bc00d0142428e231fab59dae01042246097d195835ab6 ]
+#21 3.609 + sha256sum /tmp/t/nuclei_3.11.1_linux_amd64.zip
+#21 3.609 + cut -d  -f1
+#21 3.706 + got=ea63d4ae232808cd7c6bc00d0142428e231fab59dae01042246097d195835ab6
+#21 3.706 + [ ea63d4ae232808cd7c6bc00d0142428e231fab59dae01042246097d195835ab6 != ea63d4ae232808cd7c6bc00d0142428e231fab59dae01042246097d195835ab6 ]
+#21 3.706 + unzip -q /tmp/t/nuclei_3.11.1_linux_amd64.zip -d /tmp/t/x
+#21 4.216 + find /tmp/t/x -type f -name nuclei -exec install -m 0755 {} /out/ ;
+#21 4.224 + [ -x /out/nuclei ]
+#21 4.224 + rm -rf /tmp/t
+#21 4.228 + fetch https://github.com/projectdiscovery/httpx/releases/download/v1.12.0 httpx_1.12.0_linux_amd64.zip httpx_1.12.0_checksums.txt httpx
+#21 4.228 + base=https://github.com/projectdiscovery/httpx/releases/download/v1.12.0
+#21 4.228 + asset=httpx_1.12.0_linux_amd64.zip
+#21 4.228 + sums=httpx_1.12.0_checksums.txt
+#21 4.228 + name=httpx
+#21 4.228 + rm -rf /tmp/t
+#21 4.228 + mkdir -p /tmp/t/x
+#21 4.229 + curl -fsSL https://github.com/projectdiscovery/httpx/releases/download/v1.12.0/httpx_1.12.0_linux_amd64.zip -o /tmp/t/httpx_1.12.0_linux_amd64.zip
+#21 6.176 + curl -fsSL https://github.com/projectdiscovery/httpx/releases/download/v1.12.0/httpx_1.12.0_checksums.txt -o /tmp/t/sums.txt
+#21 6.511 + awk -v a=httpx_1.12.0_linux_amd64.zip $2 == a || $2 == "*" a { print $1 } /tmp/t/sums.txt
+#21 6.511 + want=9d8439e8b6c9aa7d1e2314817a392e00d5178da3af5652f7475f88868f418f76
+#21 6.512 + [ -z 9d8439e8b6c9aa7d1e2314817a392e00d5178da3af5652f7475f88868f418f76 ]
+#21 6.512 + cut -d  -f1
+#21 6.513 + sha256sum /tmp/t/httpx_1.12.0_linux_amd64.zip
+#21 6.555 + got=9d8439e8b6c9aa7d1e2314817a392e00d5178da3af5652f7475f88868f418f76
+#21 6.555 + [ 9d8439e8b6c9aa7d1e2314817a392e00d5178da3af5652f7475f88868f418f76 != 9d8439e8b6c9aa7d1e2314817a392e00d5178da3af5652f7475f88868f418f76 ]
+#21 6.555 + unzip -q /tmp/t/httpx_1.12.0_linux_amd64.zip -d /tmp/t/x
+#21 6.772 + find /tmp/t/x -type f -name httpx -exec install -m 0755 {} /out/ ;
+#21 6.800 + [ -x /out/httpx ]
+#21 6.800 + rm -rf /tmp/t
+#21 6.802 + fetch https://github.com/projectdiscovery/subfinder/releases/download/v2.17.0 subfinder_2.17.0_linux_amd64.zip subfinder_2.17.0_checksums.txt subfinder
+#21 6.802 + base=https://github.com/projectdiscovery/subfinder/releases/download/v2.17.0
+#21 6.802 + asset=subfinder_2.17.0_linux_amd64.zip
+#21 6.802 + sums=subfinder_2.17.0_checksums.txt
+#21 6.802 + name=subfinder
+#21 6.802 + rm -rf /tmp/t
+#21 6.802 + mkdir -p /tmp/t/x
+#21 6.803 + curl -fsSL https://github.com/projectdiscovery/subfinder/releases/download/v2.17.0/subfinder_2.17.0_linux_amd64.zip -o /tmp/t/subfinder_2.17.0_linux_amd64.zip
+#21 7.392 + curl -fsSL https://github.com/projectdiscovery/subfinder/releases/download/v2.17.0/subfinder_2.17.0_checksums.txt -o /tmp/t/sums.txt
+#21 7.575 + awk -v a=subfinder_2.17.0_linux_amd64.zip $2 == a || $2 == "*" a { print $1 } /tmp/t/sums.txt
+#21 7.575 + want=a39c3e5c7a26ef3c430915c4d6cbf7716a00f26769a75e9405aba796142eba37
+#21 7.575 + [ -z a39c3e5c7a26ef3c430915c4d6cbf7716a00f26769a75e9405aba796142eba37 ]
+#21 7.576 + sha256sum /tmp/t/subfinder_2.17.0_linux_amd64.zip
+#21 7.576 + cut -d  -f1
+#21 7.598 + got=a39c3e5c7a26ef3c430915c4d6cbf7716a00f26769a75e9405aba796142eba37
+#21 7.598 + [ a39c3e5c7a26ef3c430915c4d6cbf7716a00f26769a75e9405aba796142eba37 != a39c3e5c7a26ef3c430915c4d6cbf7716a00f26769a75e9405aba796142eba37 ]
+#21 7.598 + unzip -q /tmp/t/subfinder_2.17.0_linux_amd64.zip -d /tmp/t/x
+#21 7.718 + find /tmp/t/x -type f -name subfinder -exec install -m 0755 {} /out/ ;
+#21 7.742 + [ -x /out/subfinder ]
+#21 7.742 + rm -rf /tmp/t
+#21 7.747 + fetch https://github.com/projectdiscovery/katana/releases/download/v1.8.0 katana_1.8.0_linux_amd64.zip katana-1.8.0-checksums.txt katana
+#21 7.748 + base=https://github.com/projectdiscovery/katana/releases/download/v1.8.0
+#21 7.748 + asset=katana_1.8.0_linux_amd64.zip
+#21 7.748 + sums=katana-1.8.0-checksums.txt
+#21 7.749 + name=katana
+#21 7.749 + rm -rf /tmp/t
+#21 7.749 + mkdir -p /tmp/t/x
+#21 7.752 + curl -fsSL https://github.com/projectdiscovery/katana/releases/download/v1.8.0/katana_1.8.0_linux_amd64.zip -o /tmp/t/katana_1.8.0_linux_amd64.zip
+#21 8.910 + curl -fsSL https://github.com/projectdiscovery/katana/releases/download/v1.8.0/katana-1.8.0-checksums.txt -o /tmp/t/sums.txt
+#21 9.133 + awk -v a=katana_1.8.0_linux_amd64.zip $2 == a || $2 == "*" a { print $1 } /tmp/t/sums.txt
+#21 9.134 + want=cb027ae99d0757061b70c07a15c7a80f62c5a535ab52c4a329f80c4b0a7309d2
+#21 9.134 + [ -z cb027ae99d0757061b70c07a15c7a80f62c5a535ab52c4a329f80c4b0a7309d2 ]
+#21 9.134 + sha256sum /tmp/t/katana_1.8.0_linux_amd64.zip
+#21 9.134 + cut -d  -f1
+#21 9.200 + got=cb027ae99d0757061b70c07a15c7a80f62c5a535ab52c4a329f80c4b0a7309d2
+#21 9.200 + [ cb027ae99d0757061b70c07a15c7a80f62c5a535ab52c4a329f80c4b0a7309d2 != cb027ae99d0757061b70c07a15c7a80f62c5a535ab52c4a329f80c4b0a7309d2 ]
+#21 9.200 + unzip -q /tmp/t/katana_1.8.0_linux_amd64.zip -d /tmp/t/x
+#21 9.456 + find /tmp/t/x -type f -name katana -exec install -m 0755 {} /out/ ;
+#21 9.460 + [ -x /out/katana ]
+#21 9.460 + rm -rf /tmp/t
+#21 9.463 + fetch https://github.com/ffuf/ffuf/releases/download/v2.3.0 ffuf_2.3.0_linux_amd64.tar.gz ffuf_2.3.0_checksums.txt ffuf
+#21 9.463 + base=https://github.com/ffuf/ffuf/releases/download/v2.3.0
+#21 9.463 + asset=ffuf_2.3.0_linux_amd64.tar.gz
+#21 9.463 + sums=ffuf_2.3.0_checksums.txt
+#21 9.463 + name=ffuf
+#21 9.463 + rm -rf /tmp/t
+#21 9.463 + mkdir -p /tmp/t/x
+#21 9.464 + curl -fsSL https://github.com/ffuf/ffuf/releases/download/v2.3.0/ffuf_2.3.0_linux_amd64.tar.gz -o /tmp/t/ffuf_2.3.0_linux_amd64.tar.gz
+#21 9.958 + curl -fsSL https://github.com/ffuf/ffuf/releases/download/v2.3.0/ffuf_2.3.0_checksums.txt -o /tmp/t/sums.txt
+#21 ...
+
+#18 [stage-3  2/13] RUN apt-get update && apt-get install -y --no-install-recommends       ca-certificates ripgrep curl wget vim git jq unzip xz-utils       dnsutils iputils-ping netcat-openbsd inetutils-telnet whois nmap     && rm -rf /var/lib/apt/lists/*
+#18 17.22 Setting up libuv1:amd64 (1.44.2-1+deb12u1) ...
+#18 17.23 Setting up vim-common (2:9.0.1378-2+deb12u2) ...
+#18 17.23 Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b2) ...
+#18 17.24 Setting up libdbus-1-3:amd64 (1.14.10-1~deb12u1) ...
+#18 17.38 Setting up xz-utils (5.4.1-1+deb12u2) ...
+#18 17.38 update-alternatives: using /usr/bin/xz to provide /usr/bin/lzma (lzma) in auto mode
+#18 17.38 update-alternatives: warning: skip creation of /usr/share/man/man1/lzma.1.gz because associated file /usr/share/man/man1/xz.1.gz (of link group lzma) doesn't exist
+#18 17.38 update-alternatives: warning: skip creation of /usr/share/man/man1/unlzma.1.gz because associated file /usr/share/man/man1/unxz.1.gz (of link group lzma) doesn't exist
+#18 17.38 update-alternatives: warning: skip creation of /usr/share/man/man1/lzcat.1.gz because associated file /usr/share/man/man1/xzcat.1.gz (of link group lzma) doesn't exist
+#18 17.38 update-alternatives: warning: skip creation of /usr/share/man/man1/lzmore.1.gz because associated file /usr/share/man/man1/xzmore.1.gz (of link group lzma) doesn't exist
+#18 17.38 update-alternatives: warning: skip creation of /usr/share/man/man1/lzless.1.gz because associated file /usr/share/man/man1/xzless.1.gz (of link group lzma) doesn't exist
+#18 17.38 update-alternatives: warning: skip creation of /usr/share/man/man1/lzdiff.1.gz because associated file /usr/share/man/man1/xzdiff.1.gz (of link group lzma) doesn't exist
+#18 17.38 update-alternatives: warning: skip creation of /usr/share/man/man1/lzcmp.1.gz because associated file /usr/share/man/man1/xzcmp.1.gz (of link group lzma) doesn't exist
+#18 17.38 update-alternatives: warning: skip creation of /usr/share/man/man1/lzgrep.1.gz because associated file /usr/share/man/man1/xzgrep.1.gz (of link group lzma) doesn't exist
+#18 17.38 update-alternatives: warning: skip creation of /usr/share/man/man1/lzegrep.1.gz because associated file /usr/share/man/man1/xzegrep.1.gz (of link group lzma) doesn't exist
+#18 17.38 update-alternatives: warning: skip creation of /usr/share/man/man1/lzfgrep.1.gz because associated file /usr/share/man/man1/xzfgrep.1.gz (of link group lzma) doesn't exist
+#18 17.39 Setting up libgdbm-compat4:amd64 (1.23-3) ...
+#18 17.39 Setting up libsasl2-2:amd64 (2.1.28+dfsg-10+deb12u1) ...
+#18 17.40 Setting up nmap-common (7.93+dfsg1-1) ...
+#18 17.40 Setting up ripgrep (13.0.0-4+b2) ...
+#18 17.41 Setting up liblua5.3-0:amd64 (5.3.6-2) ...
+#18 17.41 Setting up git-man (1:2.39.5-0+deb12u3) ...
+#18 17.42 Setting up libssh2-1:amd64 (1.10.0-3+deb12u1) ...
+#18 17.42 Setting up vim-runtime (2:9.0.1378-2+deb12u2) ...
+#18 17.46 Setting up libbsd0:amd64 (0.11.7-2) ...
+#18 17.47 Setting up iputils-ping (3:20221126-1+deb12u1) ...
+#18 17.47 Setting up libjson-c5:amd64 (0.16-2) ...
+#18 17.48 Setting up libxml2:amd64 (2.9.14+dfsg-1.3~deb12u6) ...
+#18 17.48 Setting up libperl5.36:amd64 (5.36.0-7+deb12u4) ...
+#18 17.48 Setting up libonig5:amd64 (6.9.8-1) ...
+#18 17.49 Setting up vim (2:9.0.1378-2+deb12u2) ...
+#18 17.49 update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/editor (editor) in auto mode
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/man1/editor.1.gz because associated file /usr/share/man/man1/vim.1.gz (of link group editor) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/da/man1/editor.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group editor) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/de/man1/editor.1.gz because associated file /usr/share/man/de/man1/vim.1.gz (of link group editor) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/fr/man1/editor.1.gz because associated file /usr/share/man/fr/man1/vim.1.gz (of link group editor) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/it/man1/editor.1.gz because associated file /usr/share/man/it/man1/vim.1.gz (of link group editor) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/ja/man1/editor.1.gz because associated file /usr/share/man/ja/man1/vim.1.gz (of link group editor) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/pl/man1/editor.1.gz because associated file /usr/share/man/pl/man1/vim.1.gz (of link group editor) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/ru/man1/editor.1.gz because associated file /usr/share/man/ru/man1/vim.1.gz (of link group editor) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/tr/man1/editor.1.gz because associated file /usr/share/man/tr/man1/vim.1.gz (of link group editor) doesn't exist
+#18 17.49 update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/ex (ex) in auto mode
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/man1/ex.1.gz because associated file /usr/share/man/man1/vim.1.gz (of link group ex) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/da/man1/ex.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group ex) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/de/man1/ex.1.gz because associated file /usr/share/man/de/man1/vim.1.gz (of link group ex) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/fr/man1/ex.1.gz because associated file /usr/share/man/fr/man1/vim.1.gz (of link group ex) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/it/man1/ex.1.gz because associated file /usr/share/man/it/man1/vim.1.gz (of link group ex) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/ja/man1/ex.1.gz because associated file /usr/share/man/ja/man1/vim.1.gz (of link group ex) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/pl/man1/ex.1.gz because associated file /usr/share/man/pl/man1/vim.1.gz (of link group ex) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/ru/man1/ex.1.gz because associated file /usr/share/man/ru/man1/vim.1.gz (of link group ex) doesn't exist
+#18 17.49 update-alternatives: warning: skip creation of /usr/share/man/tr/man1/ex.1.gz because associated file /usr/share/man/tr/man1/vim.1.gz (of link group ex) doesn't exist
+#18 17.50 update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/rview (rview) in auto mode
+#18 17.50 update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/rvim (rvim) in auto mode
+#18 17.50 update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vi (vi) in auto mode
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/man1/vi.1.gz because associated file /usr/share/man/man1/vim.1.gz (of link group vi) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/da/man1/vi.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group vi) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/de/man1/vi.1.gz because associated file /usr/share/man/de/man1/vim.1.gz (of link group vi) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/fr/man1/vi.1.gz because associated file /usr/share/man/fr/man1/vim.1.gz (of link group vi) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/it/man1/vi.1.gz because associated file /usr/share/man/it/man1/vim.1.gz (of link group vi) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/ja/man1/vi.1.gz because associated file /usr/share/man/ja/man1/vim.1.gz (of link group vi) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/pl/man1/vi.1.gz because associated file /usr/share/man/pl/man1/vim.1.gz (of link group vi) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/ru/man1/vi.1.gz because associated file /usr/share/man/ru/man1/vim.1.gz (of link group vi) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/tr/man1/vi.1.gz because associated file /usr/share/man/tr/man1/vim.1.gz (of link group vi) doesn't exist
+#18 17.50 update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/view (view) in auto mode
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/man1/view.1.gz because associated file /usr/share/man/man1/vim.1.gz (of link group view) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/da/man1/view.1.gz because associated file /usr/share/man/da/man1/vim.1.gz (of link group view) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/de/man1/view.1.gz because associated file /usr/share/man/de/man1/vim.1.gz (of link group view) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/fr/man1/view.1.gz because associated file /usr/share/man/fr/man1/vim.1.gz (of link group view) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/it/man1/view.1.gz because associated file /usr/share/man/it/man1/vim.1.gz (of link group view) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/ja/man1/view.1.gz because associated file /usr/share/man/ja/man1/vim.1.gz (of link group view) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/pl/man1/view.1.gz because associated file /usr/share/man/pl/man1/vim.1.gz (of link group view) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/ru/man1/view.1.gz because associated file /usr/share/man/ru/man1/vim.1.gz (of link group view) doesn't exist
+#18 17.50 update-alternatives: warning: skip creation of /usr/share/man/tr/man1/view.1.gz because associated file /usr/share/man/tr/man1/vim.1.gz (of link group view) doesn't exist
+#18 17.50 update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vim (vim) in auto mode
+#18 17.50 update-alternatives: using /usr/bin/vim.basic to provide /usr/bin/vimdiff (vimdiff) in auto mode
+#18 17.51 Setting up bind9-libs:amd64 (1:9.18.49-1~deb12u3) ...
+#18 17.51 Setting up libjq1:amd64 (1.6-2.1+deb12u3) ...
+#18 17.51 Setting up libedit2:amd64 (3.1-20221030-2) ...
+#18 17.52 Setting up netcat-openbsd (1.219-1) ...
+#18 17.52 update-alternatives: using /bin/nc.openbsd to provide /bin/nc (nc) in auto mode
+#18 17.52 update-alternatives: warning: skip creation of /usr/share/man/man1/nc.1.gz because associated file /usr/share/man/man1/nc_openbsd.1.gz (of link group nc) doesn't exist
+#18 17.52 update-alternatives: warning: skip creation of /usr/share/man/man1/netcat.1.gz because associated file /usr/share/man/man1/nc_openbsd.1.gz (of link group nc) doesn't exist
+#18 17.52 Setting up libldap-2.5-0:amd64 (2.5.13+dfsg-5) ...
+#18 17.53 Setting up liblinear4:amd64 (2.3.0+dfsg-5) ...
+#18 17.53 Setting up perl (5.36.0-7+deb12u4) ...
+#18 17.54 Setting up libpcap0.8:amd64 (1.10.3-1) ...
+#18 17.54 Setting up jq (1.6-2.1+deb12u3) ...
+#18 17.55 Setting up libcurl4:amd64 (7.88.1-10+deb12u15) ...
+#18 17.55 Setting up curl (7.88.1-10+deb12u15) ...
+#18 17.56 Setting up bind9-host (1:9.18.49-1~deb12u3) ...
+#18 17.56 Setting up libcurl3-gnutls:amd64 (7.88.1-10+deb12u15) ...
+#18 17.57 Setting up nmap (7.93+dfsg1-1) ...
+#18 17.58 Setting up liberror-perl (0.17029-2) ...
+#18 17.58 Setting up git (1:2.39.5-0+deb12u3) ...
+#18 17.60 Setting up bind9-dnsutils (1:9.18.49-1~deb12u3) ...
+#18 17.60 Setting up dnsutils (1:9.18.49-1~deb12u3) ...
+#18 17.61 Processing triggers for libc-bin (2.36-9+deb12u14) ...
+#18 DONE 17.7s
+
+#14 [build 1/7] FROM docker.io/library/golang:1.26-bookworm@sha256:dc40a13b61304647ed7e5d581d246b86413dfc29d63c6d018310feb93cd98fc0
+#14 extracting sha256:d6c30932f8d3f5798b438cce12cdf6cebb1717b52f51e22ff010b4d86667031d 1.3s done
+#14 extracting sha256:c6b99ccefcff75aed54b2f906cea1c712f385f1fa6da7c910864c11945477236 0.6s done
+#14 extracting sha256:6dbc954da649613d4c282586205a0e44ab2d9d17be5dfde8d18d13f7461fad21 1.4s done
+#14 extracting sha256:6da9d21223e35007a7dcb4245c0ccab62343582da7878c7ad750c13c682365d8 0.0s done
+#14 extracting sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1 0.0s done
+#14 DONE 19.9s
+
+#22 [build 2/7] WORKDIR /src
+#22 DONE 0.1s
+
+#21 [tools 3/3] RUN set -eux;     case "amd64" in       amd64) PD_ARCH=amd64; FFUF_ARCH=amd64; DALFOX_ARCH=x86_64 ;;       arm64) PD_ARCH=arm64; FFUF_ARCH=arm64; DALFOX_ARCH=aarch64 ;;       *) echo "unsupported architecture: amd64" >&2; exit 1 ;;     esac;     mkdir -p /out;     fetch() { base="$1"; asset="$2"; sums="$3"; name="$4";       rm -rf /tmp/t; mkdir -p /tmp/t/x;       curl -fsSL "$base/$asset" -o "/tmp/t/$asset";       curl -fsSL "$base/$sums" -o /tmp/t/sums.txt;       want="$(awk -v a="$asset" '$2 == a || $2 == "*" a { print $1 }' /tmp/t/sums.txt)";       if [ -z "$want" ]; then echo "no checksum entry for $asset" >&2; exit 1; fi;       got="$(sha256sum "/tmp/t/$asset" | cut -d' ' -f1)";       if [ "$want" != "$got" ]; then echo "checksum mismatch for $asset: want $want got $got" >&2; exit 1; fi;       case "$asset" in *.zip) unzip -q "/tmp/t/$asset" -d /tmp/t/x ;; *) tar -xzf "/tmp/t/$asset" -C /tmp/t/x ;; esac;       find /tmp/t/x -type f -name "$name" -exec install -m 0755 {} /out/ ; ;       [ -x "/out/$name" ] || { echo "$name not found in $asset" >&2; exit 1; };       rm -rf /tmp/t; };     gh="https://github.com";     fetch "$gh/projectdiscovery/nuclei/releases/download/v3.11.1"       "nuclei_3.11.1_linux_${PD_ARCH}.zip" "nuclei_3.11.1_checksums.txt" nuclei;     fetch "$gh/projectdiscovery/httpx/releases/download/v1.12.0"       "httpx_1.12.0_linux_${PD_ARCH}.zip" "httpx_1.12.0_checksums.txt" httpx;     fetch "$gh/projectdiscovery/subfinder/releases/download/v2.17.0"       "subfinder_2.17.0_linux_${PD_ARCH}.zip" "subfinder_2.17.0_checksums.txt" subfinder;     fetch "$gh/projectdiscovery/katana/releases/download/v1.8.0"       "katana_1.8.0_linux_${PD_ARCH}.zip" "katana-1.8.0-checksums.txt" katana;     fetch "$gh/ffuf/ffuf/releases/download/v2.3.0"       "ffuf_2.3.0_linux_${FFUF_ARCH}.tar.gz" "ffuf_2.3.0_checksums.txt" ffuf;     fetch "$gh/hahwul/dalfox/releases/download/v3.2.4"       "dalfox-v3.2.4-linux-${DALFOX_ARCH}-musl.tar.gz" "dalfox-v3.2.4-linux-${DALFOX_ARCH}-musl.tar.gz.sha256" dalfox;     git clone --quiet --depth 1 --branch "1.9.9" https://github.com/sqlmapproject/sqlmap /opt/sqlmap;     commit="$(git -C /opt/sqlmap rev-parse HEAD)";     if [ "$commit" != "cceda39208b5aad478de2c3f731df4239d9881f6" ]; then echo "sqlmap commit mismatch: want cceda39208b5aad478de2c3f731df4239d9881f6 got $commit" >&2; exit 1; fi;     rm -rf /opt/sqlmap/.git
+#21 10.23 + awk -v a=ffuf_2.3.0_linux_amd64.tar.gz $2 == a || $2 == "*" a { print $1 } /tmp/t/sums.txt
+#21 10.23 + want=b2a3c725fcb9da175159682f54d6e9149f2905b00d84d155e7efc5d599975ceb
+#21 10.23 + [ -z b2a3c725fcb9da175159682f54d6e9149f2905b00d84d155e7efc5d599975ceb ]
+#21 10.23 + sha256sum /tmp/t/ffuf_2.3.0_linux_amd64.tar.gz
+#21 10.23 + cut -d  -f1
+#21 10.24 + got=b2a3c725fcb9da175159682f54d6e9149f2905b00d84d155e7efc5d599975ceb
+#21 10.24 + [ b2a3c725fcb9da175159682f54d6e9149f2905b00d84d155e7efc5d599975ceb != b2a3c725fcb9da175159682f54d6e9149f2905b00d84d155e7efc5d599975ceb ]
+#21 10.24 + tar -xzf /tmp/t/ffuf_2.3.0_linux_amd64.tar.gz -C /tmp/t/x
+#21 10.29 + find /tmp/t/x -type f -name ffuf -exec install -m 0755 {} /out/ ;
+#21 10.30 + [ -x /out/ffuf ]
+#21 10.30 + rm -rf /tmp/t
+#21 10.30 + fetch https://github.com/hahwul/dalfox/releases/download/v3.2.4 dalfox-v3.2.4-linux-x86_64-musl.tar.gz dalfox-v3.2.4-linux-x86_64-musl.tar.gz.sha256 dalfox
+#21 10.30 + base=https://github.com/hahwul/dalfox/releases/download/v3.2.4
+#21 10.30 + asset=dalfox-v3.2.4-linux-x86_64-musl.tar.gz
+#21 10.30 + sums=dalfox-v3.2.4-linux-x86_64-musl.tar.gz.sha256
+#21 10.30 + name=dalfox
+#21 10.30 + rm -rf /tmp/t
+#21 10.30 + mkdir -p /tmp/t/x
+#21 10.30 + curl -fsSL https://github.com/hahwul/dalfox/releases/download/v3.2.4/dalfox-v3.2.4-linux-x86_64-musl.tar.gz -o /tmp/t/dalfox-v3.2.4-linux-x86_64-musl.tar.gz
+#21 ...
+
+#23 [build 3/7] COPY go.mod go.sum ./
+#23 DONE 0.1s
+
+#21 [tools 3/3] RUN set -eux;     case "amd64" in       amd64) PD_ARCH=amd64; FFUF_ARCH=amd64; DALFOX_ARCH=x86_64 ;;       arm64) PD_ARCH=arm64; FFUF_ARCH=arm64; DALFOX_ARCH=aarch64 ;;       *) echo "unsupported architecture: amd64" >&2; exit 1 ;;     esac;     mkdir -p /out;     fetch() { base="$1"; asset="$2"; sums="$3"; name="$4";       rm -rf /tmp/t; mkdir -p /tmp/t/x;       curl -fsSL "$base/$asset" -o "/tmp/t/$asset";       curl -fsSL "$base/$sums" -o /tmp/t/sums.txt;       want="$(awk -v a="$asset" '$2 == a || $2 == "*" a { print $1 }' /tmp/t/sums.txt)";       if [ -z "$want" ]; then echo "no checksum entry for $asset" >&2; exit 1; fi;       got="$(sha256sum "/tmp/t/$asset" | cut -d' ' -f1)";       if [ "$want" != "$got" ]; then echo "checksum mismatch for $asset: want $want got $got" >&2; exit 1; fi;       case "$asset" in *.zip) unzip -q "/tmp/t/$asset" -d /tmp/t/x ;; *) tar -xzf "/tmp/t/$asset" -C /tmp/t/x ;; esac;       find /tmp/t/x -type f -name "$name" -exec install -m 0755 {} /out/ ; ;       [ -x "/out/$name" ] || { echo "$name not found in $asset" >&2; exit 1; };       rm -rf /tmp/t; };     gh="https://github.com";     fetch "$gh/projectdiscovery/nuclei/releases/download/v3.11.1"       "nuclei_3.11.1_linux_${PD_ARCH}.zip" "nuclei_3.11.1_checksums.txt" nuclei;     fetch "$gh/projectdiscovery/httpx/releases/download/v1.12.0"       "httpx_1.12.0_linux_${PD_ARCH}.zip" "httpx_1.12.0_checksums.txt" httpx;     fetch "$gh/projectdiscovery/subfinder/releases/download/v2.17.0"       "subfinder_2.17.0_linux_${PD_ARCH}.zip" "subfinder_2.17.0_checksums.txt" subfinder;     fetch "$gh/projectdiscovery/katana/releases/download/v1.8.0"       "katana_1.8.0_linux_${PD_ARCH}.zip" "katana-1.8.0-checksums.txt" katana;     fetch "$gh/ffuf/ffuf/releases/download/v2.3.0"       "ffuf_2.3.0_linux_${FFUF_ARCH}.tar.gz" "ffuf_2.3.0_checksums.txt" ffuf;     fetch "$gh/hahwul/dalfox/releases/download/v3.2.4"       "dalfox-v3.2.4-linux-${DALFOX_ARCH}-musl.tar.gz" "dalfox-v3.2.4-linux-${DALFOX_ARCH}-musl.tar.gz.sha256" dalfox;     git clone --quiet --depth 1 --branch "1.9.9" https://github.com/sqlmapproject/sqlmap /opt/sqlmap;     commit="$(git -C /opt/sqlmap rev-parse HEAD)";     if [ "$commit" != "cceda39208b5aad478de2c3f731df4239d9881f6" ]; then echo "sqlmap commit mismatch: want cceda39208b5aad478de2c3f731df4239d9881f6 got $commit" >&2; exit 1; fi;     rm -rf /opt/sqlmap/.git
+#21 10.67 + curl -fsSL https://github.com/hahwul/dalfox/releases/download/v3.2.4/dalfox-v3.2.4-linux-x86_64-musl.tar.gz.sha256 -o /tmp/t/sums.txt
+#21 10.93 + awk -v a=dalfox-v3.2.4-linux-x86_64-musl.tar.gz $2 == a || $2 == "*" a { print $1 } /tmp/t/sums.txt
+#21 10.93 + want=c11cfd2f8261973f0a2a2a1eba5a147ce77712a29acfa6343f9847fb8bb7eca2
+#21 10.93 + [ -z c11cfd2f8261973f0a2a2a1eba5a147ce77712a29acfa6343f9847fb8bb7eca2 ]
+#21 10.93 + cut -d  -f1
+#21 10.93 + sha256sum /tmp/t/dalfox-v3.2.4-linux-x86_64-musl.tar.gz
+#21 10.95 + got=c11cfd2f8261973f0a2a2a1eba5a147ce77712a29acfa6343f9847fb8bb7eca2
+#21 10.95 + [ c11cfd2f8261973f0a2a2a1eba5a147ce77712a29acfa6343f9847fb8bb7eca2 != c11cfd2f8261973f0a2a2a1eba5a147ce77712a29acfa6343f9847fb8bb7eca2 ]
+#21 10.95 + tar -xzf /tmp/t/dalfox-v3.2.4-linux-x86_64-musl.tar.gz -C /tmp/t/x
+#21 11.02 + find /tmp/t/x -type f -name dalfox -exec install -m 0755 {} /out/ ;
+#21 11.02 + [ -x /out/dalfox ]
+#21 11.02 + rm -rf /tmp/t
+#21 11.02 + git clone --quiet --depth 1 --branch 1.9.9 https://github.com/sqlmapproject/sqlmap /opt/sqlmap
+#21 11.97 Note: switching to 'cceda39208b5aad478de2c3f731df4239d9881f6'.
+#21 11.97 
+#21 11.97 You are in 'detached HEAD' state. You can look around, make experimental
+#21 11.97 changes and commit them, and you can discard any commits you make in this
+#21 11.97 state without impacting any branches by switching back to a branch.
+#21 11.97 
+#21 11.97 If you want to create a new branch to retain commits you create, you may
+#21 11.97 do so (now or later) by using -c with the switch command. Example:
+#21 11.97 
+#21 11.97   git switch -c <new-branch-name>
+#21 11.97 
+#21 11.97 Or undo this operation with:
+#21 11.97 
+#21 11.97   git switch -
+#21 11.97 
+#21 11.97 Turn off this advice by setting config variable advice.detachedHead to false
+#21 11.97 
+#21 12.01 + git -C /opt/sqlmap rev-parse HEAD
+#21 12.01 + commit=cceda39208b5aad478de2c3f731df4239d9881f6
+#21 12.01 + [ cceda39208b5aad478de2c3f731df4239d9881f6 != cceda39208b5aad478de2c3f731df4239d9881f6 ]
+#21 12.01 + rm -rf /opt/sqlmap/.git
+#21 DONE 12.1s
+
+#24 [stage-3  3/13] RUN set -eux;     case "amd64" in       amd64) NODE_ARCH=x64 ;;       arm64) NODE_ARCH=arm64 ;;       *) echo "unsupported architecture: amd64" >&2; exit 1 ;;     esac;     base="https://nodejs.org/dist/v22.23.4";     asset="node-v22.23.4-linux-${NODE_ARCH}.tar.xz";     curl -fsSL "$base/$asset" -o "/tmp/$asset";     curl -fsSL "$base/SHASUMS256.txt" -o /tmp/SHASUMS256.txt;     want="$(awk -v a="$asset" '$2 == a { print $1 }' /tmp/SHASUMS256.txt)";     if [ -z "$want" ]; then echo "no checksum entry for $asset" >&2; exit 1; fi;     got="$(sha256sum "/tmp/$asset" | cut -d' ' -f1)";     if [ "$want" != "$got" ]; then echo "checksum mismatch for $asset: want $want got $got" >&2; exit 1; fi;     tar -xJf "/tmp/$asset" -C /usr/local --strip-components=1 --no-same-owner;     rm -f "/tmp/$asset" /tmp/SHASUMS256.txt;     node --version; npm --version
+#24 0.151 + NODE_ARCH=x64
+#24 0.151 + base=https://nodejs.org/dist/v22.23.4
+#24 0.151 + asset=node-v22.23.4-linux-x64.tar.xz
+#24 0.151 + curl -fsSL https://nodejs.org/dist/v22.23.4/node-v22.23.4-linux-x64.tar.xz -o /tmp/node-v22.23.4-linux-x64.tar.xz
+#24 1.027 + curl -fsSL https://nodejs.org/dist/v22.23.4/SHASUMS256.txt -o /tmp/SHASUMS256.txt
+#24 1.073 + awk -v a=node-v22.23.4-linux-x64.tar.xz $2 == a { print $1 } /tmp/SHASUMS256.txt
+#24 1.074 + want=1805bcd35e6815559bd2eb97db438d3fdb0eb3a5e6a977b7c1badca76337e9ce
+#24 1.074 + [ -z 1805bcd35e6815559bd2eb97db438d3fdb0eb3a5e6a977b7c1badca76337e9ce ]
+#24 1.074 + sha256sum /tmp/node-v22.23.4-linux-x64.tar.xz
+#24 1.074 + cut -d  -f1
+#24 1.139 + got=1805bcd35e6815559bd2eb97db438d3fdb0eb3a5e6a977b7c1badca76337e9ce
+#24 1.139 + [ 1805bcd35e6815559bd2eb97db438d3fdb0eb3a5e6a977b7c1badca76337e9ce != 1805bcd35e6815559bd2eb97db438d3fdb0eb3a5e6a977b7c1badca76337e9ce ]
+#24 1.139 + tar -xJf /tmp/node-v22.23.4-linux-x64.tar.xz -C /usr/local --strip-components=1 --no-same-owner
+#24 2.408 + rm -f /tmp/node-v22.23.4-linux-x64.tar.xz /tmp/SHASUMS256.txt
+#24 2.409 + node --version
+#24 2.411 v22.23.4
+#24 2.412 + npm --version
+#24 2.464 10.9.9
+#24 DONE 2.5s
+
+#25 [stage-3  4/13] COPY --from=tools /out/ /usr/local/bin/
+#25 DONE 0.1s
+
+#26 [web 6/6] RUN npm run build:static
+#26 0.164 
+#26 0.164 > artex-web@2.2.0 build:static
+#26 0.164 > NEXT_EXPORT=1 next build
+#26 0.164 
+#26 0.350 ▲ Next.js 16.4.6 (Turbopack)
+#26 0.358 ✓ Running next.config.mjs took 7ms
+#26 0.360 Attention: Next.js now collects completely anonymous telemetry regarding usage.
+#26 0.360 This information is used to shape Next.js' roadmap and prioritize features.
+#26 0.360 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+#26 0.360 https://nextjs.org/telemetry
+#26 0.360 
+#26 0.379 
+#26 0.397   Creating an optimized production build ...
+#26 7.268 ✓ Compiled successfully in 6.9s
+#26 7.270   Running TypeScript ...
+#26 ...
+
+#27 [stage-3  5/13] COPY --from=tools /opt/sqlmap /opt/sqlmap
+#27 DONE 0.1s
+
+#28 [build 4/7] RUN go mod download
+#28 ...
+
+#29 [stage-3  6/13] RUN set -eux;     ln -s /opt/sqlmap/sqlmap.py /usr/local/bin/sqlmap;     nuclei -version >/dev/null; httpx -version; subfinder -version; katana -version;     ffuf -V >/dev/null; dalfox --version >/dev/null; sqlmap --version >/dev/null
+#29 0.159 + ln -s /opt/sqlmap/sqlmap.py /usr/local/bin/sqlmap
+#29 0.160 + nuclei -version
+#29 0.268 [[34mINF[0m] Nuclei Engine Version: v3.11.1
+#29 0.268 [[34mINF[0m] Nuclei Config Directory: /root/.config/nuclei
+#29 0.268 [[34mINF[0m] Nuclei Cache Directory: /root/.cache/nuclei
+#29 0.268 [[34mINF[0m] PDCP Directory: /root/.pdcp
+#29 0.268 + httpx -version
+#29 0.331 
+#29 0.331     __    __  __       _  __
+#29 0.331    / /_  / /_/ /_____ | |/ /
+#29 0.331   / __ \/ __/ __/ __ \|   /
+#29 0.331  / / / / /_/ /_/ /_/ /   |
+#29 0.331 /_/ /_/\__/\__/ .___/_/|_|
+#29 0.331              /_/
+#29 0.331 
+#29 0.331 		projectdiscovery.io
+#29 0.331 
+#29 0.331 [[34mINF[0m] Current Version: v1.12.0
+#29 0.333 + subfinder -version
+#29 0.381 [[34mINF[0m] Current Version: v2.17.0
+#29 0.381 [[34mINF[0m] Subfinder Config Directory: /root/.config/subfinder
+#29 0.382 + katana -version
+#29 0.424 
+#29 0.424    __        __                
+#29 0.424   / /_____ _/ /____ ____  ___ _
+#29 0.424  /  '_/ _  / __/ _  / _ \/ _  /
+#29 0.424 /_/\_\\_,_/\__/\_,_/_//_/\_,_/							 
+#29 0.424 
+#29 0.424 		projectdiscovery.io
+#29 0.424 
+#29 0.424 [[34mINF[0m] Current version: v1.8.0
+#29 0.425 + ffuf -V
+#29 0.432 + dalfox --version
+#29 0.443 + sqlmap --version
+#29 DONE 1.0s
+
+#30 [stage-3  7/13] RUN set -eux;     python -m venv /opt/bbot;     /opt/bbot/bin/pip install --no-cache-dir "bbot==3.0.2";     ln -s /opt/bbot/bin/bbot /usr/local/bin/bbot;     bbot -y --install-all-deps;     bbot --version >/dev/null;     bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness >/dev/null 2>&1 || true;     bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness --no-color >/tmp/bbot-dry.log 2>&1 || true;     ! grep -qE "Installing|ERRR|CRITICAL" /tmp/bbot-dry.log || { cat /tmp/bbot-dry.log; exit 1; }
+#30 0.129 + python -m venv /opt/bbot
+#30 1.581 + /opt/bbot/bin/pip install --no-cache-dir bbot==3.0.2
+#30 2.109 Collecting bbot==3.0.2
+#30 2.238   Downloading bbot-3.0.2-py3-none-any.whl.metadata (19 kB)
+#30 2.344 Collecting ansible-core<3,>=2.17 (from bbot==3.0.2)
+#30 2.369   Downloading ansible_core-2.21.6-py3-none-any.whl.metadata (7.8 kB)
+#30 2.407 Collecting ansible-runner<3,>=2.3.2 (from bbot==3.0.2)
+#30 2.436   Downloading ansible_runner-2.4.3-py3-none-any.whl.metadata (3.2 kB)
+#30 2.466 Collecting asndb>=1.1.0 (from bbot==3.0.2)
+#30 2.497   Downloading asndb-1.1.1-py3-none-any.whl.metadata (6.3 kB)
+#30 2.535 Collecting beautifulsoup4<5,>=4.12.2 (from bbot==3.0.2)
+#30 2.559   Downloading beautifulsoup4-4.15.0-py3-none-any.whl.metadata (3.8 kB)
+#30 2.681 Collecting blastdns<2,>=1.9.0 (from bbot==3.0.2)
+#30 2.709   Downloading blastdns-1.9.1-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (26 kB)
+#30 2.772 Collecting blasthttp<0.11,>=0.10.0 (from bbot==3.0.2)
+#30 2.787   Downloading blasthttp-0.10.1-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (167 bytes)
+#30 2.814 Collecting cachetools<8.0.0,>=5.3.2 (from bbot==3.0.2)
+#30 2.827   Downloading cachetools-7.3.2-py3-none-any.whl.metadata (5.5 kB)
+#30 2.923 Collecting cloudcheck<12,>=11.1.0 (from bbot==3.0.2)
+#30 2.937   Downloading cloudcheck-11.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (18 kB)
+#30 2.966 Collecting deepdiff<10,>=8.0.0 (from bbot==3.0.2)
+#30 2.979   Downloading deepdiff-9.1.0-py3-none-any.whl.metadata (8.4 kB)
+#30 3.002 Collecting dnspython<2.9.0,>=2.7.0 (from bbot==3.0.2)
+#30 3.094   Downloading dnspython-2.8.0-py3-none-any.whl.metadata (5.7 kB)
+#30 3.117 Collecting idna<4,>=3.4 (from bbot==3.0.2)
+#30 3.130   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+#30 3.153 Collecting jinja2<4,>=3.1.3 (from bbot==3.0.2)
+#30 3.166   Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+#30 3.350 Collecting lxml<7.0.0,>=4.9.2 (from bbot==3.0.2)
+#30 3.372   Downloading lxml-6.1.3-cp312-cp312-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (3.3 kB)
+#30 3.436 Collecting mmh3<6.0,>=4.1 (from bbot==3.0.2)
+#30 3.448   Downloading mmh3-5.3.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (13 kB)
+#30 3.634 Collecting orjson<4,>=3.10.12 (from bbot==3.0.2)
+#30 3.648   Downloading orjson-3.13.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (42 kB)
+#30 3.676 Collecting packaging>=23.0 (from bbot==3.0.2)
+#30 3.689   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+#30 3.690 Requirement already satisfied: pip in /opt/bbot/lib/python3.12/site-packages (from bbot==3.0.2) (25.0.1)
+#30 3.751 Collecting psutil<8.0.0,>=5.9.4 (from bbot==3.0.2)
+#30 3.764   Downloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl.metadata (22 kB)
+#30 3.787 Collecting puremagic<2,>=1.28 (from bbot==3.0.2)
+#30 3.799   Downloading puremagic-1.30-py3-none-any.whl.metadata (5.8 kB)
+#30 3.875 Collecting pycryptodome<4,>=3.17 (from bbot==3.0.2)
+#30 3.887   Downloading pycryptodome-3.24.1-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.4 kB)
+#30 3.984 Collecting pydantic<3,>=2.12.2 (from bbot==3.0.2)
+#30 ...
+
+#28 [build 4/7] RUN go mod download
+#28 DONE 7.6s
+
+#30 [stage-3  7/13] RUN set -eux;     python -m venv /opt/bbot;     /opt/bbot/bin/pip install --no-cache-dir "bbot==3.0.2";     ln -s /opt/bbot/bin/bbot /usr/local/bin/bbot;     bbot -y --install-all-deps;     bbot --version >/dev/null;     bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness >/dev/null 2>&1 || true;     bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness --no-color >/tmp/bbot-dry.log 2>&1 || true;     ! grep -qE "Installing|ERRR|CRITICAL" /tmp/bbot-dry.log || { cat /tmp/bbot-dry.log; exit 1; }
+#30 4.015   Downloading pydantic-2.14.3-py3-none-any.whl.metadata (141 kB)
+#30 4.055 Collecting pyjwt<3,>=2.7.0 (from bbot==3.0.2)
+#30 4.068   Downloading pyjwt-2.15.1-py3-none-any.whl.metadata (3.5 kB)
+#30 4.096 Collecting pyyaml<7,>=6.0.0 (from bbot==3.0.2)
+#30 ...
+
+#31 [build 5/7] COPY . .
+#31 DONE 0.2s
+
+#30 [stage-3  7/13] RUN set -eux;     python -m venv /opt/bbot;     /opt/bbot/bin/pip install --no-cache-dir "bbot==3.0.2";     ln -s /opt/bbot/bin/bbot /usr/local/bin/bbot;     bbot -y --install-all-deps;     bbot --version >/dev/null;     bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness >/dev/null 2>&1 || true;     bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness --no-color >/tmp/bbot-dry.log 2>&1 || true;     ! grep -qE "Installing|ERRR|CRITICAL" /tmp/bbot-dry.log || { cat /tmp/bbot-dry.log; exit 1; }
+#30 4.108   Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+#30 4.265 Collecting pyzmq<28.0.0,>=26.0.3 (from bbot==3.0.2)
+#30 4.278   Downloading pyzmq-27.3.0-cp312-abi3-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (3.8 kB)
+#30 4.323 Collecting radixtarget<5,>=4.0.1 (from bbot==3.0.2)
+#30 4.336   Downloading radixtarget-4.3.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (9.0 kB)
+#30 4.555 Collecting regex<2027.0.0,>=2024.4.16 (from bbot==3.0.2)
+#30 4.567   Downloading regex-2026.11.15-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+#30 4.627 Collecting setproctitle<2,>=1.3.3 (from bbot==3.0.2)
+#30 4.640   Downloading setproctitle-1.3.8-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (10 kB)
+#30 4.657 Collecting socksio<2,>=1.0.0 (from bbot==3.0.2)
+#30 4.669   Downloading socksio-1.0.0-py3-none-any.whl.metadata (6.1 kB)
+#30 4.688 Collecting tabulate==0.8.10 (from bbot==3.0.2)
+#30 4.703   Downloading tabulate-0.8.10-py3-none-any.whl.metadata (25 kB)
+#30 4.727 Collecting tldextract<6,>=5.3.0 (from bbot==3.0.2)
+#30 4.740   Downloading tldextract-5.4.0-py3-none-any.whl.metadata (9.2 kB)
+#30 4.764 Collecting unidecode<2,>=1.3.8 (from bbot==3.0.2)
+#30 4.776   Downloading Unidecode-1.4.0-py3-none-any.whl.metadata (13 kB)
+#30 4.875 Collecting websockets<17.0.0,>=14.0.0 (from bbot==3.0.2)
+#30 ...
+
+#26 [web 6/6] RUN npm run build:static
+#26 12.01   Finished TypeScript in 4.7s ...
+#26 12.02   Collecting page data using 19 workers ...
+#26 12.99   Generating static pages using 19 workers (0/31) ...
+#26 13.18   Generating static pages using 19 workers (7/31) 
+#26 13.18   Generating static pages using 19 workers (15/31) 
+#26 13.25   Generating static pages using 19 workers (23/31) 
+#26 13.29 ✓ Generating static pages using 19 workers (31/31) in 300ms
+#26 13.29   Finalizing page optimization ...
+#26 13.31 ⚠ Statically exporting a Next.js application via `next export` disables API routes and middleware.
+#26 13.31 This command is meant for static-only hosts, and is not necessary to make your application static.
+#26 13.31 Pages in your application without server-side data dependencies will be automatically statically exported by `next build`, including pages powered by `getStaticProps`.
+#26 13.31 Learn more: https://nextjs.org/docs/messages/api-routes-static-export
+#26 13.82 
+#26 13.82 Route (app)
+#26 13.82 ┌ ○ /
+#26 13.82 ├ ○ /_not-found
+#26 13.82 ├ ○ /chat
+#26 13.82 ├ ○ /dashboard
+#26 13.82 ├ ○ /function/assets
+#26 13.82 ├ ○ /function/commands
+#26 13.82 ├ ○ /function/findings
+#26 13.82 ├ ○ /function/findings/detail
+#26 13.82 ├ ○ /function/llm-records
+#26 13.82 ├ ○ /function/sync
+#26 13.82 ├ ○ /function/tasks
+#26 13.82 ├ ○ /function/tasks/detail
+#26 13.82 ├ ○ /function/traffic
+#26 13.82 ├ ○ /function/workspace
+#26 13.82 ├ ○ /icon.png
+#26 13.82 ├ ○ /login
+#26 13.82 ├ ○ /setup
+#26 13.82 ├ ○ /system/agents
+#26 13.82 ├ ○ /system/agents/detail
+#26 13.82 ├ ○ /system/intercept
+#26 13.82 ├ ○ /system/intercept/approvals
+#26 13.82 ├ ○ /system/intercept/assets
+#26 13.82 ├ ○ /system/llm
+#26 13.82 ├ ○ /system/logs
+#26 13.82 ├ ○ /system/mcp
+#26 13.82 ├ ○ /system/notify
+#26 13.82 ├ ○ /system/settings
+#26 13.82 ├ ○ /system/skills
+#26 13.82 └ ○ /system/tools
+#26 13.82 
+#26 13.82 
+#26 13.82 ƒ Proxy (Middleware)
+#26 13.82 
+#26 13.82 ○  (Static)  prerendered as static content
+#26 13.82 
+#26 DONE 13.9s
+
+#30 [stage-3  7/13] RUN set -eux;     python -m venv /opt/bbot;     /opt/bbot/bin/pip install --no-cache-dir "bbot==3.0.2";     ln -s /opt/bbot/bin/bbot /usr/local/bin/bbot;     bbot -y --install-all-deps;     bbot --version >/dev/null;     bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness >/dev/null 2>&1 || true;     bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness --no-color >/tmp/bbot-dry.log 2>&1 || true;     ! grep -qE "Installing|ERRR|CRITICAL" /tmp/bbot-dry.log || { cat /tmp/bbot-dry.log; exit 1; }
+#30 4.887   Downloading websockets-16.1.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.8 kB)
+#30 4.905 Collecting wordninja<3,>=2.0.0 (from bbot==3.0.2)
+#30 4.919   Downloading wordninja-2.0.0.tar.gz (541 kB)
+#30 4.962      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 541.6/541.6 kB 12.0 MB/s eta 0:00:00
+#30 4.965   Installing build dependencies: started
+#30 ...
+
+#32 [build 6/7] COPY --from=web /src/web/out ./server/webui/dist
+#32 DONE 0.1s
+
+#30 [stage-3  7/13] RUN set -eux;     python -m venv /opt/bbot;     /opt/bbot/bin/pip install --no-cache-dir "bbot==3.0.2";     ln -s /opt/bbot/bin/bbot /usr/local/bin/bbot;     bbot -y --install-all-deps;     bbot --version >/dev/null;     bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness >/dev/null 2>&1 || true;     bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness --no-color >/tmp/bbot-dry.log 2>&1 || true;     ! grep -qE "Installing|ERRR|CRITICAL" /tmp/bbot-dry.log || { cat /tmp/bbot-dry.log; exit 1; }
+#30 5.892   Installing build dependencies: finished with status 'done'
+#30 5.893   Getting requirements to build wheel: started
+#30 6.044   Getting requirements to build wheel: finished with status 'done'
+#30 6.045   Preparing metadata (pyproject.toml): started
+#30 6.171   Preparing metadata (pyproject.toml): finished with status 'done'
+#30 6.189 Collecting xmltojson<3,>=2.0.2 (from bbot==3.0.2)
+#30 6.203   Downloading xmltojson-2.0.3-py3-none-any.whl.metadata (1.9 kB)
+#30 6.317 Collecting xxhash<5,>=3.5.0 (from bbot==3.0.2)
+#30 6.331   Downloading xxhash-4.1.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (18 kB)
+#30 6.361 Collecting yara-python<5,>=4.5.4 (from bbot==3.0.2)
+#30 6.373   Downloading yara_python-4.5.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (2.8 kB)
+#30 6.422 Collecting zstandard<1,>=0.22 (from bbot==3.0.2)
+#30 6.435   Downloading zstandard-0.25.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.3 kB)
+#30 6.555 Collecting cryptography (from ansible-core<3,>=2.17->bbot==3.0.2)
+#30 6.567   Downloading cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (4.4 kB)
+#30 6.587 Collecting resolvelib<2.0.0,>=0.8.0 (from ansible-core<3,>=2.17->bbot==3.0.2)
+#30 6.601   Downloading resolvelib-1.2.1-py3-none-any.whl.metadata (3.7 kB)
+#30 6.619 Collecting pexpect>=4.5 (from ansible-runner<3,>=2.3.2->bbot==3.0.2)
+#30 6.632   Downloading pexpect-4.9.0-py2.py3-none-any.whl.metadata (2.5 kB)
+#30 6.650 Collecting python-daemon (from ansible-runner<3,>=2.3.2->bbot==3.0.2)
+#30 6.665   Downloading python_daemon-3.1.2-py3-none-any.whl.metadata (4.8 kB)
+#30 6.698 Collecting typer>=0.19.2 (from asndb>=1.1.0->bbot==3.0.2)
+#30 6.711   Downloading typer-0.29.1-py3-none-any.whl.metadata (16 kB)
+#30 6.735 Collecting soupsieve>=1.6.1 (from beautifulsoup4<5,>=4.12.2->bbot==3.0.2)
+#30 6.747   Downloading soupsieve-4.1.1-py3-none-any.whl.metadata (4.4 kB)
+#30 6.767 Collecting typing-extensions>=4.0.0 (from beautifulsoup4<5,>=4.12.2->bbot==3.0.2)
+#30 6.779   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+#30 6.963 Collecting cachebox<6,>=5.2 (from deepdiff<10,>=8.0.0->bbot==3.0.2)
+#30 6.976   Downloading cachebox-5.2.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (27 kB)
+#30 6.999 Collecting orderly-set<6,>=5.5.0 (from deepdiff<10,>=8.0.0->bbot==3.0.2)
+#30 7.014   Downloading orderly_set-5.5.0-py3-none-any.whl.metadata (6.6 kB)
+#30 7.051 Collecting MarkupSafe>=2.0 (from jinja2<4,>=3.1.3->bbot==3.0.2)
+#30 7.065   Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+#30 7.087 Collecting annotated-types>=0.6.0 (from pydantic<3,>=2.12.2->bbot==3.0.2)
+#30 7.101   Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+#30 7.420 Collecting pydantic-core==2.50.4 (from pydantic<3,>=2.12.2->bbot==3.0.2)
+#30 7.435   Downloading pydantic_core-2.50.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (6.6 kB)
+#30 7.457 Collecting typing-inspection>=0.4.4 (from pydantic<3,>=2.12.2->bbot==3.0.2)
+#30 7.469   Downloading typing_inspection-0.4.5-py3-none-any.whl.metadata (2.6 kB)
+#30 7.507 Collecting requests>=2.1.0 (from tldextract<6,>=5.3.0->bbot==3.0.2)
+#30 7.521   Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+#30 7.540 Collecting requests-file>=1.4 (from tldextract<6,>=5.3.0->bbot==3.0.2)
+#30 7.552   Downloading requests_file-3.0.1-py2.py3-none-any.whl.metadata (1.7 kB)
+#30 7.585 Collecting filelock>=3.0.8 (from tldextract<6,>=5.3.0->bbot==3.0.2)
+#30 7.599   Downloading filelock-4.2.10-py3-none-any.whl.metadata (2.3 kB)
+#30 7.619 Collecting xmltodict==0.14.2 (from xmltojson<3,>=2.0.2->bbot==3.0.2)
+#30 7.632   Downloading xmltodict-0.14.2-py2.py3-none-any.whl.metadata (8.0 kB)
+#30 7.663 Collecting ptyprocess>=0.5 (from pexpect>=4.5->ansible-runner<3,>=2.3.2->bbot==3.0.2)
+#30 7.678   Downloading ptyprocess-0.7.0-py2.py3-none-any.whl.metadata (1.3 kB)
+#30 7.759 Collecting charset_normalizer<4,>=2 (from requests>=2.1.0->tldextract<6,>=5.3.0->bbot==3.0.2)
+#30 7.773   Downloading charset_normalizer-3.5.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (46 kB)
+#30 7.807 Collecting urllib3<3,>=1.26 (from requests>=2.1.0->tldextract<6,>=5.3.0->bbot==3.0.2)
+#30 7.821   Downloading urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+#30 7.846 Collecting certifi>=2023.5.7 (from requests>=2.1.0->tldextract<6,>=5.3.0->bbot==3.0.2)
+#30 7.860   Downloading certifi-2026.10.23-py3-none-any.whl.metadata (2.5 kB)
+#30 7.900 Collecting shellingham>=1.3.0 (from typer>=0.19.2->asndb>=1.1.0->bbot==3.0.2)
+#30 7.916   Downloading shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+#30 8.028 Collecting rich>=13.8.0 (from typer>=0.19.2->asndb>=1.1.0->bbot==3.0.2)
+#30 8.054   Downloading rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+#30 8.079 Collecting annotated-doc>=0.0.2 (from typer>=0.19.2->asndb>=1.1.0->bbot==3.0.2)
+#30 8.093   Downloading annotated_doc-0.0.6-py3-none-any.whl.metadata (6.5 kB)
+#30 8.155 Collecting cffi>=2.0.0 (from cryptography->ansible-core<3,>=2.17->bbot==3.0.2)
+#30 8.169   Downloading cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.5 kB)
+#30 8.186 Collecting lockfile>=0.10 (from python-daemon->ansible-runner<3,>=2.3.2->bbot==3.0.2)
+#30 8.198   Downloading lockfile-0.12.2-py2.py3-none-any.whl.metadata (2.4 kB)
+#30 8.217 Collecting pycparser (from cffi>=2.0.0->cryptography->ansible-core<3,>=2.17->bbot==3.0.2)
+#30 8.233   Downloading pycparser-3.12-py3-none-any.whl.metadata (9.7 kB)
+#30 8.255 Collecting markdown-it-py>=2.2.0 (from rich>=13.8.0->typer>=0.19.2->asndb>=1.1.0->bbot==3.0.2)
+#30 8.268   Downloading markdown_it_py-4.3.0-py3-none-any.whl.metadata (7.9 kB)
+#30 8.292 Collecting pygments<3.0.0,>=2.13.0 (from rich>=13.8.0->typer>=0.19.2->asndb>=1.1.0->bbot==3.0.2)
+#30 8.305   Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+#30 8.328 Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=13.8.0->typer>=0.19.2->asndb>=1.1.0->bbot==3.0.2)
+#30 8.341   Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+#30 8.359 Downloading bbot-3.0.2-py3-none-any.whl (1.9 MB)
+#30 8.477    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.9/1.9 MB 16.3 MB/s eta 0:00:00
+#30 8.488 Downloading tabulate-0.8.10-py3-none-any.whl (29 kB)
+#30 8.504 Downloading ansible_core-2.21.6-py3-none-any.whl (2.5 MB)
+#30 8.661    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.5/2.5 MB 15.3 MB/s eta 0:00:00
+#30 8.676 Downloading ansible_runner-2.4.3-py3-none-any.whl (80 kB)
+#30 8.693 Downloading asndb-1.1.1-py3-none-any.whl (18 kB)
+#30 8.708 Downloading beautifulsoup4-4.15.0-py3-none-any.whl (109 kB)
+#30 8.726 Downloading blastdns-1.9.1-cp312-cp312-manylinux_2_28_x86_64.whl (2.4 MB)
+#30 8.878    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.4/2.4 MB 16.6 MB/s eta 0:00:00
+#30 8.893 Downloading blasthttp-0.10.1-cp312-cp312-manylinux_2_28_x86_64.whl (4.8 MB)
+#30 9.190    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.8/4.8 MB 16.0 MB/s eta 0:00:00
+#30 9.202 Downloading cachetools-7.3.2-py3-none-any.whl (19 kB)
+#30 9.219 Downloading cloudcheck-11.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (4.0 MB)
+#30 9.440    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.0/4.0 MB 18.0 MB/s eta 0:00:00
+#30 9.455 Downloading deepdiff-9.1.0-py3-none-any.whl (184 kB)
+#30 9.481 Downloading dnspython-2.8.0-py3-none-any.whl (331 kB)
+#30 9.517 Downloading idna-3.20-py3-none-any.whl (69 kB)
+#30 9.534 Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+#30 9.556 Downloading lxml-6.1.3-cp312-cp312-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (5.2 MB)
+#30 9.949    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.2/5.2 MB 13.4 MB/s eta 0:00:00
+#30 9.966 Downloading mmh3-5.3.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (103 kB)
+#30 9.981 Downloading orjson-3.13.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (130 kB)
+#30 10.00 Downloading packaging-26.3-py3-none-any.whl (129 kB)
+#30 10.02 Downloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+#30 10.05 Downloading puremagic-1.30-py3-none-any.whl (43 kB)
+#30 10.06 Downloading pycryptodome-3.24.1-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (2.3 MB)
+#30 10.35    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.3/2.3 MB 10.8 MB/s eta 0:00:00
+#30 10.36 Downloading pydantic-2.14.3-py3-none-any.whl (494 kB)
+#30 10.43 Downloading pydantic_core-2.50.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (2.3 MB)
+#30 10.62    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.3/2.3 MB 11.7 MB/s eta 0:00:00
+#30 10.63 Downloading pyjwt-2.15.1-py3-none-any.whl (33 kB)
+#30 10.65 Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+#30 10.71    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 12.5 MB/s eta 0:00:00
+#30 10.72 Downloading pyzmq-27.3.0-cp312-abi3-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (855 kB)
+#30 10.80    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 855.2/855.2 kB 10.9 MB/s eta 0:00:00
+#30 10.81 Downloading radixtarget-4.3.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (526 kB)
+#30 10.89    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 526.3/526.3 kB 11.0 MB/s eta 0:00:00
+#30 10.91 Downloading regex-2026.11.15-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (809 kB)
+#30 10.98    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 809.2/809.2 kB 12.8 MB/s eta 0:00:00
+#30 10.99 Downloading setproctitle-1.3.8-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (32 kB)
+#30 11.08 Downloading socksio-1.0.0-py3-none-any.whl (12 kB)
+#30 11.10 Downloading tldextract-5.4.0-py3-none-any.whl (107 kB)
+#30 11.12 Downloading Unidecode-1.4.0-py3-none-any.whl (235 kB)
+#30 11.15 Downloading websockets-16.1.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (187 kB)
+#30 11.18 Downloading xmltojson-2.0.3-py3-none-any.whl (7.8 kB)
+#30 11.20 Downloading xmltodict-0.14.2-py2.py3-none-any.whl (10.0 kB)
+#30 11.21 Downloading xxhash-4.1.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (472 kB)
+#30 11.26 Downloading yara_python-4.5.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.3 MB)
+#30 11.46    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.3/2.3 MB 12.1 MB/s eta 0:00:00
+#30 11.47 Downloading zstandard-0.25.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.5 MB)
+#30 11.87    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.5/5.5 MB 14.0 MB/s eta 0:00:00
+#30 11.88 Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+#30 11.89 Downloading cachebox-5.2.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (398 kB)
+#30 11.93 Downloading filelock-4.2.10-py3-none-any.whl (218 kB)
+#30 11.95 Downloading markupsafe-3.0.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+#30 11.97 Downloading orderly_set-5.5.0-py3-none-any.whl (13 kB)
+#30 11.99 Downloading pexpect-4.9.0-py2.py3-none-any.whl (63 kB)
+#30 12.01 Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+#30 12.02 Downloading requests_file-3.0.1-py2.py3-none-any.whl (4.5 kB)
+#30 12.03 Downloading resolvelib-1.2.1-py3-none-any.whl (18 kB)
+#30 12.05 Downloading soupsieve-4.1.1-py3-none-any.whl (55 kB)
+#30 12.07 Downloading typer-0.29.1-py3-none-any.whl (121 kB)
+#30 12.08 Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+#30 12.10 Downloading typing_inspection-0.4.5-py3-none-any.whl (14 kB)
+#30 12.11 Downloading cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl (4.8 MB)
+#30 12.54    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.8/4.8 MB 10.9 MB/s eta 0:00:00
+#30 12.56 Downloading python_daemon-3.1.2-py3-none-any.whl (30 kB)
+#30 12.57 Downloading annotated_doc-0.0.6-py3-none-any.whl (5.3 kB)
+#30 12.58 Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+#30 12.60 Downloading cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (221 kB)
+#30 12.63 Downloading charset_normalizer-3.5.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (257 kB)
+#30 12.65 Downloading lockfile-0.12.2-py2.py3-none-any.whl (13 kB)
+#30 12.67 Downloading ptyprocess-0.7.0-py2.py3-none-any.whl (13 kB)
+#30 12.68 Downloading rich-15.0.0-py3-none-any.whl (310 kB)
+#30 12.71 Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+#30 12.73 Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+#30 12.75 Downloading markdown_it_py-4.3.0-py3-none-any.whl (96 kB)
+#30 12.77 Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+#30 12.88    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 10.9 MB/s eta 0:00:00
+#30 12.90 Downloading pycparser-3.12-py3-none-any.whl (62 kB)
+#30 12.91 Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+#30 12.96 Building wheels for collected packages: wordninja
+#30 12.96   Building wheel for wordninja (pyproject.toml): started
+#30 13.10   Building wheel for wordninja (pyproject.toml): finished with status 'done'
+#30 13.10   Created wheel for wordninja: filename=wordninja-2.0.0-py3-none-any.whl size=541553 sha256=735b787af70ef8b81ab782ce335541e90999dd5979ebdf0e62c92e27824d3fc8
+#30 13.10   Stored in directory: /tmp/pip-ephem-wheel-cache-zo7m34fg/wheels/6e/31/92/f12667e4dd102e546832a02f41feca39ae916889006517e595
+#30 13.10 Successfully built wordninja
+#30 13.16 Installing collected packages: yara-python, wordninja, puremagic, ptyprocess, lockfile, zstandard, xxhash, xmltodict, websockets, urllib3, unidecode, typing-extensions, tabulate, soupsieve, socksio, shellingham, setproctitle, resolvelib, regex, radixtarget, pyzmq, pyyaml, python-daemon, pyjwt, pygments, pycryptodome, pycparser, psutil, pexpect, packaging, orjson, orderly-set, mmh3, mdurl, MarkupSafe, lxml, idna, filelock, dnspython, cloudcheck, charset_normalizer, certifi, cachetools, cachebox, blasthttp, annotated-types, annotated-doc, xmltojson, typing-inspection, requests, pydantic-core, markdown-it-py, jinja2, deepdiff, cffi, beautifulsoup4, ansible-runner, rich, requests-file, pydantic, cryptography, typer, tldextract, blastdns, ansible-core, asndb, bbot
+#30 ...
+
+#33 [build 7/7] RUN ARTEX_SKIP_FRONTEND=1     ARTEX_SKIP_NPM_CI=1     ARTEX_COMPRESS=0     ARTEX_OUTPUT=/out/artex     ARTEX_BUILD_VERSION="dev"     bash ./build.sh --target "linux/amd64"
+#33 0.115 [36m[*][0m Compiling linux/amd64, version dev
+#33 7.754 [36m[*][0m Skipping UPX: /out/artex
+#33 7.754 [32m[+][0m Build complete: /out/artex
+#33 DONE 7.9s
+
+#30 [stage-3  7/13] RUN set -eux;     python -m venv /opt/bbot;     /opt/bbot/bin/pip install --no-cache-dir "bbot==3.0.2";     ln -s /opt/bbot/bin/bbot /usr/local/bin/bbot;     bbot -y --install-all-deps;     bbot --version >/dev/null;     bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness >/dev/null 2>&1 || true;     bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness --no-color >/tmp/bbot-dry.log 2>&1 || true;     ! grep -qE "Installing|ERRR|CRITICAL" /tmp/bbot-dry.log || { cat /tmp/bbot-dry.log; exit 1; }
+#30 16.35 Successfully installed MarkupSafe-3.0.4 annotated-doc-0.0.6 annotated-types-0.8.0 ansible-core-2.21.6 ansible-runner-2.4.3 asndb-1.1.1 bbot-3.0.2 beautifulsoup4-4.15.0 blastdns-1.9.1 blasthttp-0.10.1 cachebox-5.2.3 cachetools-7.3.2 certifi-2026.10.23 cffi-2.1.1 charset_normalizer-3.5.2 cloudcheck-11.2.0 cryptography-50.0.2 deepdiff-9.1.0 dnspython-2.8.0 filelock-4.2.10 idna-3.20 jinja2-3.1.6 lockfile-0.12.2 lxml-6.1.3 markdown-it-py-4.3.0 mdurl-0.1.2 mmh3-5.3.1 orderly-set-5.5.0 orjson-3.13.0 packaging-26.3 pexpect-4.9.0 psutil-7.2.2 ptyprocess-0.7.0 puremagic-1.30 pycparser-3.12 pycryptodome-3.24.1 pydantic-2.14.3 pydantic-core-2.50.4 pygments-2.21.0 pyjwt-2.15.1 python-daemon-3.1.2 pyyaml-6.0.3 pyzmq-27.3.0 radixtarget-4.3.1 regex-2026.11.15 requests-2.34.2 requests-file-3.0.1 resolvelib-1.2.1 rich-15.0.0 setproctitle-1.3.8 shellingham-1.5.4 socksio-1.0.0 soupsieve-4.1.1 tabulate-0.8.10 tldextract-5.4.0 typer-0.29.1 typing-extensions-4.16.0 typing-inspection-0.4.5 unidecode-1.4.0 urllib3-2.8.0 websockets-16.1.1 wordninja-2.0.0 xmltodict-0.14.2 xmltojson-2.0.3 xxhash-4.1.0 yara-python-4.5.4 zstandard-0.25.0
+#30 16.46 
+#30 16.46 [notice] A new release of pip is available: 25.0.1 -> 26.3
+#30 16.46 [notice] To update, run: python -m pip install --upgrade pip
+#30 16.59 + ln -s /opt/bbot/bin/bbot /usr/local/bin/bbot
+#30 16.59 + bbot -y --install-all-deps
+#30 16.72  [1;38;5;208m ______ [0m _____   ____ _______
+#30 16.72  [1;38;5;208m|  ___ \[0m|  __ \ / __ \__   __|
+#30 16.72  [1;38;5;208m| |___) [0m| |__) | |  | | | |
+#30 16.72  [1;38;5;208m|  ___ <[0m|  __ <| |  | | | |
+#30 16.72  [1;38;5;208m| |___) [0m| |__) | |__| | | |
+#30 16.72  [1;38;5;208m|______/[0m|_____/ \____/  |_|
+#30 16.72  [1;38;5;208mBIGHUGE[0m BLS OSINT TOOL 3.0.2
+#30 16.72 
+#30 16.72 www.blacklanternsecurity.com/bbot
+#30 16.72 
+#30 16.95 [1;38;5;69m[INFO][0m Creating BBOT config at /root/.config/bbot/bbot.yml
+#30 16.96 [1;38;5;69m[INFO][0m Creating BBOT secrets at /root/.config/bbot/secrets.yml
+#30 17.44 [1;38;5;69m[INFO][0m Installing module dependencies
+#30 17.44 [1;38;5;69m[INFO][0m Installing Ansible Community General Collection
+#30 23.50 [1;38;5;69m[INFO][0m Successfully installed Ansible Community General Collection
+#30 23.61 [1;38;5;69m[INFO][0m Installing core BBOT dependencies: 7z,gcc,make,openssl_dev_headers
+#30 38.37 [1;38;5;69m[INFO][0m [1;38;5;69mInstalling module dependencies. Please be patient, this may take a while.[0m
+#30 38.37 [1;38;5;69m[INFO][0m Installing the following pip packages: baddns~=2.4.0
+#30 39.60 [1;38;5;69m[INFO][0m Successfully installed baddns-2.4.1 colorama-0.4.6 python-dateutil-2.9.0.post0 python-whois-0.9.6 six-1.17.0
+#30 39.60 [1;38;5;69m[INFO][0m Installing the following pip packages: baddns~=2.4.0
+#30 39.98 [1;38;5;69m[INFO][0m Requirement already satisfied: certifi>=2023.5.7 in /opt/bbot/lib/python3.12/site-packages (from requests>=2.1.0->tldextract>=5.1.1->baddns~=2.4.0) (2026.10.23)
+#30 39.98 [1;38;5;69m[INFO][0m Installing the following pip packages: badsecrets~=1.2.1
+#30 42.48 [1;38;5;69m[INFO][0m Successfully installed asgiref-3.13.0 badsecrets-1.2.1 blinker-1.9.0 click-8.5.1 django-5.2.19 flask-3.1.3 flask-unsign-1.2.1 itsdangerous-2.2.0 sqlparse-0.6.1 werkzeug-3.1.9
+#30 42.48 [1;38;5;69m[INFO][0m Installing the following pip packages: asyncpg
+#30 43.30 [1;38;5;69m[INFO][0m Successfully installed asyncpg-0.32.0
+#30 43.30 [1;38;5;69m[INFO][0m Running 5 Ansible tasks for dnsbrute
+#30 48.73 [1;38;5;69m[INFO][0m Successfully ran 5 Ansible tasks for dnsbrute
+#30 48.73 [1;38;5;69m[INFO][0m Running 1 Ansible tasks for fingerprintx
+#30 50.46 [1;38;5;69m[INFO][0m Successfully ran 1 Ansible tasks for fingerprintx
+#30 50.46 [1;38;5;69m[INFO][0m Installing the following OS packages: git
+#30 52.13 [1;38;5;69m[INFO][0m Successfully installed OS packages "git"
+#30 52.13 [1;38;5;69m[INFO][0m Installing the following pip packages: aiosqlite
+#30 52.60 [1;38;5;69m[INFO][0m Successfully installed aiosqlite-0.22.1
+#30 52.60 [1;38;5;69m[INFO][0m Running 11 Ansible tasks for gowitness
+#30 73.23 [1;38;5;69m[INFO][0m Successfully ran 11 Ansible tasks for gowitness
+#30 73.23 [1;38;5;69m[INFO][0m Running 1 Ansible tasks for gowitness
+#30 75.95 [1;38;5;69m[INFO][0m Successfully ran 1 Ansible tasks for gowitness
+#30 75.95 [1;38;5;69m[INFO][0m Running 5 Ansible tasks for jadx
+#30 86.60 [1;38;5;69m[INFO][0m Successfully ran 5 Ansible tasks for jadx
+#30 86.60 [1;38;5;69m[INFO][0m Running 2 Ansible tasks for jadx
+#30 91.28 [1;38;5;69m[INFO][0m Successfully ran 2 Ansible tasks for jadx
+#30 91.28 [1;38;5;69m[INFO][0m Installing the following pip packages: kreuzberg>=4.3,<4.5,pypdfium2~=5.0
+#30 93.48 [1;38;5;69m[INFO][0m Successfully installed kreuzberg-4.4.6 pypdfium2-5.15.2
+#30 93.48 [1;38;5;69m[INFO][0m Running 1 Ansible tasks for legba
+#30 95.91 [1;38;5;69m[INFO][0m Successfully ran 1 Ansible tasks for legba
+#30 95.91 [1;38;5;69m[INFO][0m Running 8 Ansible tasks for medusa
+#30 153.4 [1;38;5;69m[INFO][0m Successfully ran 8 Ansible tasks for medusa
+#30 153.4 [1;38;5;69m[INFO][0m Installing the following pip packages: pyyaml~=6.0
+#30 153.9 [1;38;5;69m[INFO][0m Requirement already satisfied: pyyaml~=6.0 in /opt/bbot/lib/python3.12/site-packages (6.0.3)
+#30 153.9 [1;38;5;69m[INFO][0m Running 1 Ansible tasks for nuclei
+#30 157.3 [1;38;5;69m[INFO][0m Successfully ran 1 Ansible tasks for nuclei
+#30 157.3 [1;38;5;69m[INFO][0m Running 5 Ansible tasks for portscan
+#30 163.7 [1;38;5;69m[INFO][0m Successfully ran 5 Ansible tasks for portscan
+#30 163.7 [1;38;5;69m[INFO][0m Running 11 Ansible tasks for retirejs
+#30 172.1 [1;38;5;69m[INFO][0m Successfully ran 11 Ansible tasks for retirejs
+#30 172.1 [1;38;5;69m[INFO][0m Installing the following pip packages: pycryptodome~=3.23.0
+#30 173.3 [1;38;5;69m[INFO][0m Successfully installed pycryptodome-3.23.0
+#30 173.3 [1;38;5;69m[INFO][0m Running 3 Ansible tasks for telerik
+#30 175.5 [1;38;5;69m[INFO][0m Successfully ran 3 Ansible tasks for telerik
+#30 175.5 [1;38;5;69m[INFO][0m Running 1 Ansible tasks for trajan
+#30 177.9 [1;38;5;69m[INFO][0m Successfully ran 1 Ansible tasks for trajan
+#30 177.9 [1;38;5;69m[INFO][0m Running 1 Ansible tasks for trufflehog
+#30 180.9 [1;38;5;69m[INFO][0m Successfully ran 1 Ansible tasks for trufflehog
+#30 180.9 [1;38;5;69m[INFO][0m Installing the following pip packages: wafw00f~=2.3.1
+#30 182.8 [1;38;5;69m[INFO][0m Successfully installed PySocks-1.7.1 pluginbase-1.0.1 wafw00f-2.3.2
+#30 182.8 [1;38;5;69m[INFO][0m Installing the following pip packages: numpy
+#30 185.1 [1;38;5;69m[INFO][0m Successfully installed numpy-2.5.4
+#30 185.1 [1;38;5;69m[INFO][0m Installing the following pip packages: aiokafka~=0.12.0
+#30 186.0 [1;38;5;69m[INFO][0m Successfully installed aiokafka-0.12.0 async-timeout-5.0.1
+#30 186.0 [1;38;5;69m[INFO][0m Installing the following pip packages: pymongo~=4.15
+#30 187.2 [1;38;5;69m[INFO][0m Successfully installed pymongo-4.20.0
+#30 187.2 [1;38;5;69m[INFO][0m Installing the following pip packages: sqlmodel,aiomysql
+#30 189.3 [1;38;5;69m[INFO][0m Successfully installed PyMySQL-1.2.4 SQLAlchemy-2.1.8 aiomysql-0.3.2 sqlmodel-0.0.50
+#30 189.3 [1;38;5;69m[INFO][0m Installing the following pip packages: nats-py
+#30 189.8 [1;38;5;69m[INFO][0m Successfully installed nats-py-2.16.0
+#30 189.8 [1;38;5;69m[INFO][0m Installing the following pip packages: neo4j
+#30 190.9 [1;38;5;69m[INFO][0m Successfully installed neo4j-6.4.1 pytz-2026.6
+#30 190.9 [1;38;5;69m[INFO][0m Installing the following pip packages: sqlmodel,asyncpg
+#30 191.4 [1;38;5;69m[INFO][0m Requirement already satisfied: typing-inspection>=0.4.4 in /opt/bbot/lib/python3.12/site-packages (from pydantic>=2.11.0->sqlmodel) (0.4.5)
+#30 191.4 [1;38;5;69m[INFO][0m Installing the following pip packages: aio_pika~=9.5.0
+#30 192.8 [1;38;5;69m[INFO][0m Successfully installed aio_pika-9.5.8 aiormq-6.9.4 multidict-7.2.1 pamqp-3.3.0 propcache-0.5.4 yarl-1.25.1
+#30 192.8 [1;38;5;69m[INFO][0m Installing the following pip packages: sqlmodel,aiosqlite
+#30 193.3 [1;38;5;69m[INFO][0m Requirement already satisfied: typing-inspection>=0.4.4 in /opt/bbot/lib/python3.12/site-packages (from pydantic>=2.11.0->sqlmodel) (0.4.5)
+#30 193.3 [1;38;5;69m[INFO][0m Installing the following pip packages: markdown~=3.4.3
+#30 193.9 [1;38;5;69m[INFO][0m Successfully installed markdown-3.4.4
+#30 193.9 [1;38;5;118m[SUCC][0m Successfully installed dependencies for 142 modules: affiliates,ajaxpro,anubisdb,apkpure,asn,aspnet_bin_exposure,asset_inventory,azure_tenant,baddns,baddns_direct,baddns_zone,badsecrets,bevigil,bucket_amazon,bucket_digitalocean,bucket_file_enum,bucket_firebase,bucket_google,bucket_hetzner,bucket_microsoft,bufferoverrun,builtwith,bypass403,c99,censys_dns,censys_ip,certspotter,chaos,code_repository,credshed,crt,crt_db,csv,dehashed,discord,dnsbimi,dnsbrute,dnsbrute_mutations,dnscaa,dnscommonsrv,dnsdumpster,dnstlsrpt,docker_pull,dockerhub,dotnetnuke,elastic,emailformat,emails,filedownload,fingerprintx,fullhunt,generic_ssrf,git,git_clone,gitdumper,github_codesearch,github_org,github_usersearch,github_workflows,gitlab_com,gitlab_onprem,google_playstore,gowitness,graphql_introspection,hackertarget,host_header,http,hunt,hunterio,iis_shortnames,ip2location,ipneighbor,ipstack,jadx,json,kafka,kreuzberg,leakix,legba,lightfuzz,medusa,mongo,mysql,myssl,nats,neo4j,newsletters,nmap_xml,ntlm,nuclei,oauth,otx,paramminer_cookies,paramminer_getparams,paramminer_headers,pgp,portfilter,portscan,postgres,postman,postman_download,rabbitmq,rapiddns,reflected_parameters,retirejs,robots,securitytrails,securitytxt,shodan_dns,shodan_enterprise,shodan_idb,skymem,slack,social,splunk,sqlite,sslcert,stdout,subdomaincenter,subdomainradar,subdomains,teams,telerik,trajan,trickest,trufflehog,txt,url_manipulation,urlscan,viewdns,virtualhost,virustotal,waf_bypass,wafw00f,wayback,web_parameters,web_report,webbrute,webbrute_shortnames,webhook,websocket,zeromq
+#30 194.1 + bbot --version
+#30 194.2  [1;38;5;208m ______ [0m _____   ____ _______
+#30 194.2  [1;38;5;208m|  ___ \[0m|  __ \ / __ \__   __|
+#30 194.2  [1;38;5;208m| |___) [0m| |__) | |  | | | |
+#30 194.2  [1;38;5;208m|  ___ <[0m|  __ <| |  | | | |
+#30 194.2  [1;38;5;208m| |___) [0m| |__) | |__| | | |
+#30 194.2  [1;38;5;208m|______/[0m|_____/ \____/  |_|
+#30 194.2  [1;38;5;208mBIGHUGE[0m BLS OSINT TOOL 3.0.2
+#30 194.2 
+#30 194.2 www.blacklanternsecurity.com/bbot
+#30 194.2 
+#30 194.4 + bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness
+#30 201.4 + bbot --dry-run -t example.com -m wafw00f,paramminer_getparams,lightfuzz,sslcert,gowitness --no-color
+#30 208.5 + grep -qE Installing|ERRR|CRITICAL /tmp/bbot-dry.log
+#30 DONE 208.7s
+
+#34 [stage-3  8/13] RUN npm install -g "@playwright/mcp@0.0.83" "@playwright/cli@0.1.22" "playwright@1.64.1"     && playwright-cli --help     && playwright install --with-deps chromium     && rm -rf /var/lib/apt/lists/*
+#34 2.144 
+#34 2.144 added 8 packages in 2s
+#34 2.514 
+#34 2.514 ╔════════════════════════════════════════════════════════════════════╗
+#34 2.514 ║ Update available for @playwright/cli: 0.1.22 → 0.1.24              ║
+#34 2.514 ║ Run `npm install -g @playwright/cli@latest` (global) or            ║
+#34 2.514 ║ `npm install --save-dev @playwright/cli@latest` (local) to update. ║
+#34 2.514 ╚════════════════════════════════════════════════════════════════════╝
+#34 2.514 
+#34 2.515 playwright-cli - run playwright mcp commands from terminal
+#34 2.515 
+#34 2.515 Usage: playwright-cli <command> [args] [options]
+#34 2.515 Usage: playwright-cli -s=<session> <command> [args] [options]
+#34 2.515 
+#34 2.515 Core:
+#34 2.515   open [url]                  open the browser
+#34 2.515   attach [name]               attach to a running playwright browser
+#34 2.515   close                       close the browser
+#34 2.515   detach                      detach from an attached browser
+#34 2.515   goto <url>                  navigate to a url
+#34 2.515   type <text>                 type text into editable element
+#34 2.515   click <target> [button]     perform click on a web page
+#34 2.515   dblclick <target> [button]  perform double click on a web page
+#34 2.515   fill <target> <text>        fill text into editable element
+#34 2.515   drag <startTarget> <endTarget> perform drag and drop between two elements
+#34 2.515   drop <target>               drop files or data onto an element
+#34 2.515   hover <target>              hover over element on page
+#34 2.515   select <target> <val>       select an option in a dropdown
+#34 2.515   upload <files...>           upload one or multiple files
+#34 2.515   check <target>              check a checkbox or radio button
+#34 2.515   uncheck <target>            uncheck a checkbox or radio button
+#34 2.515   snapshot [target]           capture page snapshot to obtain element ref
+#34 2.515   find [text]                 search the page snapshot for text or a regexp, returning matching nodes with surrounding context (like search snippets)
+#34 2.515   eval <func> [target]        evaluate javascript expression on page or element
+#34 2.515   dialog-accept [prompt]      accept a dialog
+#34 2.515   dialog-dismiss              dismiss a dialog
+#34 2.515   resize <w> <h>              resize the browser window
+#34 2.515   delete-data                 delete session data
+#34 2.515 
+#34 2.515 Navigation:
+#34 2.515   go-back                     go back to the previous page
+#34 2.515   go-forward                  go forward to the next page
+#34 2.515   reload                      reload the current page
+#34 2.515 
+#34 2.515 Keyboard:
+#34 2.515   press <key>                 press a key on the keyboard, `a`, `arrowleft`
+#34 2.515   keydown <key>               press a key down on the keyboard
+#34 2.515   keyup <key>                 press a key up on the keyboard
+#34 2.515 
+#34 2.515 Mouse:
+#34 2.515   mousemove <x> <y>           move mouse to a given position
+#34 2.515   mousedown [button]          press mouse down
+#34 2.515   mouseup [button]            press mouse up
+#34 2.515   mousewheel <dx> <dy>        scroll mouse wheel
+#34 2.515 
+#34 2.515 Save as:
+#34 2.515   screenshot [target]         screenshot of the current page or element
+#34 2.515   pdf                         save page as pdf
+#34 2.515 
+#34 2.515 Tabs:
+#34 2.515   tab-list                    list all tabs
+#34 2.515   tab-new [url]               create a new tab
+#34 2.515   tab-close [index]           close a browser tab
+#34 2.515   tab-select <index>          select a browser tab
+#34 2.515 
+#34 2.515 Storage:
+#34 2.515   state-load <filename>       loads browser storage (authentication) state from a file
+#34 2.515   state-save [filename]       saves the current storage (authentication) state to a file
+#34 2.515   cookie-list                 list all cookies (optionally filtered by domain/path)
+#34 2.515   cookie-get <name>           get a specific cookie by name
+#34 2.515   cookie-set <name> <value>   set a cookie with optional flags
+#34 2.515   cookie-delete <name>        delete a specific cookie
+#34 2.515   cookie-clear                clear all cookies
+#34 2.515   localstorage-list           list all localstorage key-value pairs
+#34 2.515   localstorage-get <key>      get a localstorage item by key
+#34 2.515   localstorage-set <key> <value> set a localstorage item
+#34 2.515   localstorage-delete <key>   delete a localstorage item
+#34 2.515   localstorage-clear          clear all localstorage
+#34 2.515   sessionstorage-list         list all sessionstorage key-value pairs
+#34 2.515   sessionstorage-get <key>    get a sessionstorage item by key
+#34 2.515   sessionstorage-set <key> <value> set a sessionstorage item
+#34 2.515   sessionstorage-delete <key> delete a sessionstorage item
+#34 2.515   sessionstorage-clear        clear all sessionstorage
+#34 2.515 
+#34 2.515 Emulation:
+#34 2.515   set-color-scheme <scheme>   emulate the light or dark color scheme
+#34 2.515   set-reduced-motion <motion> emulate the reduced motion preference
+#34 2.515   set-forced-colors <colors>  emulate forced colors mode
+#34 2.515   set-contrast <contrast>     emulate the preferred contrast
+#34 2.515   set-media <media>           emulate the css media type
+#34 2.515   clear-color-scheme          clear color scheme emulation
+#34 2.515   clear-reduced-motion        clear reduced motion emulation
+#34 2.515   clear-forced-colors         clear forced colors emulation
+#34 2.515   clear-contrast              clear preferred contrast emulation
+#34 2.515   clear-media                 clear css media type emulation
+#34 2.515 
+#34 2.515 Network:
+#34 2.515   requests                    list all network requests since loading the page. each request is numbered for use with the `request` command.
+#34 2.515   request <index>             show full details (headers, body, response) of a single network request by its number from the `requests` command.
+#34 2.515   request-headers <index>     print only the request headers for a single network request by its number from the `requests` command.
+#34 2.515   request-body <index>        print only the request body for a single network request by its number from the `requests` command.
+#34 2.515   response-headers <index>    print only the response headers for a single network request by its number from the `requests` command.
+#34 2.515   response-body <index>       print the response body for a single network request by its number from the `requests` command. textual bodies are inlined; binary bodies are saved to a file and the path is printed.
+#34 2.515   route <pattern>             mock network requests matching a url pattern
+#34 2.515   route-list                  list all active network routes
+#34 2.515   unroute [pattern]           remove routes matching a pattern (or all routes)
+#34 2.515   network-state-set <state>   set the browser network state to online or offline
+#34 2.515 
+#34 2.515 DevTools:
+#34 2.515   console [min-level]         list console messages
+#34 2.515   run-code [code]             run playwright code snippet
+#34 2.515   recording-start             start recording user actions
+#34 2.515   recording-stop              stop recording user actions and print them as playwright code
+#34 2.515   tracing-start               start trace recording
+#34 2.515   tracing-stop                stop trace recording
+#34 2.515   video-start [filename]      start video recording
+#34 2.515   video-stop                  stop video recording
+#34 2.515   video-chapter <title>       add a chapter marker to the video recording
+#34 2.515   video-show-actions          annotate subsequent cli/mcp actions on the page with a callout that names the action and, when styled, marks the action point and highlights the target element
+#34 2.515   video-hide-actions          stop annotating actions performed on the page
+#34 2.515   show                        show playwright dashboard
+#34 2.515   pause-at <location>         run the test up to a specific location and pause there
+#34 2.515   resume                      resume the test execution
+#34 2.515   step-over                   step over the next call in the test
+#34 2.515   generate-locator <target>   generate a playwright locator for the given element
+#34 2.515   highlight [target]          show (or with --hide, remove) a highlight overlay for an element; `--hide` without a target hides all page highlights.
+#34 2.515 
+#34 2.515 WebMCP:
+#34 2.515   webmcp-list                 list the webmcp tools registered by the page
+#34 2.515   webmcp-call <name>          call a webmcp tool registered by the page
+#34 2.515 
+#34 2.515 Install:
+#34 2.515   install                     initialize workspace
+#34 2.515   install-browser [browser]   install browser
+#34 2.515 
+#34 2.515 Browser sessions:
+#34 2.515   list                        list browser sessions
+#34 2.515   close-all                   close all browser sessions
+#34 2.515   kill-all                    forcefully kill all browser sessions (for stale/zombie processes)
+#34 2.515 
+#34 2.515 Global options:
+#34 2.515   --help [command]            print help
+#34 2.515   --json                      output response as JSON
+#34 2.515   --raw                       output only the result value, without status and code
+#34 2.515   --version                   print version
+#34 2.784 Installing dependencies...
+#34 2.813 Hit:1 http://deb.debian.org/debian bookworm InRelease
+#34 2.813 Hit:2 http://deb.debian.org/debian bookworm-updates InRelease
+#34 2.817 Hit:3 http://deb.debian.org/debian-security bookworm-security InRelease
+#34 2.892 Reading package lists...
+#34 3.161 Reading package lists...
+#34 3.412 Building dependency tree...
+#34 3.472 Reading state information...
+#34 3.537 libasound2 is already the newest version (1.2.8-1+b1).
+#34 3.537 libatk-bridge2.0-0 is already the newest version (2.46.0-5).
+#34 3.537 libatk1.0-0 is already the newest version (2.46.0-5).
+#34 3.537 libatspi2.0-0 is already the newest version (2.46.0-5).
+#34 3.537 libatspi2.0-0 set to manually installed.
+#34 3.537 libcairo2 is already the newest version (1.16.0-7).
+#34 3.537 libcups2 is already the newest version (2.4.2-3+deb12u9).
+#34 3.537 libdbus-1-3 is already the newest version (1.14.10-1~deb12u1).
+#34 3.537 libdbus-1-3 set to manually installed.
+#34 3.537 libdrm2 is already the newest version (2.4.114-1+b1).
+#34 3.537 libgbm1 is already the newest version (22.3.6-1+deb12u2).
+#34 3.537 libglib2.0-0 is already the newest version (2.74.6-2+deb12u9).
+#34 3.537 libnspr4 is already the newest version (2:4.35-1).
+#34 3.537 libnspr4 set to manually installed.
+#34 3.537 libnss3 is already the newest version (2:3.87.1-1+deb12u4).
+#34 3.537 libpango-1.0-0 is already the newest version (1.50.12+ds-1).
+#34 3.537 libx11-6 is already the newest version (2:1.8.4-2+deb12u2).
+#34 3.537 libx11-6 set to manually installed.
+#34 3.537 libxcb1 is already the newest version (1.15-1).
+#34 3.537 libxcb1 set to manually installed.
+#34 3.537 libxcomposite1 is already the newest version (1:0.4.5-1).
+#34 3.537 libxdamage1 is already the newest version (1:1.1.6-1).
+#34 3.537 libxext6 is already the newest version (2:1.3.4-1+b1).
+#34 3.537 libxext6 set to manually installed.
+#34 3.537 libxfixes3 is already the newest version (1:6.0.0-2).
+#34 3.537 libxkbcommon0 is already the newest version (1.5.0-1).
+#34 3.537 libxrandr2 is already the newest version (2:1.5.2-2+b1).
+#34 3.537 libfontconfig1 is already the newest version (2.14.1-4).
+#34 3.537 libfontconfig1 set to manually installed.
+#34 3.537 libfreetype6 is already the newest version (2.12.1+dfsg-5+deb12u4).
+#34 3.537 libfreetype6 set to manually installed.
+#34 3.537 The following additional packages will be installed:
+#34 3.537   libunwind8 libxfont2 x11-xkb-utils xfonts-encodings xfonts-utils
+#34 3.537   xserver-common
+#34 3.538 Recommended packages:
+#34 3.538   fonts-ipafont-mincho fonts-tlwg-loma xfonts-base xauth
+#34 3.587 The following NEW packages will be installed:
+#34 3.587   fonts-freefont-ttf fonts-ipafont-gothic fonts-liberation
+#34 3.588   fonts-noto-color-emoji fonts-tlwg-loma-otf fonts-unifont fonts-wqy-zenhei
+#34 3.588   libunwind8 libxfont2 x11-xkb-utils xfonts-encodings xfonts-scalable
+#34 3.588   xfonts-utils xserver-common xvfb
+#34 3.618 0 upgraded, 15 newly installed, 0 to remove and 0 not upgraded.
+#34 3.618 Need to get 33.3 MB of archives.
+#34 3.618 After this operation, 73.6 MB of additional disk space will be used.
+#34 3.618 Get:1 http://deb.debian.org/debian bookworm/main amd64 fonts-ipafont-gothic all 00303-23 [3515 kB]
+#34 3.730 Get:2 http://deb.debian.org/debian bookworm/main amd64 fonts-freefont-ttf all 20120503-10 [2552 kB]
+#34 3.785 Get:3 http://deb.debian.org/debian bookworm/main amd64 fonts-liberation all 1:1.07.4-11 [828 kB]
+#34 3.807 Get:4 http://deb.debian.org/debian bookworm/main amd64 fonts-noto-color-emoji all 2.042-0+deb12u1 [9894 kB]
+#34 4.030 Get:5 http://deb.debian.org/debian bookworm/main amd64 fonts-tlwg-loma-otf all 1:0.7.3-1 [147 kB]
+#34 4.040 Get:6 http://deb.debian.org/debian bookworm/main amd64 fonts-unifont all 1:15.0.01-2 [2019 kB]
+#34 4.093 Get:7 http://deb.debian.org/debian bookworm/main amd64 fonts-wqy-zenhei all 0.9.45-8 [7479 kB]
+#34 4.265 Get:8 http://deb.debian.org/debian bookworm/main amd64 libunwind8 amd64 1.6.2-3 [51.2 kB]
+#34 4.291 Get:9 http://deb.debian.org/debian-security bookworm-security/main amd64 libxfont2 amd64 1:2.0.6-1+deb12u1 [132 kB]
+#34 4.327 Get:10 http://deb.debian.org/debian bookworm/main amd64 x11-xkb-utils amd64 7.7+7 [165 kB]
+#34 4.332 Get:11 http://deb.debian.org/debian bookworm/main amd64 xfonts-encodings all 1:1.0.4-2.2 [577 kB]
+#34 4.342 Get:12 http://deb.debian.org/debian bookworm/main amd64 xfonts-utils amd64 1:7.7+6 [93.0 kB]
+#34 4.352 Get:13 http://deb.debian.org/debian bookworm/main amd64 xfonts-scalable all 1:1.0.3-1.3 [306 kB]
+#34 4.364 Get:14 http://deb.debian.org/debian-security bookworm-security/main amd64 xserver-common all 2:21.1.7-3+deb12u13 [2384 kB]
+#34 4.419 Get:15 http://deb.debian.org/debian-security bookworm-security/main amd64 xvfb amd64 2:21.1.7-3+deb12u13 [3154 kB]
+#34 4.556 debconf: delaying package configuration, since apt-utils is not installed
+#34 4.570 Fetched 33.3 MB in 1s (37.0 MB/s)
+#34 4.581 Selecting previously unselected package fonts-ipafont-gothic.
+#34 4.581 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 32790 files and directories currently installed.)
+#34 4.593 Preparing to unpack .../00-fonts-ipafont-gothic_00303-23_all.deb ...
+#34 4.677 Unpacking fonts-ipafont-gothic (00303-23) ...
+#34 4.837 Selecting previously unselected package fonts-freefont-ttf.
+#34 4.841 Preparing to unpack .../01-fonts-freefont-ttf_20120503-10_all.deb ...
+#34 4.842 Unpacking fonts-freefont-ttf (20120503-10) ...
+#34 4.965 Selecting previously unselected package fonts-liberation.
+#34 4.968 Preparing to unpack .../02-fonts-liberation_1%3a1.07.4-11_all.deb ...
+#34 4.970 Unpacking fonts-liberation (1:1.07.4-11) ...
+#34 5.016 Selecting previously unselected package fonts-noto-color-emoji.
+#34 5.020 Preparing to unpack .../03-fonts-noto-color-emoji_2.042-0+deb12u1_all.deb ...
+#34 5.021 Unpacking fonts-noto-color-emoji (2.042-0+deb12u1) ...
+#34 5.426 Selecting previously unselected package fonts-tlwg-loma-otf.
+#34 5.430 Preparing to unpack .../04-fonts-tlwg-loma-otf_1%3a0.7.3-1_all.deb ...
+#34 5.431 Unpacking fonts-tlwg-loma-otf (1:0.7.3-1) ...
+#34 5.451 Selecting previously unselected package fonts-unifont.
+#34 5.455 Preparing to unpack .../05-fonts-unifont_1%3a15.0.01-2_all.deb ...
+#34 5.456 Unpacking fonts-unifont (1:15.0.01-2) ...
+#34 5.559 Selecting previously unselected package fonts-wqy-zenhei.
+#34 5.563 Preparing to unpack .../06-fonts-wqy-zenhei_0.9.45-8_all.deb ...
+#34 5.569 Unpacking fonts-wqy-zenhei (0.9.45-8) ...
+#34 5.877 Selecting previously unselected package libunwind8:amd64.
+#34 5.881 Preparing to unpack .../07-libunwind8_1.6.2-3_amd64.deb ...
+#34 5.884 Unpacking libunwind8:amd64 (1.6.2-3) ...
+#34 5.901 Selecting previously unselected package libxfont2:amd64.
+#34 5.905 Preparing to unpack .../08-libxfont2_1%3a2.0.6-1+deb12u1_amd64.deb ...
+#34 5.909 Unpacking libxfont2:amd64 (1:2.0.6-1+deb12u1) ...
+#34 5.928 Selecting previously unselected package x11-xkb-utils.
+#34 5.931 Preparing to unpack .../09-x11-xkb-utils_7.7+7_amd64.deb ...
+#34 5.933 Unpacking x11-xkb-utils (7.7+7) ...
+#34 5.954 Selecting previously unselected package xfonts-encodings.
+#34 5.958 Preparing to unpack .../10-xfonts-encodings_1%3a1.0.4-2.2_all.deb ...
+#34 5.959 Unpacking xfonts-encodings (1:1.0.4-2.2) ...
+#34 6.001 Selecting previously unselected package xfonts-utils.
+#34 6.005 Preparing to unpack .../11-xfonts-utils_1%3a7.7+6_amd64.deb ...
+#34 6.006 Unpacking xfonts-utils (1:7.7+6) ...
+#34 6.026 Selecting previously unselected package xfonts-scalable.
+#34 6.029 Preparing to unpack .../12-xfonts-scalable_1%3a1.0.3-1.3_all.deb ...
+#34 6.031 Unpacking xfonts-scalable (1:1.0.3-1.3) ...
+#34 6.058 Selecting previously unselected package xserver-common.
+#34 6.062 Preparing to unpack .../13-xserver-common_2%3a21.1.7-3+deb12u13_all.deb ...
+#34 6.064 Unpacking xserver-common (2:21.1.7-3+deb12u13) ...
+#34 6.085 Selecting previously unselected package xvfb.
+#34 6.089 Preparing to unpack .../14-xvfb_2%3a21.1.7-3+deb12u13_amd64.deb ...
+#34 6.091 Unpacking xvfb (2:21.1.7-3+deb12u13) ...
+#34 6.146 Setting up fonts-noto-color-emoji (2.042-0+deb12u1) ...
+#34 6.150 Setting up x11-xkb-utils (7.7+7) ...
+#34 6.155 Setting up fonts-wqy-zenhei (0.9.45-8) ...
+#34 6.168 Setting up fonts-freefont-ttf (20120503-10) ...
+#34 6.172 Setting up libunwind8:amd64 (1.6.2-3) ...
+#34 6.176 Setting up fonts-tlwg-loma-otf (1:0.7.3-1) ...
+#34 6.181 Setting up xfonts-encodings (1:1.0.4-2.2) ...
+#34 6.187 Setting up fonts-ipafont-gothic (00303-23) ...
+#34 6.193 update-alternatives: using /usr/share/fonts/opentype/ipafont-gothic/ipag.ttf to provide /usr/share/fonts/truetype/fonts-japanese-gothic.ttf (fonts-japanese-gothic.ttf) in auto mode
+#34 6.196 Setting up fonts-liberation (1:1.07.4-11) ...
+#34 6.202 Setting up xserver-common (2:21.1.7-3+deb12u13) ...
+#34 6.206 Setting up libxfont2:amd64 (1:2.0.6-1+deb12u1) ...
+#34 6.211 Setting up fonts-unifont (1:15.0.01-2) ...
+#34 6.216 Setting up xvfb (2:21.1.7-3+deb12u13) ...
+#34 6.220 Setting up xfonts-utils (1:7.7+6) ...
+#34 6.226 Setting up xfonts-scalable (1:1.0.3-1.3) ...
+#34 6.245 Processing triggers for libc-bin (2.36-9+deb12u14) ...
+#34 6.258 Processing triggers for fontconfig (2.14.1-4) ...
+#34 6.305 Downloading Chrome for Testing 156.0.8078.4 (playwright chromium v1248) from https://cdn.playwright.dev/builds/cft/156.0.8078.4/linux64/chrome-linux64.zip
+#34 6.609 |                                                                                |   0% of 191.1 MiB
+#34 7.153 |■■■■■■■■                                                                        |  10% of 191.1 MiB
+#34 7.549 |■■■■■■■■■■■■■■■■                                                                |  20% of 191.1 MiB
+#34 7.970 |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 191.1 MiB
+#34 8.337 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 191.1 MiB
+#34 8.743 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 191.1 MiB
+#34 9.109 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 191.1 MiB
+#34 9.534 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 191.1 MiB
+#34 9.996 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 191.1 MiB
+#34 10.40 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 191.1 MiB
+#34 10.80 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 191.1 MiB
+#34 12.07 Chrome for Testing 156.0.8078.4 (playwright chromium v1248) downloaded to /root/.cache/ms-playwright/chromium-1248
+#34 12.07 Downloading FFmpeg (playwright ffmpeg v1013) from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1013/ffmpeg-linux.zip
+#34 12.37 |                                                                                |   0% of 2.2 MiB
+#34 12.38 |■■■■■■■■                                                                        |  10% of 2.2 MiB
+#34 12.39 |■■■■■■■■■■■■■■■■                                                                |  20% of 2.2 MiB
+#34 12.39 |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 2.2 MiB
+#34 12.40 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 2.2 MiB
+#34 12.43 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 2.2 MiB
+#34 12.43 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 2.2 MiB
+#34 12.44 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 2.2 MiB
+#34 12.45 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 2.2 MiB
+#34 12.45 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 2.2 MiB
+#34 12.46 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 2.2 MiB
+#34 12.48 FFmpeg (playwright ffmpeg v1013) downloaded to /root/.cache/ms-playwright/ffmpeg-1013
+#34 12.48 Downloading Chrome Headless Shell 156.0.8078.4 (playwright chromium-headless-shell v1248) from https://cdn.playwright.dev/builds/cft/156.0.8078.4/linux64/chrome-headless-shell-linux64.zip
+#34 12.79 |                                                                                |   0% of 120 MiB
+#34 13.16 |■■■■■■■■                                                                        |  10% of 120 MiB
+#34 13.43 |■■■■■■■■■■■■■■■■                                                                |  20% of 120 MiB
+#34 13.70 |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 120 MiB
+#34 13.97 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 120 MiB
+#34 14.21 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 120 MiB
+#34 14.47 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 120 MiB
+#34 14.81 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 120 MiB
+#34 15.08 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 120 MiB
+#34 15.33 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 120 MiB
+#34 15.55 |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 120 MiB
+#34 16.47 Chrome Headless Shell 156.0.8078.4 (playwright chromium-headless-shell v1248) downloaded to /root/.cache/ms-playwright/chromium_headless_shell-1248
+#34 DONE 16.7s
+
+#35 [stage-3  9/13] WORKDIR /app
+#35 DONE 0.1s
+
+#36 [stage-3 10/13] COPY --from=build /out/artex /app/artex
+#36 DONE 0.0s
+
+#37 [stage-3 11/13] COPY start.sh /app/start.sh
+#37 DONE 0.0s
+
+#38 [stage-3 12/13] RUN chmod +x /app/artex /app/start.sh && mkdir -p /app/keys
+#38 DONE 0.2s
+
+#39 [stage-3 13/13] COPY skills/ /app/skills/
+#39 DONE 0.1s
+
+#40 exporting to image
+#40 exporting layers
+#40 exporting layers 103.2s done
+#40 exporting manifest sha256:cedcbc260fc29835c1fd2e72ac2aa76c4a928a91aa286942f31661d58da36c90 done
+#40 exporting config sha256:c8160b71b6049ddfe0e62403445937c852e91515926f221eef2107922007cba2 done
+#40 exporting attestation manifest sha256:d22737d6fc98fc9f0395d7ac793c8cc61b8db0f9ebbbc01a26db937b39cbcc02 0.0s done
+#40 exporting manifest list sha256:d32d646f0006b177a77cfc29ba993f040ae2d5cd534cf088e885f78fb8428f4a done
+#40 naming to docker.io/library/artex:local done
+#40 unpacking to docker.io/library/artex:local
+#40 unpacking to docker.io/library/artex:local 12.5s done
+#40 DONE 115.8s
+
+#41 resolving provenance for metadata file
+#41 DONE 0.0s
+ Image artex:local Built 
+ Network artex_default Creating 
+ Volume artex_pgdata Creating 
+ Volume artex_pgdata Created 
+ Network artex_default Created 
+ Container artex-postgres-1 Creating 
+ Container artex-postgres-1 Created 
+ Container artex-artex-1 Creating 
+ Container artex-artex-1 Created 
+ Container artex-postgres-1 Starting 
+ Container artex-postgres-1 Started 
+ Container artex-postgres-1 Waiting 
+ Container artex-postgres-1 Healthy 
+ Container artex-artex-1 Starting 
+ Container artex-artex-1 Started 
