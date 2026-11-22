@@ -349,6 +349,20 @@ export const api = {
   updateMachine: (id: number, m: MachineInput) => put<Machine>(`/machines/${id}`, m),
   deleteMachine: (id: number) => del<{ ok: boolean }>(`/machines/${id}`),
   machineStatus: (name: string) => get<MachineStatus>(`/machines/${encodeURIComponent(name)}/status`),
+  machineVerifyCredentials: (body: { host: string; port?: number; username: string; secret_type?: string; private_key?: string; password?: string }) =>
+    post<{ ok: boolean; output?: string; error?: string; latency_ms: number }>("/machines/verify", body),
+  machineTestConnection: (name: string, username?: string) =>
+    post<{ ok: boolean; output?: string; error?: string; latency_ms: number }>(
+      `/machines/${encodeURIComponent(name)}/test-connection${username ? `?username=${encodeURIComponent(username)}` : ""}`,
+      {},
+    ),
+  machineLabState: (name: string) => get<Record<string, unknown>>(`/machines/${encodeURIComponent(name)}/lab-state`),
+  machineConsoleOpen: (name: string) => post<Record<string, unknown>>(`/machines/${encodeURIComponent(name)}/console`, {}),
+  machineConsoleScreenUrl: (name: string) => `/api/machines/${encodeURIComponent(name)}/console/screen`,
+  machineConsoleInput: (name: string, body: { action: "click" | "type" | "key"; x?: number; y?: number; button?: string; text?: string; keys?: string }) =>
+    post<Record<string, unknown>>(`/machines/${encodeURIComponent(name)}/console/input`, body),
+  machineConsoleClose: (name: string) =>
+    http(`/machines/${encodeURIComponent(name)}/console`, { method: "DELETE" }),
   machineAction: (name: string, action: "start" | "stop" | "reset", force?: boolean) =>
     post<MachineStatus>(`/machines/${encodeURIComponent(name)}/${action}`, force === undefined ? undefined : { force }),
   machineSnapshot: (name: string, action: "list" | "create" | "revert", snapshot?: string) =>

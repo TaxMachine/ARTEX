@@ -278,3 +278,19 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+// ConsoleScreen is the operator variant of DesktopScreen: task scope 0 and the
+// raw PNG returned (the HTTP layer serves it as image/png).
+func (s *Service) ConsoleScreen(ctx context.Context, name string) (sessionID string, png []byte, w, h int, err error) {
+	sess, err := sessionOf(name)
+	if err != nil {
+		return "", nil, 0, 0, err
+	}
+	png, w, h, err = sess.grabPNG(ctx)
+	if err != nil {
+		return "", nil, 0, 0, err
+	}
+	m, _ := s.Machine(name)
+	s.recordDesktop(m, "console_screen", fmt.Sprintf("%dx%d", w, h), "", 0, png)
+	return sess.machine.Name + ":" + string(sess.kind), png, w, h, nil
+}

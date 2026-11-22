@@ -104,7 +104,12 @@ func host0(m db.Machine) string { return strings.ToLower(strings.TrimSpace(m.Hos
 
 func (s *Service) Credential(taskID int64, m db.Machine, username string, credentialID int64) (db.TaskCredential, error) {
 	if taskID <= 0 {
-		return db.TaskCredential{}, errors.New("machine tools need a running task")
+		// Operator scope (no task, no conversation): machine-level credentials
+		// only — the Machines page's test-connection / lab-state / console.
+		if c, ok := machineLevelCredential(m, username); ok {
+			return c, nil
+		}
+		return db.TaskCredential{}, errors.New("machine tools need a running task or a machine-level credential (config.ssh_credentials)")
 	}
 	if credentialID > 0 {
 		c, err := s.pg.Credential(taskID, credentialID)
@@ -120,50 +125,6 @@ func (s *Service) Credential(taskID int64, m db.Machine, username string, creden
 	if err != nil {
 		return db.TaskCredential{}, err
 	}
-	// Machine-level credentials (config.ssh_credentials on the machine row):
-	// injected into every task touching that machine, so SSH works out of the
-	// box without re-attaching credentials per task. Explicit task
-	// credentials win (more specific).
-	// Shape: [{"username":"taxmachine","secret_type":"key","private_key":"...","password":"..."}]
-	if len(list) == 0 {
-		if raw, ok := m.Config["ssh_credentials"].([]any); ok {
-			type mc struct {
-				Username   string `json:"username"`
-				Password   string `json:"password"`
-				SecretType string `json:"secret_type"`
-				PrivateKey string `json:"private_key"`
-			}
-			for _, e := range raw {
-				b, err := json.Marshal(e)
-				if err != nil {
-					continue
-				}
-				var c mc
-				if json.Unmarshal(b, &c) != nil || c.Username == "" {
-					continue
-				}
-				if c.SecretType != "key" && c.SecretType != "password" && c.Password == "" && c.PrivateKey == "" {
-					continue
-				}
-				if strings.TrimSpace(username) != "" && !strings.EqualFold(c.Username, username) {
-					continue
-				}
-				if c.SecretType == "" {
-					if c.PrivateKey != "" {
-						c.SecretType = "key"
-					} else {
-						c.SecretType = "password"
-					}
-				}
-				return db.TaskCredential{
-					Protocol: "ssh", Domain: host0(m), Port: m.SSHPort,
-					Username: c.Username, Password: c.Password,
-					SecretType: c.SecretType, PrivateKey: c.PrivateKey,
-					Source: "machine", Note: "machine-level credential",
-				}, nil
-			}
-		}
-	}
 	// The operator can pin the default account per machine (lab VMs use the
 	// unprivileged lpeuser for LPE work; admin actions pass username explicitly).
 	if strings.TrimSpace(username) == "" {
@@ -173,6 +134,15 @@ func (s *Service) Credential(taskID int64, m db.Machine, username string, creden
 	}
 	host := strings.ToLower(strings.TrimSpace(m.Host))
 	name := strings.ToLower(strings.TrimSpace(m.Name))
+	// Machine-level credentials: injected into every task touching that
+	// machine when no task credential matches, so SSH works out of the box
+	// without re-attaching credentials per task.
+	// Shape: [{"username":"taxmachine","secret_type":"key","private_key":"..."}]
+	if len(list) == 0 {
+		if c, ok := machineLevelCredential(m, username); ok {
+			return c, nil
+		}
+	}
 	var best *db.TaskCredential
 	for i := range list {
 		c := &list[i]
@@ -183,7 +153,7 @@ func (s *Service) Credential(taskID int64, m db.Machine, username string, creden
 		if d != host && d != name {
 			continue
 		}
-		if username = strings.TrimSpace(username); username != "" && !strings.EqualFold(c.Username, username) {
+		if u := strings.TrimSpace(username); u != "" && !strings.EqualFold(c.Username, u) {
 			continue
 		}
 		if best == nil || c.ID > best.ID {
@@ -191,11 +161,60 @@ func (s *Service) Credential(taskID int64, m db.Machine, username string, creden
 		}
 	}
 	if best == nil {
+		if c, ok := machineLevelCredential(m, username); ok {
+			return c, nil
+		}
 		return db.TaskCredential{}, fmt.Errorf(
 			"no ssh credential for machine %s (host %s). Ask the operator, or save one with "+
 				"save_task_credential(protocol=\"ssh\", domain=\"%s\", username=\"...\", ...)", m.Name, m.Host, m.Host)
 	}
 	return *best, nil
+}
+
+// machineLevelCredential reads config.ssh_credentials (set from the Machines
+// page): one key/password that works for every scope — tasks AND operators.
+// Explicit username filter applies; first match wins.
+func machineLevelCredential(m db.Machine, username string) (db.TaskCredential, bool) {
+	raw, ok := m.Config["ssh_credentials"].([]any)
+	if !ok {
+		return db.TaskCredential{}, false
+	}
+	type mc struct {
+		Username   string `json:"username"`
+		Password   string `json:"password"`
+		SecretType string `json:"secret_type"`
+		PrivateKey string `json:"private_key"`
+	}
+	for _, e := range raw {
+		b, err := json.Marshal(e)
+		if err != nil {
+			continue
+		}
+		var c mc
+		if json.Unmarshal(b, &c) != nil || c.Username == "" {
+			continue
+		}
+		if c.SecretType != "key" && c.SecretType != "password" && c.Password == "" && c.PrivateKey == "" {
+			continue
+		}
+		if u := strings.TrimSpace(username); u != "" && !strings.EqualFold(c.Username, u) {
+			continue
+		}
+		if c.SecretType == "" {
+			if c.PrivateKey != "" {
+				c.SecretType = "key"
+			} else {
+				c.SecretType = "password"
+			}
+		}
+		return db.TaskCredential{
+			Protocol: "ssh", Domain: host0(m), Port: m.SSHPort,
+			Username: c.Username, Password: c.Password,
+			SecretType: c.SecretType, PrivateKey: c.PrivateKey,
+			Source: "machine", Note: "machine-level credential",
+		}, true
+	}
+	return db.TaskCredential{}, false
 }
 
 // sshTarget resolves host/port/user/secret for an SSH call.

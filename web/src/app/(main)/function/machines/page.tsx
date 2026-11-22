@@ -2,7 +2,10 @@
 
 import * as React from "react";
 
+import Link from "next/link";
+
 import {
+  CheckCircle2Icon,
   Loader2Icon,
   PlayIcon,
   PlusIcon,
@@ -11,6 +14,7 @@ import {
   RotateCcwIcon,
   SquareIcon,
   Trash2Icon,
+  XCircleIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -56,6 +60,33 @@ export default function MachinesPage() {
   // edit = keep what's stored; filled = replace. Password shown count only.
   const [machineKeyDraft, setMachineKeyDraft] = React.useState("");
   const [machinePassDraft, setMachinePassDraft] = React.useState("");
+  // Registration wizard (new machines only; edit keeps the full form).
+  const [wizStep, setWizStep] = React.useState(0); // 0 identity, 1 endpoint+creds, 2 verify, 3 lifecycle
+  const [verifying, setVerifying] = React.useState(false);
+  const [verifyRes, setVerifyRes] = React.useState<{ ok: boolean; output?: string; error?: string; latency_ms: number } | null>(null);
+  const wizSteps = ["Identity", "Endpoint & credentials", "Verify", "Lifecycle"];
+
+  async function wizardVerify() {
+    setVerifying(true);
+    setVerifyRes(null);
+    try {
+      const defaultUser = typeof form.config?.default_username === "string" ? form.config.default_username : "";
+      setVerifyRes(
+        await api.machineVerifyCredentials({
+          host: form.host,
+          port: Number(form.ssh_port) || 22,
+          username: defaultUser,
+          secret_type: machineKeyDraft.trim() ? "key" : "password",
+          private_key: machineKeyDraft.trim(),
+          password: machinePassDraft,
+        }),
+      );
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : String(e));
+    } finally {
+      setVerifying(false);
+    }
+  }
   const sshCredCount = React.useMemo(
     () => (Array.isArray(form.config?.ssh_credentials) ? form.config.ssh_credentials.length : 0),
     [form.config],
@@ -73,6 +104,34 @@ export default function MachinesPage() {
 
   React.useEffect(() => {
     void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto status check for every machine on first load (the detail page keeps
+  // its own refresh); silent — failures leave the column empty.
+  React.useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const ms = await api.machines();
+        if (cancelled) return;
+        await Promise.all(
+          ms.map(async (m) => {
+            try {
+              const st = await api.machineStatus(m.name);
+              if (!cancelled) setStatuses((s) => ({ ...s, [m.name]: st }));
+            } catch {
+              /* status is best-effort */
+            }
+          }),
+        );
+      } catch {
+        /* the main load surfaces errors */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -161,6 +220,8 @@ export default function MachinesPage() {
     }
     setMachineKeyDraft("");
     setMachinePassDraft("");
+    setWizStep(0);
+    setVerifyRes(null);
   }
 
   async function save() {
@@ -281,7 +342,16 @@ export default function MachinesPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-xs">
-                          <div>{m.host || m.domain || "—"}</div>
+                          <div>
+                            <Link
+                              href={`/function/machines/detail?name=${encodeURIComponent(m.name)}`}
+                              className="font-medium hover:text-primary hover:underline"
+                              title="Machine detail"
+                            >
+                              {m.name}
+                            </Link>
+                          </div>
+                          <div className="text-muted-foreground">{m.host || m.domain || "—"}</div>
                           {m.host && <div className="text-muted-foreground">ssh :{m.ssh_port}</div>}
                         </TableCell>
                         <TableCell>
@@ -351,6 +421,24 @@ export default function MachinesPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">{editing ? `Edit ${editing.name}` : "Register machine"}</CardTitle>
+            {!editing && (
+              <div className="flex items-center gap-1 pb-1">
+                {wizSteps.map((st, i) => (
+                  <React.Fragment key={st}>
+                    {i > 0 && <div className={`h-px w-4 ${i <= wizStep ? "bg-primary" : "bg-border"}`} />}
+                    <button
+                      type="button"
+                      onClick={() => setWizStep(i)}
+                      className={`cursor-pointer rounded-full px-2 py-0.5 text-xs ${
+                        i === wizStep ? "bg-primary text-primary-foreground" : i < wizStep ? "bg-muted" : "text-muted-foreground"
+                      }`}
+                    >
+                      {i + 1}. {st}
+                    </button>
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
@@ -452,16 +540,54 @@ export default function MachinesPage() {
               protected (refuse start/stop/reset)
             </label>
             <p className="text-xs text-muted-foreground">{kindHint}</p>
+            {!editing && wizStep === 2 && (
+              <div className="space-y-2 rounded-md border p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Verify before saving</span>
+                  <Button variant="outline" size="sm" onClick={() => void wizardVerify()} disabled={verifying || !form.host.trim()}>
+                    {verifying ? <Loader2Icon className="size-4 animate-spin" /> : <CheckCircle2Icon className="size-4" />}
+                    Run whoami
+                  </Button>
+                </div>
+                {verifyRes && (
+                  <div className="flex items-start gap-2 text-sm">
+                    {verifyRes.ok ? (
+                      <CheckCircle2Icon className="mt-0.5 size-4 text-emerald-600" />
+                    ) : (
+                      <XCircleIcon className="mt-0.5 size-4 text-red-600" />
+                    )}
+                    <span className="font-mono text-xs">
+                      {verifyRes.ok ? verifyRes.output : verifyRes.error} · {verifyRes.latency_ms} ms
+                    </span>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Nothing is stored by this check; it dials the endpoint with exactly the credential above.
+                </p>
+              </div>
+            )}
             <div className="flex justify-end gap-2">
+              {!editing && wizStep > 0 && (
+                <Button variant="outline" onClick={() => setWizStep((s) => s - 1)}>
+                  Back
+                </Button>
+              )}
+              {!editing && wizStep < 3 && (
+                <Button onClick={() => setWizStep((s) => s + 1)} disabled={wizStep === 0 && !form.name.trim()}>
+                  Next
+                </Button>
+              )}
               {editing && (
                 <Button variant="outline" onClick={() => startEdit()}>
                   Cancel
                 </Button>
               )}
-              <Button onClick={() => void save()} disabled={busy === "save" || !form.name.trim()}>
-                {busy === "save" && <Loader2Icon className="size-4 animate-spin" />}
-                {editing ? "Save" : "Register"}
-              </Button>
+              {(editing || wizStep === 3) && (
+                <Button onClick={() => void save()} disabled={busy === "save" || !form.name.trim()}>
+                  {busy === "save" && <Loader2Icon className="size-4 animate-spin" />}
+                  {editing ? "Save" : "Register"}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

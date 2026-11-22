@@ -70,8 +70,11 @@ func (s *Service) dialSSH(ctx context.Context, m db.Machine, c db.TaskCredential
 	addr := net.JoinHostPort(m.Host, strconv.Itoa(port))
 	// Target gate: dial through the pinned dialer so an approved pin is enforced
 	// on the address actually opened (same contract as WebFetch/HTTP clients).
-	// Ungated scopes (gate off, no scope) dial directly.
-	conn, err := intercept.PinnedDialer("ssh", true)(ctx, "tcp", addr)
+	// Ungated scopes (gate off, no scope) dial directly. Operator-scope calls
+	// (Machines page: test-connection, lab-state, console) run outside any
+	// session and use the ungated dialer — they ARE the approval.
+	scoped := !OperatorDial(ctx)
+	conn, err := intercept.PinnedDialer("ssh", scoped)(ctx, "tcp", addr)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +137,34 @@ func (s *Service) Exec(ctx context.Context, taskID int64, machineName, username 
 		return ExecResult{}, fmt.Errorf("ssh %s@%s:%d: %w", c.Username, m.Host, m.SSHPort, err)
 	}
 	defer client.Close()
+	res, err := sshRun(ctx, client, command, timeout)
+	if err != nil {
+		return res, err
+	}
+	credID := c.ID
+	exit := res.ExitCode
+	res.EventID, _ = s.record(db.MachineEvent{
+		TaskID:       &taskID,
+		MachineID:    &m.ID,
+		Machine:      m.Name,
+		Protocol:     "ssh",
+		Action:       "exec",
+		Username:     c.Username,
+		CredentialID: &credID,
+		Command:      command,
+		Stdout:       res.Stdout,
+		Stderr:       res.Stderr,
+		ExitCode:     &exit,
+		DurationMS:   int(res.Duration),
+		Bytes:        int64(len(res.Stdout) + len(res.Stderr)),
+		Meta:         map[string]any{"host": m.Host, "port": m.SSHPort, "timed_out": res.TimedOut},
+	})
+	return res, nil
+}
 
+// sshRun runs one command on an open client and returns the captured result.
+// Shared by Service.Exec (records an event) and VerifySSH (records nothing).
+func sshRun(ctx context.Context, client *ssh.Client, command string, timeout time.Duration) (ExecResult, error) {
 	session, err := client.NewSession()
 	if err != nil {
 		return ExecResult{}, fmt.Errorf("ssh session: %w", err)
@@ -180,23 +210,6 @@ func (s *Service) Exec(ctx context.Context, taskID int64, machineName, username 
 		TimedOut: timedOut,
 		Duration: dur.Milliseconds(),
 	}
-	credID := c.ID
-	res.EventID, _ = s.record(db.MachineEvent{
-		TaskID:       &taskID,
-		MachineID:    &m.ID,
-		Machine:      m.Name,
-		Protocol:     "ssh",
-		Action:       "exec",
-		Username:     c.Username,
-		CredentialID: &credID,
-		Command:      command,
-		Stdout:       res.Stdout,
-		Stderr:       res.Stderr,
-		ExitCode:     &exit,
-		DurationMS:   int(dur.Milliseconds()),
-		Bytes:        int64(len(res.Stdout) + len(res.Stderr)),
-		Meta:         map[string]any{"host": m.Host, "port": m.SSHPort, "timed_out": timedOut},
-	})
 	if runErr != nil && !timedOut {
 		return res, runErr
 	}
@@ -334,4 +347,50 @@ func (s *Service) Download(ctx context.Context, taskID int64, machineName, usern
 		return res, fmt.Errorf("download: %w", copyErr)
 	}
 	return res, nil
+}
+
+// VerifySSH dials an arbitrary host with explicit credentials and runs
+// whoami/hostname — the wizard's pre-registration check. Nothing recorded.
+func (s *Service) VerifySSH(ctx context.Context, req VerifyReq) (ExecResult, error) {
+	if req.Port <= 0 {
+		req.Port = 22
+	}
+	m := db.Machine{Name: "verify", Kind: "ssh", Host: req.Host, SSHPort: req.Port}
+	c := db.TaskCredential{
+		Protocol: "ssh", Domain: req.Host, Port: req.Port, Username: req.Username,
+		SecretType: req.SecretType, PrivateKey: req.PrivateKey, Password: req.Password,
+		Source: "verify",
+	}
+	client, err := s.dialSSH(ctx, m, c, 15*time.Second)
+	if err != nil {
+		return ExecResult{}, err
+	}
+	defer client.Close()
+	return sshRun(ctx, client, "whoami & hostname", 15*time.Second)
+}
+
+// VerifyReq is the explicit-credential shape the wizard verifies with.
+type VerifyReq struct {
+	Host       string
+	Port       int
+	Username   string
+	SecretType string
+	PrivateKey string
+	Password   string
+}
+
+// operatorDialKey marks an SSH dial as operator-scope (Machines page): the
+// target gate has no session to consult, and the operator clicking the button
+// is the approval. Machine-level credentials still apply.
+type operatorDialKey struct{}
+
+// WithOperatorDial marks ctx for ungated SSH dialing by operator endpoints.
+func WithOperatorDial(ctx context.Context) context.Context {
+	return context.WithValue(ctx, operatorDialKey{}, true)
+}
+
+// OperatorDial reports whether ctx is operator-marked for ungated dialing.
+func OperatorDial(ctx context.Context) bool {
+	v, _ := ctx.Value(operatorDialKey{}).(bool)
+	return v
 }
