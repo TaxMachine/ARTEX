@@ -328,7 +328,7 @@ export default function MachinesPage() {
                   machines.map((m) => {
                     const st = statuses[m.name];
                     return (
-                      <TableRow key={m.id}>
+                      <TableRow key={m.id} className="cursor-pointer" onClick={() => (window.location.href = `/function/machines/detail?name=${encodeURIComponent(m.name)}`)}>
                         <TableCell>
                           <div className="font-medium">{m.name}</div>
                           <div className="text-xs text-muted-foreground">{m.description || m.os || "—"}</div>
@@ -402,10 +402,10 @@ export default function MachinesPage() {
                                 </Button>
                               </>
                             )}
-                            <Button variant="ghost" size="sm" onClick={() => startEdit(m)}>
+                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); startEdit(m); }}>
                               edit
                             </Button>
-                            <Button variant="ghost" size="icon" title="delete" onClick={() => void remove(m)}>
+                            <Button variant="ghost" size="icon" title="delete" onClick={(e) => { e.stopPropagation(); void remove(m); }}>
                               <Trash2Icon className="size-4 text-destructive" />
                             </Button>
                           </div>

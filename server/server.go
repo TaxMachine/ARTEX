@@ -897,6 +897,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/machines/{name}/test-connection", s.machineTestConnection)
 	mux.HandleFunc("POST /api/machines/verify", s.machineVerifyCredentials)
 	mux.HandleFunc("GET /api/machines/{name}/lab-state", s.machineLabState)
+	mux.HandleFunc("POST /api/machines/{name}/rdp", s.machineRDPToggle)
+	mux.HandleFunc("GET /api/machines/{name}/occupancy", s.machineOccupancy)
 	mux.HandleFunc("POST /api/machines/{name}/console", s.consoleOpen)
 	mux.HandleFunc("GET /api/machines/{name}/console/screen", s.consoleScreen)
 	mux.HandleFunc("POST /api/machines/{name}/console/input", s.consoleInput)

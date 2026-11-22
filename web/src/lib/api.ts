@@ -357,6 +357,12 @@ export const api = {
       {},
     ),
   machineLabState: (name: string) => get<Record<string, unknown>>(`/machines/${encodeURIComponent(name)}/lab-state`),
+  machineRdpToggle: (name: string, enabled: boolean) =>
+    post<{ ok: boolean; output?: string; error?: string }>(`/machines/${encodeURIComponent(name)}/rdp`, { enabled }),
+  machineOccupancy: (name: string) =>
+    get<{ machine: string; tasks?: { task_id: number; name: string; status: string }[]; credentials: { count: number; has_password: boolean; default_username: string } }>(
+      `/machines/${encodeURIComponent(name)}/occupancy`,
+    ),
   machineConsoleOpen: (name: string) => post<Record<string, unknown>>(`/machines/${encodeURIComponent(name)}/console`, {}),
   machineConsoleScreenUrl: (name: string) => `/api/machines/${encodeURIComponent(name)}/console/screen`,
   machineConsoleInput: (name: string, body: { action: "click" | "type" | "key"; x?: number; y?: number; button?: string; text?: string; keys?: string }) =>

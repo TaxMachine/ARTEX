@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/TaxMachine/ARTEX/db"
 	"io"
 	"net/http"
 	"os"
@@ -61,7 +63,9 @@ func (s *Server) machineTestConnection(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, res)
 }
 
-// consoleOpen opens (or returns the existing) VNC desktop session for operators.
+// consoleOpen opens (or returns the existing) desktop session for operators:
+// VNC when configured, else RDP when enabled on the machine (password
+// credential required — resolved from machine-level creds, never task ones).
 func (s *Server) consoleOpen(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
 	m, err := s.m.Machines().Machine(name)
@@ -70,16 +74,72 @@ func (s *Server) consoleOpen(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	opt := s.m.Machines().DesktopOptionsFor(m)
-	if opt.Port == 0 {
-		writeErr(w, 409, "no console configured for this machine (set config.vnc_port)")
-		return
+	if opt.Port == 0 && m.Host != "" {
+		// No VNC: try RDP (office-vm style headless Windows boxes).
+		rdpUp, why := s.rdpReachable(r.Context(), m)
+		if !rdpUp {
+			writeErr(w, 409, "no VNC configured and RDP unavailable: "+why)
+			return
+		}
+		user, pass, ok := s.machinePasswordCredential(m)
+		if !ok {
+			writeErr(w, 409, "RDP is on but no machine-level password credential is stored (add one on the machine form; RDP cannot use keys)")
+			return
+		}
+		opt.Kind = "rdp"
+		opt.Host = m.Host
+		opt.Port = 3389
+		opt.Username = user
+		opt.Password = pass
 	}
-	info, err := s.m.Machines().DesktopOpen(r.Context(), m, opt)
+	info, err := s.m.Machines().DesktopOpen(machine.WithOperatorDial(r.Context()), m, opt)
 	if err != nil {
 		writeErr(w, 500, err.Error())
 		return
 	}
 	writeJSON(w, 200, info)
+}
+
+// rdpReachable checks 3389 from the server and the machine-side enablement via
+// one cheap SSH probe (operator scope).
+func (s *Server) rdpReachable(ctx context.Context, m db.Machine) (bool, string) {
+	if !machine.TCPReachable(m.Host, 3389, 2*time.Second) {
+		return false, "port 3389 not reachable (enable RDP first — Lab state tab)"
+	}
+	sctx, cancel := context.WithTimeout(ctx, 12*time.Second)
+	defer cancel()
+	out, err := s.m.Machines().Exec(sctx, 0, m.Name, "", 0,
+		"powershell -NoProfile -EncodedCommand "+psEncode64Server(
+			`Write-Output ((Get-ItemProperty 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -ErrorAction SilentlyContinue).fDenyTSConnections)`),
+		10*time.Second)
+	if err != nil {
+		return false, "probe failed: " + err.Error()
+	}
+	if strings.TrimSpace(out.Stdout) == "1" {
+		return false, "RDP is disabled on the machine (fDenyTSConnections=1)"
+	}
+	return true, ""
+}
+
+// machinePasswordCredential finds a machine-level password credential.
+func (s *Server) machinePasswordCredential(m db.Machine) (user, pass string, ok bool) {
+	raw, has := m.Config["ssh_credentials"].([]any)
+	if !has {
+		return "", "", false
+	}
+	for _, e := range raw {
+		c, isMap := e.(map[string]any)
+		if !isMap {
+			continue
+		}
+		st, _ := c["secret_type"].(string)
+		p, _ := c["password"].(string)
+		u, _ := c["username"].(string)
+		if p != "" && (st == "password" || st == "") && u != "" {
+			return u, p, true
+		}
+	}
+	return "", "", false
 }
 
 // consoleScreen grabs a fresh screenshot and serves the PNG bytes.
@@ -170,6 +230,9 @@ func (s *Server) machineLabState(w http.ResponseWriter, r *http.Request) {
 		`$r += 'fuzzer_procs=' + @(Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object {$_.CommandLine -match 'artex-fuzzer'}).Count`,
 		`try { $r += 'defender_exclusions=' + @((Get-MpPreference -ErrorAction Stop).ExclusionPath).Count } catch { $r += 'defender_exclusions=unknown' }`,
 		`$r += 'office_procs=' + @(Get-Process WINWORD,EXCEL -ErrorAction SilentlyContinue).Count`,
+		`$r += 'rdp_service=' + (Get-Service TermService -ErrorAction SilentlyContinue).Status`,
+		`$r += 'rdp_enabled=' + $((Get-ItemProperty 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -ErrorAction SilentlyContinue).fDenyTSConnections -eq 0)`,
+		`$r += 'rdp_listening=' + @(Get-NetTCPConnection -LocalPort 3389 -State Listen -ErrorAction SilentlyContinue).Count`,
 		`$r -join "|"`,
 	}, "; ")
 	if ex, execErr := s.m.Machines().Exec(ctx, 0, m.Name, "", 0,
@@ -256,4 +319,98 @@ func (s *Server) machineVerifyCredentials(w http.ResponseWriter, r *http.Request
 		}
 	}
 	writeJSON(w, 200, res)
+}
+
+// machineRDPToggle enables or disables Remote Desktop on the machine over the
+// operator SSH path (registry + firewall group + service). Idempotent.
+func (s *Server) machineRDPToggle(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	var body struct {
+		Enabled bool `json:"enabled"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r.Body, 1<<12)).Decode(&body); err != nil {
+		writeErr(w, 400, "bad json: "+err.Error())
+		return
+	}
+	m, err := s.m.Machines().Machine(name)
+	if err != nil {
+		writeErr(w, 404, "machine not found")
+		return
+	}
+	deny := 1
+	fw := "Disable-NetFirewallRule"
+	if body.Enabled {
+		deny = 0
+		fw = "Enable-NetFirewallRule"
+	}
+	ps := strings.Join([]string{
+		fmt.Sprintf(`Set-ItemProperty 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -Value %d -Type DWord`, deny),
+		fmt.Sprintf(`%s -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue`, fw),
+		`if ($deny -eq 0 -or $true) { }`,
+		`Write-Output ("fDeny=" + (Get-ItemProperty 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections).fDenyTSConnections)`,
+	}, "; ")
+	ctx, cancel := context.WithTimeout(machine.WithOperatorDial(r.Context()), 30*time.Second)
+	defer cancel()
+	out, execErr := s.m.Machines().Exec(ctx, 0, m.Name, "", 0,
+		"powershell -NoProfile -EncodedCommand "+psEncode64Server(ps), 25*time.Second)
+	res := map[string]any{"machine": m.Name, "requested": body.Enabled}
+	if execErr != nil {
+		res["ok"] = false
+		res["error"] = execErr.Error()
+	} else {
+		res["ok"] = strings.Contains(out.Stdout, fmt.Sprintf("fDeny=%d", deny))
+		res["output"] = strings.TrimSpace(out.Stdout)
+	}
+	writeJSON(w, 200, res)
+}
+
+// machineOccupancy lists recent tasks that used the machine (from machine
+// events) with their current status, plus the credential summary — the
+// "everything about this machine" companion to the detail page.
+func (s *Server) machineOccupancy(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	m, err := s.m.Machines().Machine(name)
+	if err != nil {
+		writeErr(w, 404, "machine not found")
+		return
+	}
+	out := map[string]any{"machine": m.Name}
+	// recent tasks from the event stream
+	rows, err := s.m.Machines().DB().Query(`
+		SELECT e.task_id, COALESCE(t.name,''), COALESCE(t.status,'')
+		FROM machine_events e LEFT JOIN tasks t ON t.id = e.task_id
+		WHERE e.machine = $1 AND e.task_id IS NOT NULL
+		GROUP BY e.task_id, t.name, t.status
+		ORDER BY max(e.id) DESC LIMIT 8`, m.Name)
+	if err == nil {
+		defer rows.Close()
+		var tasks []map[string]any
+		for rows.Next() {
+			var id int64
+			var taskName, status sql.NullString
+			if rows.Scan(&id, &taskName, &status) == nil {
+				tasks = append(tasks, map[string]any{
+					"task_id": id, "name": taskName.String, "status": status.String,
+				})
+			}
+		}
+		out["tasks"] = tasks
+	}
+	// credential summary (never the secrets)
+	summary := map[string]any{"count": 0, "has_password": false, "default_username": ""}
+	if raw, ok := m.Config["ssh_credentials"].([]any); ok {
+		summary["count"] = len(raw)
+		for _, e := range raw {
+			if c, ok := e.(map[string]any); ok {
+				if st, _ := c["secret_type"].(string); st == "password" {
+					summary["has_password"] = true
+				}
+			}
+		}
+	}
+	if u, ok := m.Config["default_username"].(string); ok {
+		summary["default_username"] = u
+	}
+	out["credentials"] = summary
+	writeJSON(w, 200, out)
 }

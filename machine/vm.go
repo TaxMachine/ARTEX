@@ -119,6 +119,11 @@ func scriptAlive(m db.Machine, pid int) bool {
 	return strings.Contains(cmd, "qemu-system") && strings.Contains(cmd, m.Name)
 }
 
+// TCPReachable is the exported wrapper for server-side probes (RDP check).
+func TCPReachable(host string, port int, timeout time.Duration) bool {
+	return tcpReachable(host, port, timeout)
+}
+
 func tcpReachable(host string, port int, timeout time.Duration) bool {
 	if host == "" {
 		return false
