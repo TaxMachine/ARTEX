@@ -165,7 +165,21 @@ func (s *Service) Status(ctx context.Context, name string) (Status, error) {
 			st.State = "stopped"
 		}
 	case "ssh":
-		st.State = "unknown"
+		// No lifecycle to query — SSH reachability IS the state. An ssh-only
+		// machine is "up" iff its endpoint answers; "unknown" here made every
+		// ssh-kind machine look broken on the Machines page despite ssh being
+		// fine (reported on office-vm).
+		if m.Host != "" {
+			st.SSHReachable = tcpReachable(m.Host, m.SSHPort, 2*time.Second)
+		}
+		if st.SSHReachable {
+			st.State = "up"
+			st.Running = true
+		} else {
+			st.State = "unreachable"
+			st.Running = false
+		}
+		return st, nil
 	}
 	if m.Host != "" {
 		st.SSHReachable = tcpReachable(m.Host, m.SSHPort, 2*time.Second)
