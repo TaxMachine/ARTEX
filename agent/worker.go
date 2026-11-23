@@ -170,6 +170,9 @@ func (w *Worker) SetConstraintInject(fn func() bool) { w.injectConstraints = fn 
 // editable through the prompt UI.
 func (w *Worker) SetLessonsBlock(block string) { w.lessonsBlock = block }
 
+// LessonsBlock returns the currently set lessons block ("" when none).
+func (w *Worker) LessonsBlock() string { return w.lessonsBlock }
+
 // wantConstraints reports whether constraint injection is enabled (default yes).
 func (w *Worker) wantConstraints() bool { return w.injectConstraints == nil || w.injectConstraints() }
 

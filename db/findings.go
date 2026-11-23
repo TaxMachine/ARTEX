@@ -171,6 +171,14 @@ func (d *DB) AddFinding(taskID, nodeID int64, vulnclass, name, severity, summary
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
 		tid, nid, vulnclass, name, severity, summary, evidence, worker, string(aidsJSON),
 	).Scan(&id)
+	if err == nil && taskID > 0 {
+		// Inherit the task's project so same-software findings aggregate on the
+		// project (the project findings digest and the projects page depend on
+		// it). Best-effort: findings without a project stay valid.
+		_, _ = d.Exec(
+			`UPDATE findings SET project_id = (SELECT t.project_id FROM tasks t WHERE t.id = $2)
+			 WHERE id = $1 AND project_id IS NULL`, id, taskID)
+	}
 	return id, err
 }
 

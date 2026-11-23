@@ -44,8 +44,17 @@ func rsiLessonsMode() string {
 // by editing the prompt in the UI. Usage is logged in both modes so a later
 // comparison can tell which tasks saw which lessons.
 func (s *Server) wireTaskLessons(t *Task, wk *agent.Worker, pl *agent.Planner) {
+	if t == nil {
+		return
+	}
+	// Project findings digest (unconditional): prior findings on the SAME
+	// software reach every planner + worker prompt deterministically — the
+	// fix for "new tasks only see project findings if the model remembers to
+	// call project_context" (6 calls across ~100 intents on tasks 9-11). The
+	// tool stays for full depth/evidence; this guarantees the baseline.
+	s.wireProjectDigest(t, wk, pl)
 	mode := rsiLessonsMode()
-	if mode == "off" || t == nil {
+	if mode == "off" {
 		return
 	}
 	taskID, err := strconv.ParseInt(t.ID, 10, 64)
@@ -72,6 +81,7 @@ func (s *Server) wireTaskLessons(t *Task, wk *agent.Worker, pl *agent.Planner) {
 			pl.SetEpisodesBlock(ep)
 		}
 	}
+
 	if err := s.m.PG().LogLessonUsage(context.Background(), taskID, ids, mode); err != nil {
 		log.Printf("[rsi] lesson usage log failed for task %s: %v", t.ID, err)
 	}
@@ -124,4 +134,23 @@ func (s *Server) extractTaskLessons(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, 200, map[string]any{"extracted": n})
+}
+
+// wireProjectDigest injects the task's project prior-findings digest into the
+// worker and planner lesson blocks (always on — it is baseline context, not an
+// RSI experiment).
+func (s *Server) wireProjectDigest(t *Task, wk *agent.Worker, pl *agent.Planner) {
+	taskID, err := strconv.ParseInt(t.ID, 10, 64)
+	if err != nil {
+		return
+	}
+	digest, err := s.m.PG().ProjectFindingsDigestForTask(context.Background(), taskID, 40)
+	if err != nil || digest == "" {
+		return
+	}
+	if existing := wk.LessonsBlock(); existing != "" {
+		digest = existing + "\n\n" + digest
+	}
+	wk.SetLessonsBlock(digest)
+	pl.SetLessonsBlock(digest)
 }

@@ -123,6 +123,9 @@ func (p *Planner) SetConstraintInject(fn func() bool) { p.injectConstraints = fn
 // editable through the prompt UI.
 func (p *Planner) SetLessonsBlock(block string) { p.lessonsBlock = block }
 
+// LessonsBlock returns the currently set lessons block ("" when none).
+func (p *Planner) LessonsBlock() string { return p.lessonsBlock }
+
 // SetEpisodesBlock sets the episodic-memory block (recorded outcomes from past
 // replay worlds). Empty disables it.
 func (p *Planner) SetEpisodesBlock(block string) { p.episodesBlock = block }
