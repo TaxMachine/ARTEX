@@ -2136,12 +2136,20 @@ func (s *Server) pgSaveProfile(w http.ResponseWriter, r *http.Request) {
 		db.LLMProfile
 		APIKey    string `json:"api_key"`
 		Streaming *bool  `json:"streaming"`
+		// IDIn accepts the id as either a JSON number or a string: the LIST
+		// endpoint serializes ids as strings (LLMProfileDTO.ID), so any client
+		// that round-trips a listed profile (including API consumers) sends
+		// "id":"5" — the embedded int64 must not reject that.
+		IDIn flexibleID `json:"id"`
 	}
 	if err := decode(w, r, &body); err != nil {
 		writeErr(w, 400, err.Error())
 		return
 	}
 	p := body.LLMProfile
+	if p.ID == 0 {
+		p.ID = int64(body.IDIn)
+	}
 	p.APIKey = body.APIKey
 	p.Streaming = body.Streaming == nil || *body.Streaming
 	// The list returns the proxy masked: the placeholder sent back keeps the
@@ -2922,4 +2930,23 @@ func templateFields(t *template.Template) []string {
 		walk(t.Tree.Root)
 	}
 	return out
+}
+
+// flexibleID unmarshals a JSON number or numeric string into an int64, so the
+// save endpoint accepts ids in both the wire forms this API emits.
+type flexibleID int64
+
+func (f *flexibleID) UnmarshalJSON(b []byte) error {
+	s := strings.TrimSpace(string(b))
+	s = strings.Trim(s, `"`)
+	if s == "" || s == "null" || s == "0" {
+		*f = 0
+		return nil
+	}
+	v, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return fmt.Errorf("id must be a number or numeric string: %w", err)
+	}
+	*f = flexibleID(v)
+	return nil
 }
