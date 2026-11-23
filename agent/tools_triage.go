@@ -123,7 +123,15 @@ func (t *ToolSet) crashTriageAutoTool() actool.CoreTool {
 			if err != nil {
 				return jsonResult(map[string]any{"stage": "triage", "launch": launchOut, "stop": stopOut, "error": err.Error()})
 			}
-			// 6) symbolize: extract module+offset from the triage output.
+			// 6) judge-the-judge: a second model pass critiques the triage's
+			// primitive extraction (Meta-Rewarding pattern at inference time).
+			// Fail-open: critique problems never block the primitive record.
+			if triageCritiqueHook != nil {
+				if crit, cerr := triageCritiqueHook(ctx, fmt.Sprint(triageOut["text"]), fmt.Sprint(triageOut["structuredContent"])); cerr == nil && strings.TrimSpace(crit) != "" {
+					triageOut["critique"] = crit
+				}
+			}
+			// 7) symbolize: extract module+offset from the triage output.
 			symbolized := crossmapSymbolize(triageOut)
 			return jsonResult(map[string]any{
 				"action": "crash_triage_auto", "machine": a.Machine, "target": a.Target,
@@ -149,4 +157,13 @@ func errText(err error) string {
 		return ""
 	}
 	return err.Error()
+}
+
+// triageCritiqueHook runs the judge-the-judge pass over triage output; the
+// server installs it (LLM profiles live there). nil = critique off.
+var triageCritiqueHook func(ctx context.Context, text, structured string) (string, error)
+
+// SetTriageCritiqueHook installs the triage critique callback.
+func SetTriageCritiqueHook(fn func(ctx context.Context, text, structured string) (string, error)) {
+	triageCritiqueHook = fn
 }

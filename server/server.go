@@ -217,6 +217,12 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 	// fuzz supervisor: watches detached campaigns on active tasks and
 	// auto-dispatches triage intents when new crash signatures land.
 	go (&fuzzSupervisor{s: s, lastSeen: map[string]int{}}).run(ctx)
+	// Self-improvement loop (Tier-A): contrastive lesson extraction on task
+	// close + outcome feedback for shown lessons.
+	m.SetSelfImproveHooks(s.onTaskClosedSelfImprove)
+	s.wireTriageCritique()
+	// post-run worker self-critique on exhausted intents
+	s.engine.SetSelfCritique(s.maybeSelfCritique)
 	// Dream-RSI phase 3: apply the adopted exploration policy to open-intent
 	// priorities (no-op until a policy is adopted via /api/rsi/adopt).
 	go s.runRsiApplier(ctx)
@@ -908,6 +914,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/rsi/dream", s.rsiDream)
 	mux.HandleFunc("POST /api/rsi/adopt", s.rsiAdopt)
 	mux.HandleFunc("GET /api/rsi/trajectory", s.rsiTrajectory)
+	mux.HandleFunc("GET /api/rsi/rubric-stats", s.retestRubricStats)
+	mux.HandleFunc("POST /api/tasks/{id}/lessons/contrastive", s.contrastiveLessonsTrigger)
 	mux.HandleFunc("POST /api/machines/{name}/rdp", s.machineRDPToggle)
 	mux.HandleFunc("GET /api/machines/{name}/occupancy", s.machineOccupancy)
 	mux.HandleFunc("POST /api/machines/{name}/console", s.consoleOpen)

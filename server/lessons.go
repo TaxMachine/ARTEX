@@ -22,6 +22,11 @@ import (
 //
 // The flag is read per task-bundle build, so changing it needs a new task or a
 // task-agent invalidation, not a restart.
+// episodesOn: the episodic-memory block switch (default on when worlds exist).
+func episodesOn() bool {
+	return strings.ToLower(strings.TrimSpace(os.Getenv("ARTEX_RSI_EPISODES"))) != "0"
+}
+
 func rsiLessonsMode() string {
 	switch strings.ToLower(strings.TrimSpace(os.Getenv("ARTEX_RSI_LESSONS"))) {
 	case "shadow":
@@ -59,6 +64,13 @@ func (s *Server) wireTaskLessons(t *Task, wk *agent.Worker, pl *agent.Planner) {
 	if mode == "inject" {
 		wk.SetLessonsBlock(block)
 		pl.SetLessonsBlock(block)
+	}
+	// Episodic memory (Early Experience world-modeling, inference-time):
+	// recorded outcomes from past replay worlds, independent of lesson mode.
+	if episodesOn() {
+		if ep, err := s.rsiStore().EpisodicSummary(context.Background(), taskID, 1200); err == nil && ep != "" {
+			pl.SetEpisodesBlock(ep)
+		}
 	}
 	if err := s.m.PG().LogLessonUsage(context.Background(), taskID, ids, mode); err != nil {
 		log.Printf("[rsi] lesson usage log failed for task %s: %v", t.ID, err)

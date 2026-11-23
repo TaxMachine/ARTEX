@@ -44,7 +44,8 @@ type Planner struct {
 	// lessonsBlock is the raw RSI evidence block. Empty = off. Plan() frames it
 	// with a per-run data envelope (field=lessons) and appends it after the
 	// rendered system prompt. The server renders the text from outcome records.
-	lessonsBlock string
+	lessonsBlock  string
+	episodesBlock string
 
 	// todos keeps ONE plan-scratchpad per task (keyed by exploration id) so the
 	// planner's multi-step plan survives across wake-ups — each Plan() is a fresh
@@ -121,6 +122,10 @@ func (p *Planner) SetConstraintInject(fn func() bool) { p.injectConstraints = fn
 // frames it as data. The server renders it from outcome records; it is never
 // editable through the prompt UI.
 func (p *Planner) SetLessonsBlock(block string) { p.lessonsBlock = block }
+
+// SetEpisodesBlock sets the episodic-memory block (recorded outcomes from past
+// replay worlds). Empty disables it.
+func (p *Planner) SetEpisodesBlock(block string) { p.episodesBlock = block }
 
 // wantConstraints reports whether constraint injection is enabled (default yes).
 func (p *Planner) wantConstraints() bool { return p.injectConstraints == nil || p.injectConstraints() }
@@ -518,6 +523,9 @@ func (p *Planner) Plan(ctx context.Context, taskID int64, as *db.AssetStore, ts 
 	taskDir := ensureRunDir(p.workDir, taskID, 0)
 	ctx = intercept.WithReviewContext(ctx, taskDir, intercept.ReviewBackground{})
 	sysBody := plannerSystem(goal, p.workDir, taskDir) + frameLessonsBlock(p.lessonsBlock)
+	if p.episodesBlock != "" {
+		sysBody += "\n\n" + p.episodesBlock
+	}
 	constraints := ""
 	if p.wantConstraints() {
 		constraints = constraintBlock(ts)

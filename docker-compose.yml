@@ -33,6 +33,10 @@ services:
       # ARTEX_COMPACTION_K: "72"
       # ARTEX_TOOL_RAG: "1"
       # ARTEX_WORKER_GLOBAL_TOOLS: kn_search,record_fact,report_finding,ssh_exec,ps_script
+      # Self-improvement loop (Tier-A): lessons inject + episodic planner memory.
+      # shadow = log what would be shown without changing prompts.
+      ARTEX_RSI_LESSONS: inject
+      ARTEX_RSI_EPISODES: "1"
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       ARTEX_LLM_PROVIDER: ${ARTEX_LLM_PROVIDER:-}

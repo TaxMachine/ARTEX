@@ -256,6 +256,7 @@ type DeleteTaskResult struct {
 // Manager owns the PostgreSQL data source (asset graph + every task's exploration
 // graph + config) and the in-memory set of task handles.
 type Manager struct {
+	selfImprove func(taskID int64) // self-improvement hooks wired by the server (lessons loop)
 	dir         string
 	pg          *pgdb.DB
 	assets      *pgdb.AssetStore
@@ -1676,6 +1677,9 @@ func (m *Manager) extractLessons(taskID int64) {
 	if _, err := m.pg.ExtractLessonsForTask(context.Background(), taskID); err != nil {
 		log.Printf("[rsi] lesson extraction failed for task %d: %v", taskID, err)
 	}
+	if m.selfImprove != nil {
+		m.selfImprove(taskID) // contrastive extraction + outcome feedback (best-effort)
+	}
 }
 
 // DeleteTask removes a task and optionally its related global data. Traffic has
@@ -2105,3 +2109,6 @@ func (t *Task) drainTriggers() []agent.TriggerEvent {
 	t.pendingTriggers = nil
 	return ev
 }
+
+// SetSelfImproveHooks installs the post-close self-improvement callbacks.
+func (m *Manager) SetSelfImproveHooks(fn func(taskID int64)) { m.selfImprove = fn }

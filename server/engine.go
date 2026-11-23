@@ -94,8 +94,9 @@ func retryableWorkerModelError(reason harness.TerminalReason, err error) bool {
 // (re)installed at runtime (LLM configured from the UI); the loops always run
 // but idle until an LLM is set.
 type Engine struct {
-	m        *Manager
-	debounce time.Duration
+	selfCritique func(t *Task, intent *db.Node, reason harness.TerminalReason, c *selfCritiqueCollector)
+	m            *Manager
+	debounce     time.Duration
 
 	bc *Broadcaster // live activity pub/sub (SSE)
 
@@ -1236,7 +1237,9 @@ func (e *Engine) runIntent(ctx context.Context, t *Task, name string, worker *ag
 	// wrap the guard hooks so steer_work can inject a mid-run course-correction
 	// for THIS intent (drained before the worker's next tool call).
 	iid := intent.ID
+	critiqueCol := &selfCritiqueCollector{}
 	taskEmit := func(a db.Activity) {
+		critiqueCol.observe(a)
 		nid := iid
 		a.NodeID, a.Worker = &nid, name
 		emit(a)
@@ -1289,6 +1292,9 @@ func (e *Engine) runIntent(ctx context.Context, t *Task, name string, worker *ag
 		e.EndLLMCall(t.ID)
 	}
 	stopHeartbeat() // no longer busy: the state writes below follow within the just-renewed claim
+	// Post-run self-critique (async): reviews the exhausted run and may record
+	// a critique fact for the planner. Never blocks settlement.
+	e.srvSelfCritique(t, intent, reason, critiqueCol)
 	if meter != nil {
 		meter.Finish() // feeds the per-worker cost estimate
 	}
