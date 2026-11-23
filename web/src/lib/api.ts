@@ -350,6 +350,19 @@ export const api = {
   updateMachine: (id: number, m: MachineInput) => put<Machine>(`/machines/${id}`, m),
   deleteMachine: (id: number) => del<{ ok: boolean }>(`/machines/${id}`),
   machineStatus: (name: string) => get<MachineStatus>(`/machines/${encodeURIComponent(name)}/status`),
+  rsiWorlds: () => get<{ id: number; task_id: number; name: string; created_at: string }[]>("/rsi/worlds").then((r) => arr(r)),
+  rsiWorldDetail: (id: number) =>
+    get<{
+      id: number; task_id: number; name: string; root: number; B: number; S: number;
+      nodes: { id: number; kind: string; parent: number; score: number; cost: number }[];
+      links: { source: number; target: number }[];
+    }>(`/rsi/worlds/${id}`),
+  rsiPolicies: () =>
+    get<{ policies: { version: number; code: string; note: string; origin: string; avg_score: number }[]; deployed_version: number }>("/rsi/policies"),
+  rsiRedream: (body: { incumbent?: number; lambda?: number }) =>
+    post<{ dreamer: string; best: { code: string; note: string; avg_score: number }; candidates: { policy: string; avg_score: number }[] }>("/rsi/re-dream", body),
+  rsiAdopt: (body: { code: string; note: string; avg_score: number }) =>
+    post<{ version: number; code: string; deployed: boolean }>("/rsi/adopt", body),
   platformIssues: (status?: string) => get<PlatformIssue[]>(`/platform-issues${status ? `?status=${encodeURIComponent(status)}` : ""}`).then((r) => arr(r)),
   createPlatformIssue: (body: { title: string; detail?: string; source?: string; source_ref?: string }) =>
     post<{ id: number; created: boolean }>("/platform-issues", body),
