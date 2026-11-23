@@ -5,6 +5,7 @@ import * as React from "react";
 import {
   ArrowUpIcon,
   BrainIcon,
+  GaugeIcon,
   ChevronDownIcon,
   CircleCheckIcon,
   CircleSlashIcon,
@@ -1417,6 +1418,7 @@ export function SessionsTab({ taskId, taskPaused = false }: { taskId: string; ta
       0,
   };
 
+
   // Run duration = span from this session's first step to its last (for a live
   // session, "now" so it ticks up — the 1.5s setTick above re-renders it).
   // While the TASK is paused nothing time-derived may advance (#84): sessions
@@ -1599,6 +1601,28 @@ export function SessionsTab({ taskId, taskPaused = false }: { taskId: string; ta
   const activeResolution = resolutionForSession(active);
   const activeAssets =
     active.role === "worker" && active.intent_id ? intentAssetsByID.get(active.intent_id) : undefined;
+  // Context fill of the ACTIVE session: the input size of its latest request
+  // vs the resolved model's context window. Source of truth is the polled
+  // last_input_tokens (newest persisted result for this session); while a turn
+  // is in flight the newest usage frame already in the store wins so the badge
+  // moves without waiting for the 5s poll.
+  const contextFill = React.useMemo(() => {
+    const capK = activeResolution?.context_window_k ?? 0;
+    if (!capK || isSystem) return null;
+    let input = sessionTokens[activeKey]?.last_input_tokens ?? 0;
+    const items = store[activeKey]?.items ?? [];
+    for (let index = items.length - 1; index >= 0; index--) {
+      const item = items[index];
+      if (item.kind === "usage" && (item.input_tokens ?? 0) > 0) {
+        input = Math.max(input, item.input_tokens ?? 0);
+        break;
+      }
+    }
+    if (input <= 0) return null;
+    const cap = capK * 1000;
+    const pct = Math.min(100, Math.round((input / cap) * 100));
+    return { input, cap, pct, over: input > cap };
+  }, [activeKey, activeResolution, sessionTokens, store, isSystem]);
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -1814,6 +1838,37 @@ export function SessionsTab({ taskId, taskPaused = false }: { taskId: string; ta
                     {activeResolution.available
                       ? [resolutionLabel(activeResolution), activeResolution.model].filter(Boolean).join(" / ")
                       : activeResolution.reason || "No available LLM config"}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {contextFill && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      aria-label={`Context fill ${contextFill.pct}%`}
+                      className={cn(
+                        "shrink-0 gap-1 font-normal tabular-nums",
+                        contextFill.pct >= 85
+                          ? "border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400"
+                          : contextFill.pct >= 60
+                            ? "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                            : "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                      )}
+                    >
+                      <GaugeIcon className="size-3" />
+                      {`Context ${contextFill.pct}%`}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs">
+                    <div className="font-medium">
+                      Context window fill · {(contextFill.input / 1000).toFixed(1)}K / {(contextFill.cap / 1000).toFixed(0)}K
+                    </div>
+                    <div className="text-muted-foreground">
+                      {contextFill.over
+                        ? "Latest request exceeded the configured window (compaction should trigger)."
+                        : "Input size of this session's latest request. Refreshes every 5s."}
+                    </div>
                   </TooltipContent>
                 </Tooltip>
               )}

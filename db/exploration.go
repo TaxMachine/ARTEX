@@ -155,6 +155,10 @@ type SessionTokenUsage struct {
 	OutputTokens     int    `json:"output_tokens"`
 	CacheReadTokens  int    `json:"cache_read_tokens"`
 	CacheWriteTokens int    `json:"cache_write_tokens"`
+	// LastInputTokens is the input size of the session's most recent request —
+	// the live "how full is the context window" signal, distinct from the sums
+	// above which accumulate across the whole session.
+	LastInputTokens int `json:"last_input_tokens"`
 }
 
 // DailyTokenBucket is one day's global token aggregate across all tasks.
@@ -1701,22 +1705,42 @@ func (s *ExplorationStore) TokenStatsByWorker() ([]TokenUsage, error) {
 // activity-history pagination. Main/planner use fixed keys; Worker executions use
 // their intent node id, even when a different work#N process handled a retry.
 func (s *ExplorationStore) TokenStatsBySession() ([]SessionTokenUsage, error) {
-	rows, err := s.db.Query(`SELECT
+	// results: one row per kind='result' activity attributed to a UI session
+	// (main:<seg> | plan | intent:<id>), tagged with its raw token columns.
+	// sums: lifetime totals per session. latest: the most recent request that
+	// carried input tokens — the live context-fill signal for that session.
+	rows, err := s.db.Query(`
+WITH results AS (
+	SELECT
 		CASE
 			WHEN COALESCE(a.worker,'')='mainagent' THEN 'main:' || COALESCE(a.main_seg,0)::text
 			WHEN COALESCE(a.worker,'')='planner' THEN 'plan'
 			WHEN n.id IS NOT NULL THEN 'intent:' || n.id::text
 			ELSE ''
 		END AS session_key,
-		COALESCE(SUM(a.input_tokens),0), COALESCE(SUM(a.output_tokens),0),
-		COALESCE(SUM(a.cache_read_tokens),0), COALESCE(SUM(a.cache_write_tokens),0)
+		a.input_tokens, a.output_tokens, a.cache_read_tokens, a.cache_write_tokens, a.id
 	FROM activity a
 	LEFT JOIN exploration_nodes n
 	  ON n.id=a.node_id AND n.exploration_id=a.exploration_id AND n.kind='intent'
 	WHERE a.exploration_id=$1 AND a.kind='result'
 	  AND (COALESCE(a.worker,'') IN ('mainagent','planner') OR n.id IS NOT NULL)
-	GROUP BY session_key
-	ORDER BY session_key`, s.expID)
+),
+sums AS (
+	SELECT session_key,
+		COALESCE(SUM(input_tokens),0) AS in_t,
+		COALESCE(SUM(output_tokens),0) AS out_t,
+		COALESCE(SUM(cache_read_tokens),0) AS cr_t,
+		COALESCE(SUM(cache_write_tokens),0) AS cw_t
+	FROM results GROUP BY session_key
+),
+latest AS (
+	SELECT DISTINCT ON (session_key) session_key, COALESCE(input_tokens,0) AS last_in
+	FROM results WHERE input_tokens > 0
+	ORDER BY session_key, id DESC
+)
+SELECT s.session_key, s.in_t, s.out_t, s.cr_t, s.cw_t, COALESCE(l.last_in, 0)
+FROM sums s LEFT JOIN latest l ON l.session_key = s.session_key
+ORDER BY s.session_key`, s.expID)
 	if err != nil {
 		return nil, err
 	}
@@ -1724,7 +1748,7 @@ func (s *ExplorationStore) TokenStatsBySession() ([]SessionTokenUsage, error) {
 	out := []SessionTokenUsage{}
 	for rows.Next() {
 		var u SessionTokenUsage
-		if err := rows.Scan(&u.Session, &u.InputTokens, &u.OutputTokens, &u.CacheReadTokens, &u.CacheWriteTokens); err != nil {
+		if err := rows.Scan(&u.Session, &u.InputTokens, &u.OutputTokens, &u.CacheReadTokens, &u.CacheWriteTokens, &u.LastInputTokens); err != nil {
 			return nil, err
 		}
 		out = append(out, u)

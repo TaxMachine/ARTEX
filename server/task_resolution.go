@@ -15,6 +15,9 @@ type taskLLMResolution struct {
 	Source    string `json:"source"`
 	Available bool   `json:"available"`
 	Reason    string `json:"reason,omitempty"`
+	// ContextWindowK mirrors the profile's context-window size (0 = unknown) so
+	// clients can turn a session's latest input size into a fill percentage.
+	ContextWindowK int `json:"context_window_k"`
 }
 
 func (s *Server) resolutionFromProfile(p *db.LLMProfile, source string) taskLLMResolution {
@@ -28,6 +31,11 @@ func (s *Server) resolutionFromProfile(p *db.LLMProfile, source string) taskLLMR
 		Format:    p.Format,
 		Model:     p.Model,
 		Source:    source,
+	}
+	if _, cfg, ok := s.providerForProfile(p.ID); ok {
+		// Same defaulting the runtime applies (0 → 200K, capped at 1M), so the
+		// fill percentage matches what compaction actually targets.
+		result.ContextWindowK = cfg.ContextWindowTokens() / 1000
 	}
 	// Ollama profiles are keyless by design; the other formats need a key.
 	if p.APIKey == "" && p.Format != "ollama" {
@@ -96,6 +104,7 @@ func (s *Server) resolveTaskRoleLLM(t *Task, agentKey string) (taskLLMResolution
 		return taskLLMResolution{
 			Name: name, Format: cfg.Provider(), Model: cfg.Model,
 			Source: "environment", Available: true,
+			ContextWindowK: cfg.ContextWindowTokens() / 1000,
 		}, nil
 	}
 	return taskLLMResolution{Source: "global", Reason: "no available LLM profile"}, nil

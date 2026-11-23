@@ -718,6 +718,7 @@ export interface TaskLLMResolution {
   source: "task_chain" | "agent_binding" | "global_profile" | "environment" | "global";
   available: boolean;
   reason?: string;
+  context_window_k?: number;
 }
 
 export interface TaskLLMResolutions {
@@ -819,6 +820,7 @@ export interface SessionTokenUsage {
   output_tokens: number;
   cache_read_tokens: number;
   cache_write_tokens: number;
+  last_input_tokens?: number;
 }
 
 export interface BatchControlItem {
