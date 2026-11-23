@@ -767,6 +767,8 @@ func (t *ToolSet) WorkerTools() []actool.CoreTool {
 		t.psScriptTool(),
 		// ready-to-run PoC zip per finding.
 		t.pocPackageTool(),
+		// unified crash-dump finder (WER config + CrashDumps + extras).
+		t.crashDumpsTool(),
 		// The following tools are still [not given] to workers, reserved for
 		// planner/main (reading context, cross-work retrospection are planning duties; a
 		// worker only executes and writes back its single intent):

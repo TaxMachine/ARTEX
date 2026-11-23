@@ -1267,14 +1267,14 @@ func (s *Server) reseedConfirmStandardPrompts() {
 // WorkerTools fix (mainagent+pentest only), so ToolResolve dropped them for
 // workers at runtime. One-time; fresh DBs seed the correct union directly.
 func (s *Server) seedGroomingToolBindings() {
-	const flag = "grooming_tools_worker_v9"
+	const flag = "grooming_tools_worker_v10"
 	if v, _, _ := s.m.pg.GetSetting(flag); v == "true" {
 		return
 	}
 	defer func() { _ = s.m.pg.SetSetting(flag, "true") }()
-	if err := s.m.pg.AddAgentToToolBinding("worker", []string{"poc_package"}); err != nil {
-		log.Printf("[tools] poc_package tool binding failed: %v", err)
+	if err := s.m.pg.AddAgentToToolBinding("worker", []string{"crash_dumps"}); err != nil {
+		log.Printf("[tools] crash_dumps tool binding failed: %v", err)
 		return
 	}
-	log.Printf("[tools] worker bound to poc_package (one-time)")
+	log.Printf("[tools] worker bound to crash_dumps (one-time)")
 }

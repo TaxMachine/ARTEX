@@ -112,10 +112,13 @@ function Mutate-Zip([byte[]]$b, [string]$m) {
   finally { Remove-Item "$tmpDir*" -Recurse -Force -ErrorAction SilentlyContinue; Remove-Item $tmpIn -ErrorAction SilentlyContinue }
 }
 
-# crash signature from WER event for the target process
+# crash signature from WER event for the target process. The event must be
+# NEWER than this iteration's open start ($script:caseStart): pre-campaign
+# events flushed late by WER otherwise get mis-attributed to the current case
+# (task 11's 8 "unique" crashes were exactly this — stale artifacts).
 function Get-CrashSignature {
   $events = Get-WinEvent -FilterHashtable @{LogName='Application'; Id=1001; StartTime=$script:campaignStart} -ErrorAction SilentlyContinue |
-    Where-Object { $_.Message -match $Target }
+    Where-Object { $_.Message -match $Target -and $_.TimeCreated -ge $script:caseStart }
   if ($events) {
     $e = $events[-1]
     if ($e.Message -match 'P1: (\S+).*?P2: (\S+).*?P3: (\S+).*?P4: (\S+).*?P5: (\S+).*?P6: (\S+).*?P7: (\S+)' -or
@@ -153,6 +156,7 @@ while ((Get-Date) -lt $deadline) {
     # open via COM, headless; use a dedicated app instance we kill per iteration
     $app = $null
     $opened = $false
+    $script:caseStart = Get-Date   # crash attribution fence (see Get-CrashSignature)
     try {
       $app = New-Object -ComObject $appName
       $app.Visible = $false

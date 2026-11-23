@@ -78,8 +78,8 @@ func (t *ToolSet) machineStop() actool.CoreTool {
 		}, "machine"),
 		t.needMachines("machine_stop", func(ctx context.Context, in json.RawMessage) (actool.Result, error) {
 			var a struct {
-				Machine string
-				Force   bool
+				Machine string `json:"machine"`
+				Force   bool   `json:"force"`
 			}
 			_ = json.Unmarshal(in, &a)
 			st, err := t.machines.Stop(ctx, t.taskID, a.Machine, a.Force)
@@ -208,8 +208,11 @@ func (t *ToolSet) sshUpload() actool.CoreTool {
 		}, "machine", "local_path", "remote_path"),
 		t.needMachines("ssh_upload", func(ctx context.Context, in json.RawMessage) (actool.Result, error) {
 			var a struct {
-				Machine, LocalPath, RemotePath, Username string
-				CredentialID                             int64 `json:"credential_id"`
+				Machine      string `json:"machine"`
+				LocalPath    string `json:"local_path"`
+				RemotePath   string `json:"remote_path"`
+				Username     string `json:"username"`
+				CredentialID int64  `json:"credential_id"`
 			}
 			_ = json.Unmarshal(in, &a)
 			res, err := t.machines.Upload(ctx, t.taskID, a.Machine, a.Username, a.CredentialID, a.LocalPath, a.RemotePath)
@@ -232,8 +235,11 @@ func (t *ToolSet) sshDownload() actool.CoreTool {
 		}, "machine", "remote_path"),
 		t.needMachines("ssh_download", func(ctx context.Context, in json.RawMessage) (actool.Result, error) {
 			var a struct {
-				Machine, RemotePath, LocalPath, Username string
-				CredentialID                             int64 `json:"credential_id"`
+				Machine      string `json:"machine"`
+				RemotePath   string `json:"remote_path"`
+				LocalPath    string `json:"local_path"`
+				Username     string `json:"username"`
+				CredentialID int64  `json:"credential_id"`
 			}
 			_ = json.Unmarshal(in, &a)
 			res, err := t.machines.Download(ctx, t.taskID, a.Machine, a.Username, a.CredentialID, a.RemotePath, a.LocalPath)

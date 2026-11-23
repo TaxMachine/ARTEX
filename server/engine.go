@@ -1411,6 +1411,24 @@ func (e *Engine) runIntent(ctx context.Context, t *Task, name string, worker *ag
 		state = "exhausted"
 		log.Printf("[worker %s] intent %d ran out of time (exhausted), wrote back %s after settling", name, intent.ID, wrote)
 	}
+	// Resume checkpoint (platform issue #5): exhausted intents record their last
+	// remote action so the re-dispatch reads existing results instead of
+	// replaying generate-then-read from zero. Synchronous + best-effort.
+	if state == "exhausted" {
+		if body := critiqueCol.checkpointFact(); body != "" {
+			payload := map[string]any{
+				"summary":  "resume checkpoint: last remote action of the exhausted run",
+				"detail":   body,
+				"evidence": "engine-settled checkpoint from the run's tool trail",
+				"source":   "tool_output",
+			}
+			if _, err := t.Store.AddNode("fact", payload, 0, "origin", "checkpoint", nil); err != nil {
+				log.Printf("[worker %s] intent %d checkpoint fact failed: %v", name, intent.ID, err)
+			} else {
+				log.Printf("[worker %s] intent %d: resume checkpoint recorded", name, intent.ID)
+			}
+		}
+	}
 	var stateErr error
 	if state == "blocked" && isTaskLLMChainExhausted(err) {
 		stateErr = t.Store.SettleIntentClaimBlocked(intent.ID, token, db.IntentBlockedLLMQuota)

@@ -161,8 +161,8 @@ type ToolSet struct {
 	// touches get anchored to it as lineage/provenance (NOT visibility — the asset
 	// graph is global and shared). Worker = its claimed intent; planner = begin root.
 	ownerNode int64
-	GoalMet   bool
-	Reason    string
+	GoalMet   bool   `json:"goal_met"`
+	Reason    string `json:"reason"`
 	writes    WriteCounts
 	// killWork, if set, terminates a running work by intent id (engine callback,
 	// wired by the planner). nil = the kill_work tool reports unavailable.
@@ -237,9 +237,9 @@ type EnrichTrigger interface {
 // findings under "facts" (record_fact → Facts, insert_assets → Assets,
 // report_finding → Findings; each element of a batch counts once).
 type WriteCounts struct {
-	Facts    int
-	Assets   int
-	Findings int
+	Facts    int `json:"facts"`
+	Assets   int `json:"assets"`
+	Findings int `json:"findings"`
 }
 
 // Total is every node persisted this run, regardless of kind — the

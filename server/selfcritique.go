@@ -32,9 +32,11 @@ worth_facting=false when the run was unremarkable — most runs are; do not inve
 // selfCritiqueCollector captures what the critique needs from the activity
 // stream without keeping the whole trail in memory.
 type selfCritiqueCollector struct {
-	mu       sync.Mutex
-	lastText string
-	tools    []string
+	mu         sync.Mutex
+	lastText   string
+	lastRemote string
+	tools      []string
+	checkpoint bool // checkpoint fact written
 }
 
 func (c *selfCritiqueCollector) observe(a db.Activity) {
@@ -52,8 +54,28 @@ func (c *selfCritiqueCollector) observe(a db.Activity) {
 				arg = strings.TrimSpace(a.Summary)
 			}
 			c.tools = append(c.tools, a.Tool+": "+clipStr(arg, 120))
+			// checkpoint (platform issue #5): remember the last REMOTE command
+			// launched, so an intent that dies mid-run leaves a resumable
+			// pointer instead of forcing the re-dispatch to start from zero.
+			switch a.Tool {
+			case "ssh_exec", "ps_script", "ssh_upload", "fuzz_campaign":
+				c.lastRemote = c.tools[len(c.tools)-1]
+			}
 		}
 	}
+}
+
+// checkpointFact renders the resume pointer for an exhausted intent. Empty when
+// the run launched nothing remote worth resuming.
+func (c *selfCritiqueCollector) checkpointFact() string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.lastRemote == "" {
+		return ""
+	}
+	body := "This intent ended exhausted. Last remote action it launched:\n  " + c.lastRemote +
+		"\n\nIf you are the re-dispatch: the command above may have already produced its results on the machine (detached scripts/fuzzers keep running after the intent dies). READ those results first (crash_dumps / the script's output dir) before regenerating anything — do not replay the full generate-then-read pipeline."
+	return clipStr(body, 1200)
 }
 
 // maybeSelfCritique runs the critique for terminal reasons worth reviewing and
