@@ -94,6 +94,7 @@ export default function PlatformIssuesPage() {
       </Card>
 
       <DataTableShell
+        fill
         toolbar={<span className="text-sm text-muted-foreground">{rows.length} issues{loading ? " · loading…" : ""}</span>}
       >
         <Table>
