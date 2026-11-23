@@ -82,7 +82,23 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
     task.active_llm_profile_id ? String(task.active_llm_profile_id) : (taskProfileIDs(task)[0] ?? ""),
   );
   const [saving, setSaving] = React.useState(false);
+  const [fill, setFill] = React.useState<{ worker: string; input_tokens: number; cache_read: number; ts: string }[]>([]);
   const popoverContentRef = React.useRef<HTMLDivElement>(null);
+
+  // Live context fill: latest actual request sizes for this task, per worker.
+  const loadFill = React.useCallback(async () => {
+    try {
+      const r = await api.taskContextFill(task.id);
+      setFill(r.latest ?? []);
+    } catch {
+      setFill([]);
+    }
+  }, [task.id]);
+  React.useEffect(() => {
+    void loadFill();
+    const iv = setInterval(() => void loadFill(), 30_000);
+    return () => clearInterval(iv);
+  }, [loadFill]);
 
   const chain = taskProfileIDs(task);
   const exhausted = task.llm_failover_state === "chain_exhausted";
@@ -179,6 +195,42 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
           </PopoverTitle>
           <PopoverDescription>{editorDescription}</PopoverDescription>
         </PopoverHeader>
+
+        {/* Context window fill: the active profile's capacity vs the latest
+            actual request sizes for this task (per worker role, 30s refresh). */}
+        {activeProfile && fill.length > 0 && (
+          <div className="rounded-md border p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span className="text-sm font-medium">{t("Context window")}</span>
+              <span className="text-muted-foreground font-mono text-xs">
+                {activeProfile.model} · {(activeProfile.context_window_k ?? 200)}K
+              </span>
+            </div>
+            <div className="space-y-2">
+              {fill.map((f) => {
+                const cap = Math.max(1, (activeProfile.context_window_k ?? 200) * 1000);
+                const pct = Math.min(100, Math.round((f.input_tokens / cap) * 100));
+                const hot = pct >= 85 ? "bg-red-500" : pct >= 60 ? "bg-amber-500" : "bg-emerald-500";
+                return (
+                  <div key={f.worker} className="space-y-1">
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <span className="font-medium">{f.worker}</span>
+                      <span className="text-muted-foreground font-mono tabular-nums">
+                        {(f.input_tokens / 1000).toFixed(1)}K / {activeProfile.context_window_k ?? 200}K · {pct}%
+                      </span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                      <div className={`h-full rounded-full transition-all ${hot}`} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-muted-foreground text-[11px]">
+              {t("Latest request size per role (cache reads included in the size). Bars turn amber at 60%, red at 85%.")}
+            </p>
+          </div>
+        )}
 
         {exhausted && (
           <Alert variant="destructive">

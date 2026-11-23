@@ -350,6 +350,10 @@ export const api = {
   updateMachine: (id: number, m: MachineInput) => put<Machine>(`/machines/${id}`, m),
   deleteMachine: (id: number) => del<{ ok: boolean }>(`/machines/${id}`),
   machineStatus: (name: string) => get<MachineStatus>(`/machines/${encodeURIComponent(name)}/status`),
+  taskContextFill: (task: string) =>
+    get<{ task: string; latest: { worker: string; input_tokens: number; cache_read: number; ts: string }[] }>(
+      `/llm/context/fill?task=${encodeURIComponent(task)}`,
+    ),
   rsiWorlds: () => get<{ id: number; task_id: number; name: string; created_at: string }[]>("/rsi/worlds").then((r) => arr(r)),
   rsiWorldDetail: (id: number) =>
     get<{
