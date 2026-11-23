@@ -1,0 +1,73 @@
+/*
+label: One Dark
+value: one-dark
+*/
+/* Atom's One Dark — the classic editor theme; One Light for day mode. */
+
+:root[data-theme-preset="one-dark"] {
+  --background: #fafafa;
+  --foreground: #383a42;
+  --card: #f0f0f1;
+  --card-foreground: var(--foreground);
+  --popover: #f0f0f1;
+  --popover-foreground: var(--foreground);
+  --primary: #4078f2;
+  --primary-foreground: #fafafa;
+  --secondary: #e5e5e7;
+  --secondary-foreground: #383a42;
+  --muted: #e5e5e7;
+  --muted-foreground: #696c77;
+  --accent: #dce2f7;
+  --accent-foreground: #2a54c8;
+  --destructive: #e45649;
+  --border: #d2d2d6;
+  --input: #696c77;
+  --ring: #4078f2;
+  --chart-1: #4078f2;
+  --chart-2: #50a14f;
+  --chart-3: #c18401;
+  --chart-4: #a626a4;
+  --chart-5: #0184bc;
+  --sidebar: #f0f0f1;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+.dark:root[data-theme-preset="one-dark"] {
+  --background: #282c34;
+  --foreground: #abb2bf;
+  --card: #21252b;
+  --card-foreground: var(--foreground);
+  --popover: #21252b;
+  --popover-foreground: var(--foreground);
+  --primary: #61afef;
+  --primary-foreground: #282c34;
+  --secondary: #3a3f4b;
+  --secondary-foreground: #abb2bf;
+  --muted: #3a3f4b;
+  --muted-foreground: #7f8794;
+  --accent: #3a3f4b;
+  --accent-foreground: #61afef;
+  --destructive: #e06c75;
+  --border: #454b58;
+  --input: #7f8794;
+  --ring: #61afef;
+  --chart-1: #61afef;
+  --chart-2: #98c379;
+  --chart-3: #e5c07b;
+  --chart-4: #c678dd;
+  --chart-5: #56b6c2;
+  --sidebar: #21252b;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}

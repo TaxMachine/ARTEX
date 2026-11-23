@@ -1,0 +1,73 @@
+/*
+label: Tokyo Night
+value: tokyo-night
+*/
+/* Tokyo Night — the City lights dark theme; Day Storm variant for light. */
+
+:root[data-theme-preset="tokyo-night"] {
+  --background: #e1e2e7;
+  --foreground: #3760bf;
+  --card: #d8dae3;
+  --card-foreground: #3760bf;
+  --popover: #c4c8da;
+  --popover-foreground: #3760bf;
+  --primary: #3760bf;
+  --primary-foreground: #e1e2e7;
+  --secondary: #c4c8da;
+  --secondary-foreground: #3760bf;
+  --muted: #c9ccd8;
+  --muted-foreground: #6172b0;
+  --accent: #b8c1e8;
+  --accent-foreground: #2e4a9e;
+  --destructive: #f52a65;
+  --border: #aab1d8;
+  --input: #6172b0;
+  --ring: #3760bf;
+  --chart-1: #3760bf;
+  --chart-2: #2e7de0;
+  --chart-3: #8c6ec5;
+  --chart-4: #007522;
+  --chart-5: #9854f1;
+  --sidebar: #d3d6e3;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+.dark:root[data-theme-preset="tokyo-night"] {
+  --background: #1a1b26;
+  --foreground: #c0caf5;
+  --card: #16161e;
+  --card-foreground: var(--foreground);
+  --popover: #1f2335;
+  --popover-foreground: var(--foreground);
+  --primary: #7aa2f7;
+  --primary-foreground: #1a1b26;
+  --secondary: #2f334d;
+  --secondary-foreground: #c0caf5;
+  --muted: #2f334d;
+  --muted-foreground: #8189af;
+  --accent: #2f334d;
+  --accent-foreground: #7aa2f7;
+  --destructive: #f7768e;
+  --border: #3b4261;
+  --input: #8189af;
+  --ring: #7aa2f7;
+  --chart-1: #7aa2f7;
+  --chart-2: #9ece6a;
+  --chart-3: #e0af68;
+  --chart-4: #ff9e64;
+  --chart-5: #bb9af7;
+  --sidebar: #16161e;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}

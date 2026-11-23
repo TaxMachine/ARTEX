@@ -1,0 +1,73 @@
+/*
+label: Solarized
+value: solarized
+*/
+/* Solarized Light & Dark — Ethan Schoonover's classic precision palette. */
+
+:root[data-theme-preset="solarized"] {
+  --background: #fdf6e3;
+  --foreground: #657b83;
+  --card: #eee8d5;
+  --card-foreground: #586e75;
+  --popover: #eee8d5;
+  --popover-foreground: #586e75;
+  --primary: #268bd2;
+  --primary-foreground: #fdf6e3;
+  --secondary: #e4ddc8;
+  --secondary-foreground: #586e75;
+  --muted: #e4ddc8;
+  --muted-foreground: #93a1a1;
+  --accent: #d3eccf;
+  --accent-foreground: #1b6636;
+  --destructive: #dc322f;
+  --border: #c8c2ae;
+  --input: #93a1a1;
+  --ring: #268bd2;
+  --chart-1: #268bd2;
+  --chart-2: #859900;
+  --chart-3: #b58900;
+  --chart-4: #d33682;
+  --chart-5: #2aa198;
+  --sidebar: #eee8d5;
+  --sidebar-foreground: #586e75;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+.dark:root[data-theme-preset="solarized"] {
+  --background: #002b36;
+  --foreground: #93a1a1;
+  --card: #073642;
+  --card-foreground: #93a1a1;
+  --popover: #073642;
+  --popover-foreground: #93a1a1;
+  --primary: #268bd2;
+  --primary-foreground: #002b36;
+  --secondary: #0d4555;
+  --secondary-foreground: #93a1a1;
+  --muted: #0d4555;
+  --muted-foreground: #6d8489;
+  --accent: #0f4a54;
+  --accent-foreground: #2aa198;
+  --destructive: #dc322f;
+  --border: #15505f;
+  --input: #6d8489;
+  --ring: #268bd2;
+  --chart-1: #268bd2;
+  --chart-2: #859900;
+  --chart-3: #b58900;
+  --chart-4: #d33682;
+  --chart-5: #2aa198;
+  --sidebar: #01323d;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}

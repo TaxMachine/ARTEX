@@ -1,0 +1,74 @@
+/*
+label: Nord
+value: nord
+*/
+/* Nord — arctic, north-bluish clean palette (nordtheme). Light mode uses the
+   Snow Storm surfaces on Polar Night accents. */
+
+:root[data-theme-preset="nord"] {
+  --background: #eceff4;
+  --foreground: #2e3440;
+  --card: #e5e9f0;
+  --card-foreground: var(--foreground);
+  --popover: #e5e9f0;
+  --popover-foreground: var(--foreground);
+  --primary: #5e81ac;
+  --primary-foreground: #eceff4;
+  --secondary: #d8dee9;
+  --secondary-foreground: #2e3440;
+  --muted: #d8dee9;
+  --muted-foreground: #4c566a;
+  --accent: #dcebf7;
+  --accent-foreground: #2e3440;
+  --destructive: #bf616a;
+  --border: #c2c9d6;
+  --input: #4c566a;
+  --ring: #5e81ac;
+  --chart-1: #5e81ac;
+  --chart-2: #a3be8c;
+  --chart-3: #ebcb8b;
+  --chart-4: #b48ead;
+  --chart-5: #88c0d0;
+  --sidebar: #e5e9f0;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+.dark:root[data-theme-preset="nord"] {
+  --background: #2e3440;
+  --foreground: #d8dee9;
+  --card: #3b4252;
+  --card-foreground: var(--foreground);
+  --popover: #3b4252;
+  --popover-foreground: var(--foreground);
+  --primary: #88c0d0;
+  --primary-foreground: #2e3440;
+  --secondary: #434c5e;
+  --secondary-foreground: #d8dee9;
+  --muted: #434c5e;
+  --muted-foreground: #9aa5b8;
+  --accent: #434c5e;
+  --accent-foreground: #88c0d0;
+  --destructive: #bf616a;
+  --border: #4c566a;
+  --input: #7b88a1;
+  --ring: #88c0d0;
+  --chart-1: #88c0d0;
+  --chart-2: #a3be8c;
+  --chart-3: #ebcb8b;
+  --chart-4: #b48ead;
+  --chart-5: #81a1c1;
+  --sidebar: #292e39;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}

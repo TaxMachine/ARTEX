@@ -1,0 +1,74 @@
+/*
+label: Material You
+value: material
+*/
+/* Google Material Design 3 (Material You) — tonal palette built on the
+   baseline seed #6750A4, surface tiers + primary/secondary/tertiary roles. */
+
+:root[data-theme-preset="material"] {
+  --background: #fef7ff;
+  --foreground: #1d1b20;
+  --card: #f3edf7;
+  --card-foreground: var(--foreground);
+  --popover: #f3edf7;
+  --popover-foreground: var(--foreground);
+  --primary: #6750a4;
+  --primary-foreground: #ffffff;
+  --secondary: #e8def8;
+  --secondary-foreground: #1d192b;
+  --muted: #e7e0ec;
+  --muted-foreground: #49454f;
+  --accent: #e8def8;
+  --accent-foreground: #1d192b;
+  --destructive: #b3261e;
+  --border: #c8c5d0;
+  --input: #79747e;
+  --ring: #6750a4;
+  --chart-1: #6750a4;
+  --chart-2: #7d5260;
+  --chart-3: #984061;
+  --chart-4: #715b2b;
+  --chart-5: #386a20;
+  --sidebar: #f3edf7;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+.dark:root[data-theme-preset="material"] {
+  --background: #141218;
+  --foreground: #e6e0e9;
+  --card: #1d1b20;
+  --card-foreground: var(--foreground);
+  --popover: #211f26;
+  --popover-foreground: var(--foreground);
+  --primary: #d0bcff;
+  --primary-foreground: #381e72;
+  --secondary: #4a4458;
+  --secondary-foreground: #e8def8;
+  --muted: #2b2930;
+  --muted-foreground: #cac4d0;
+  --accent: #4a4458;
+  --accent-foreground: #e8def8;
+  --destructive: #f2b8b5;
+  --border: #49454f;
+  --input: #938f99;
+  --ring: #d0bcff;
+  --chart-1: #d0bcff;
+  --chart-2: #efb8c8;
+  --chart-3: #ffb86c;
+  --chart-4: #a8d5ba;
+  --chart-5: #7cd9e8;
+  --sidebar: #1d1b20;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}

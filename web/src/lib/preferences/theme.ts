@@ -14,7 +14,7 @@ export type ResolvedThemeMode = "light" | "dark";
 
 export const THEME_PRESET_OPTIONS = [
   {
-    label: t("Default"),
+    label: "Default",
     value: "default",
     primary: {
       light: "oklch(0.205 0 0)",
@@ -30,11 +30,67 @@ export const THEME_PRESET_OPTIONS = [
     },
   },
   {
+    label: "Catppuccin",
+    value: "catppuccin",
+    primary: {
+      light: "#8839ef",
+      dark: "#c6a0f6",
+    },
+  },
+  {
+    label: "Dracula",
+    value: "dracula",
+    primary: {
+      light: "#7c3aed",
+      dark: "#bd93f9",
+    },
+  },
+  {
+    label: "GitHub",
+    value: "github",
+    primary: {
+      light: "#0969da",
+      dark: "#4493f8",
+    },
+  },
+  {
+    label: "Material You",
+    value: "material",
+    primary: {
+      light: "#6750a4",
+      dark: "#d0bcff",
+    },
+  },
+  {
     label: "Neon",
     value: "neon",
     primary: {
       light: "#00685f",
       dark: "#54eccd",
+    },
+  },
+  {
+    label: "Nord",
+    value: "nord",
+    primary: {
+      light: "#5e81ac",
+      dark: "#88c0d0",
+    },
+  },
+  {
+    label: "One Dark",
+    value: "one-dark",
+    primary: {
+      light: "#4078f2",
+      dark: "#61afef",
+    },
+  },
+  {
+    label: "Rosé Pine",
+    value: "rose-pine",
+    primary: {
+      light: "#907aa9",
+      dark: "#c4a7e7",
     },
   },
   {
@@ -46,11 +102,27 @@ export const THEME_PRESET_OPTIONS = [
     },
   },
   {
+    label: "Solarized",
+    value: "solarized",
+    primary: {
+      light: "#268bd2",
+      dark: "#268bd2",
+    },
+  },
+  {
     label: "Tangerine",
     value: "tangerine",
     primary: {
       light: "oklch(0.64 0.17 36.44)",
       dark: "oklch(0.64 0.17 36.44)",
+    },
+  },
+  {
+    label: "Tokyo Night",
+    value: "tokyo-night",
+    primary: {
+      light: "#3760bf",
+      dark: "#7aa2f7",
     },
   },
 ] as const;

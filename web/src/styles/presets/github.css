@@ -1,0 +1,73 @@
+/*
+label: GitHub
+value: github
+*/
+/* GitHub Primer — the canonical light/dark pair every developer knows. */
+
+:root[data-theme-preset="github"] {
+  --background: #ffffff;
+  --foreground: #1f2328;
+  --card: #f6f8fa;
+  --card-foreground: var(--foreground);
+  --popover: #ffffff;
+  --popover-foreground: var(--foreground);
+  --primary: #0969da;
+  --primary-foreground: #ffffff;
+  --secondary: #eff2f5;
+  --secondary-foreground: #1f2328;
+  --muted: #eff2f5;
+  --muted-foreground: #59636e;
+  --accent: #ddf4ff;
+  --accent-foreground: #0969da;
+  --destructive: #cf222e;
+  --border: #d1d9e0;
+  --input: #59636e;
+  --ring: #0969da;
+  --chart-1: #0969da;
+  --chart-2: #1f883d;
+  --chart-3: #9a6700;
+  --chart-4: #8250df;
+  --chart-5: #bf3989;
+  --sidebar: #f6f8fa;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+.dark:root[data-theme-preset="github"] {
+  --background: #0d1117;
+  --foreground: #e6edf3;
+  --card: #161b22;
+  --card-foreground: var(--foreground);
+  --popover: #161b22;
+  --popover-foreground: var(--foreground);
+  --primary: #4493f8;
+  --primary-foreground: #ffffff;
+  --secondary: #21262d;
+  --secondary-foreground: #e6edf3;
+  --muted: #21262d;
+  --muted-foreground: #848d97;
+  --accent: #121d2f;
+  --accent-foreground: #4493f8;
+  --destructive: #f85149;
+  --border: #3d444d;
+  --input: #848d97;
+  --ring: #4493f8;
+  --chart-1: #4493f8;
+  --chart-2: #3fb950;
+  --chart-3: #d29922;
+  --chart-4: #ab7df8;
+  --chart-5: #db61a2;
+  --sidebar: #010409;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}

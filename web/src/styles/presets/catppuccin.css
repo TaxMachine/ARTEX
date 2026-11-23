@@ -1,0 +1,73 @@
+/*
+label: Catppuccin
+value: catppuccin
+*/
+/* Catppuccin — Latte (light) / Macchiato (dark), the pastel soothing set. */
+
+:root[data-theme-preset="catppuccin"] {
+  --background: #eff1f5;
+  --foreground: #4c4f69;
+  --card: #e6e9ef;
+  --card-foreground: var(--foreground);
+  --popover: #e6e9ef;
+  --popover-foreground: var(--foreground);
+  --primary: #8839ef;
+  --primary-foreground: #eff1f5;
+  --secondary: #dce0e8;
+  --secondary-foreground: #4c4f69;
+  --muted: #dce0e8;
+  --muted-foreground: #6c6f85;
+  --accent: #dce0e8;
+  --accent-foreground: #4c4f69;
+  --destructive: #d20f39;
+  --border: #bcc0cc;
+  --input: #6c6f85;
+  --ring: #8839ef;
+  --chart-1: #8839ef;
+  --chart-2: #179299;
+  --chart-3: #df8e1d;
+  --chart-4: #ea76cb;
+  --chart-5: #40a02f;
+  --sidebar: #e6e9ef;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+.dark:root[data-theme-preset="catppuccin"] {
+  --background: #24273a;
+  --foreground: #cad3f5;
+  --card: #1e2030;
+  --card-foreground: var(--foreground);
+  --popover: #1e2030;
+  --popover-foreground: var(--foreground);
+  --primary: #c6a0f6;
+  --primary-foreground: #24273a;
+  --secondary: #363a4f;
+  --secondary-foreground: #cad3f5;
+  --muted: #363a4f;
+  --muted-foreground: #9aa5ce;
+  --accent: #363a4f;
+  --accent-foreground: #c6a0f6;
+  --destructive: #ed8796;
+  --border: #494d64;
+  --input: #8087a2;
+  --ring: #c6a0f6;
+  --chart-1: #c6a0f6;
+  --chart-2: #8bd5ca;
+  --chart-3: #f5a97f;
+  --chart-4: #f0c6c6;
+  --chart-5: #a6da95;
+  --sidebar: #1e2030;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}

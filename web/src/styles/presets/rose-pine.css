@@ -1,0 +1,73 @@
+/*
+label: Rosé Pine
+value: rose-pine
+*/
+/* Rosé Pine — the warm, natural-toned theme (dawn/moon variants). */
+
+:root[data-theme-preset="rose-pine"] {
+  --background: #faf4ed;
+  --foreground: #575279;
+  --card: #fffaf3;
+  --card-foreground: var(--foreground);
+  --popover: #fffaf3;
+  --popover-foreground: var(--foreground);
+  --primary: #907aa9;
+  --primary-foreground: #faf4ed;
+  --secondary: #f2e9e1;
+  --secondary-foreground: #575279;
+  --muted: #f2e9e1;
+  --muted-foreground: #797593;
+  --accent: #eae2dc;
+  --accent-foreground: #575279;
+  --destructive: #b4637a;
+  --border: #ddd3cd;
+  --input: #797593;
+  --ring: #907aa9;
+  --chart-1: #907aa9;
+  --chart-2: #56949f;
+  --chart-3: #ea9d34;
+  --chart-4: #d7827e;
+  --chart-5: #286983;
+  --sidebar: #f5efe6;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+.dark:root[data-theme-preset="rose-pine"] {
+  --background: #191724;
+  --foreground: #e0def4;
+  --card: #1f1d2e;
+  --card-foreground: var(--foreground);
+  --popover: #1f1d2e;
+  --popover-foreground: var(--foreground);
+  --primary: #c4a7e7;
+  --primary-foreground: #191724;
+  --secondary: #26233a;
+  --secondary-foreground: #e0def4;
+  --muted: #26233a;
+  --muted-foreground: #908caa;
+  --accent: #26233a;
+  --accent-foreground: #c4a7e7;
+  --destructive: #eb6f92;
+  --border: #403d52;
+  --input: #908caa;
+  --ring: #c4a7e7;
+  --chart-1: #c4a7e7;
+  --chart-2: #9ccfd8;
+  --chart-3: #f6c177;
+  --chart-4: #ebbcba;
+  --chart-5: #31748f;
+  --sidebar: #1f1d2e;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
