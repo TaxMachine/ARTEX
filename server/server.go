@@ -220,6 +220,7 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 	// Self-improvement loop (Tier-A): contrastive lesson extraction on task
 	// close + outcome feedback for shown lessons.
 	m.SetSelfImproveHooks(s.onTaskClosedSelfImprove)
+	s.seedDreamerAgent()
 	s.wireTriageCritique()
 	// post-run worker self-critique on exhausted intents
 	s.engine.SetSelfCritique(s.maybeSelfCritique)

@@ -57,6 +57,14 @@ func (s *Server) dreamerConfig() (agent.Config, bool) {
 }
 
 func (s *Server) dreamerProfile() (*db.LLMProfile, error) {
+	// The configured Dreamer agent wins: an llm_profile binding on the
+	// agent row (set from the Agents page) selects the dreaming model.
+	var bound int64
+	if err := s.m.pg.QueryRow(`SELECT COALESCE(llm_profile_id,0) FROM agents WHERE key='dreamer'`).Scan(&bound); err == nil && bound > 0 {
+		if p, err := s.m.pg.ProfileByID(bound); err == nil && p != nil {
+			return p, nil
+		}
+	}
 	// name preference: exact GLM 5.3 Flash, else any glm flash, else default
 	rows, err := s.m.pg.Query(`SELECT id FROM llm_profiles ORDER BY id`)
 	if err != nil {
@@ -110,6 +118,10 @@ func (s *Server) dreamWithLLM(ctx context.Context, incumbent int, lambda float64
 	if err != nil {
 		return nil, err
 	}
+	sysPrompt := dreamerSystem
+	if edited := s.dreamerPrompt(); edited != "" {
+		sysPrompt = edited
+	}
 	// Compose the trajectory report the agent conditions on.
 	traj, _ := st.TrajectoryReport(ctx, incumbent)
 	incCode, incNote, _, _ := st.GetPolicy(ctx, incumbent)
@@ -129,7 +141,7 @@ func (s *Server) dreamWithLLM(ctx context.Context, incumbent int, lambda float64
 	defer cancel()
 	log.Printf("[rsi-dream] LLM call start")
 	msg, _, _, err := prov.Complete(cctx, llm.CompletionRequest{
-		System: []string{dreamerSystem},
+		System: []string{sysPrompt},
 		Messages: []llm.Message{
 			{Role: llm.RoleUser, Content: []llm.ContentBlock{llm.TextBlock(b.String())}},
 		},
@@ -236,4 +248,18 @@ func clipStr(s string, n int) string {
 		return s
 	}
 	return s[:n] + "…"
+}
+
+// dreamerPrompt returns the Dreamer agent's current edited prompt ("" = use
+// the built-in constant).
+func (s *Server) dreamerPrompt() string {
+	var pid int64
+	if err := s.m.pg.QueryRow(`SELECT COALESCE(current_prompt_id,0) FROM agents WHERE key='dreamer'`).Scan(&pid); err != nil || pid == 0 {
+		return ""
+	}
+	var text string
+	if err := s.m.pg.QueryRow(`SELECT template_text FROM agent_prompts WHERE id=$1`, pid).Scan(&text); err != nil {
+		return ""
+	}
+	return strings.TrimSpace(text)
 }
