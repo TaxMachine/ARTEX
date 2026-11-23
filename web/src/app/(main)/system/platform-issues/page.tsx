@@ -11,6 +11,7 @@ import {
   RotateCcwIcon,
   XCircleIcon,
 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -99,30 +100,21 @@ export default function PlatformIssuesPage() {
         </Button>
       </div>
 
-      {/* GitHub-style filter bar: counts per state, defaults to open */}
+      {/* Filter tabs: the platform's standard Tabs component, defaults to open */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex overflow-hidden rounded-md border">
-          {filters.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setFilter(f.key)}
-              className={`flex cursor-pointer items-center gap-1.5 px-3 py-1.5 text-sm ${
-                filter === f.key ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"
-              }`}
-            >
-              {f.icon}
-              {f.label}
-              <span
-                className={`rounded-full px-1.5 text-xs ${
-                  filter === f.key ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {f.count}
-              </span>
-            </button>
-          ))}
-        </div>
+        <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
+          <TabsList variant="default">
+            {filters.map((f) => (
+              <TabsTrigger key={f.key} value={f.key}>
+                {f.icon}
+                {f.label}
+                <span className="ml-1.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-muted px-1 text-[10px] font-semibold leading-none text-foreground/70">
+                  {f.count > 99 ? "99+" : f.count}
+                </span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
         <span className="ml-auto text-xs text-muted-foreground">
           {visible.length} {filter === "all" ? "total" : filter === "open" ? "open" : "resolved"}
         </span>
