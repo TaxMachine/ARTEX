@@ -212,6 +212,17 @@ func (s *Server) archiveTask(job *pgdb.TaskArchive) (runErr error) {
 	if snapshot.ExplorationID != task.ExplorationID {
 		return errors.New("the task's exploration record changed during the archive snapshot")
 	}
+	// Dream-RSI world export BEFORE the exploration rows are deleted: the
+	// archived task's discovery history stays in the replay pool (dreaming
+	// compounds across archived tasks). Best-effort — an export failure must
+	// never fail the archive.
+	if name := strings.TrimSpace(task.Name); name != "" {
+		if _, err := s.rsiStore().ExportTask(s.ctx, job.TaskID, fmt.Sprintf("task%d-%s", job.TaskID, slugify(name))); err != nil {
+			log.Printf("[task-archive] task %d: replay-world export failed (history archived but not in dream pool): %v", job.TaskID, err)
+		} else {
+			log.Printf("[task-archive] task %d: replay world exported to the dream pool", job.TaskID)
+		}
+	}
 	if s.m.traffic != nil && len(snapshot.Hosts) > 0 {
 		_ = s.m.pg.UpdateTaskArchiveProgress(job.ID, "snapshot_traffic", 38)
 		trafficCount, err := s.m.traffic.ExportHosts(snapshot.Hosts, filepath.Join(fileStage.payload, "traffic"))

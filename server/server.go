@@ -915,6 +915,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/rsi/adopt", s.rsiAdopt)
 	mux.HandleFunc("GET /api/rsi/trajectory", s.rsiTrajectory)
 	mux.HandleFunc("GET /api/rsi/rubric-stats", s.retestRubricStats)
+	mux.HandleFunc("POST /api/rsi/export-archive/{id}", s.rsiExportArchiveWorld)
 	mux.HandleFunc("POST /api/tasks/{id}/lessons/contrastive", s.contrastiveLessonsTrigger)
 	mux.HandleFunc("GET /api/platform-issues", s.listPlatformIssues)
 	mux.HandleFunc("POST /api/platform-issues", s.createPlatformIssue)

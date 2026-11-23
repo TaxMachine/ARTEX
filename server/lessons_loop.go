@@ -343,3 +343,25 @@ func salvageContrastive(raw string, parsed *struct {
 	}
 	return found
 }
+
+// slugify renders an archive-safe name fragment for world exports.
+func slugify(s string) string {
+	var out []rune
+	for _, r := range strings.ToLower(s) {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
+			out = append(out, r)
+		default:
+			if len(out) > 0 && out[len(out)-1] != '-' {
+				out = append(out, '-')
+			}
+		}
+	}
+	for len(out) > 0 && out[len(out)-1] == '-' {
+		out = out[:len(out)-1]
+	}
+	if len(out) == 0 {
+		return "task"
+	}
+	return string(out)
+}
