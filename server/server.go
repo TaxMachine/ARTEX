@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/TaxMachine/ARTEX/rsi"
 	"io"
 	"log"
 	"net"
@@ -46,6 +47,7 @@ var BuildVersion = "dev"
 // Server exposes the ARTEX backend over a JSON HTTP API for the shadcn/ui
 // frontend.
 type Server struct {
+	rsi *rsi.Store // Dream-RSI store (lazy)
 	// crossmapURL is the cross-binary function map server (optional; empty
 	// disables the map queries without affecting anything else).
 	crossmapURL string
@@ -215,6 +217,9 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 	// fuzz supervisor: watches detached campaigns on active tasks and
 	// auto-dispatches triage intents when new crash signatures land.
 	go (&fuzzSupervisor{s: s, lastSeen: map[string]int{}}).run(ctx)
+	// Dream-RSI phase 3: apply the adopted exploration policy to open-intent
+	// priorities (no-op until a policy is adopted via /api/rsi/adopt).
+	go s.runRsiApplier(ctx)
 	for _, o := range opts {
 		o(s)
 	}
@@ -897,6 +902,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/machines/{name}/test-connection", s.machineTestConnection)
 	mux.HandleFunc("POST /api/machines/verify", s.machineVerifyCredentials)
 	mux.HandleFunc("GET /api/machines/{name}/lab-state", s.machineLabState)
+	mux.HandleFunc("POST /api/rsi/export", s.rsiExportTask)
+	mux.HandleFunc("GET /api/rsi/worlds", s.rsiListWorlds)
+	mux.HandleFunc("GET /api/rsi/ranking", s.rsiRanking)
+	mux.HandleFunc("POST /api/rsi/dream", s.rsiDream)
+	mux.HandleFunc("POST /api/rsi/adopt", s.rsiAdopt)
+	mux.HandleFunc("GET /api/rsi/trajectory", s.rsiTrajectory)
 	mux.HandleFunc("POST /api/machines/{name}/rdp", s.machineRDPToggle)
 	mux.HandleFunc("GET /api/machines/{name}/occupancy", s.machineOccupancy)
 	mux.HandleFunc("POST /api/machines/{name}/console", s.consoleOpen)
