@@ -325,6 +325,7 @@ function ProfileSheet({
   const [format, setFormat] = React.useState<ProfileFormat>("anthropic");
   const [model, setModel] = React.useState("");
   const [baseUrl, setBaseUrl] = React.useState("");
+  const [providerLabel_, setProviderLabel_] = React.useState("");
   const [proxy, setProxy] = React.useState("");
   const [apiKey, setApiKey] = React.useState("");
   const [keyHint, setKeyHint] = React.useState("");
@@ -360,6 +361,7 @@ function ProfileSheet({
     );
     setModel(profile?.model ?? "");
     setBaseUrl(profile?.base_url ?? "");
+    setProviderLabel_(profile?.provider_label ?? "");
     setProxy(profile?.proxy ?? "");
     setRps(String(profile?.rate_per_second ?? 0));
     setRpm(String(profile?.rate_per_minute ?? 0));
@@ -467,6 +469,7 @@ function ProfileSheet({
         format,
         model: model.trim(),
         base_url: baseUrl.trim(),
+        provider_label: providerLabel_.trim(),
         proxy: proxy.trim(),
         api_key: apiKey,
         provider: profile?.provider ?? prefill?.preset.id ?? "",
@@ -635,6 +638,20 @@ function ProfileSheet({
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
             />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="p-provider-label">API name (custom providers)</Label>
+            <Input
+              id="p-provider-label"
+              placeholder="e.g. IKHDev — shown as the provider group and picker origin tag"
+              value={providerLabel_}
+              onChange={(e) => setProviderLabel_(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Names this API in the model list and pickers (presets use their built-in names; empty custom providers
+              fall back to the endpoint host).
+            </p>
           </div>
 
           <div className="grid gap-2">
@@ -1144,6 +1161,23 @@ function providerLabel(id: string | undefined): string {
 // profile the operator wired to the same gateway groups under one readable
 // header instead of an anonymous "custom" pile.
 function customGroupLabel(profiles: LLMProfile[]): string {
+  // user-named custom APIs win: one label chosen by the operator
+  const labels = new Map<string, number>();
+  for (const p of profiles) {
+    const l = (p.provider_label ?? "").trim();
+    if (l) labels.set(l, (labels.get(l) ?? 0) + 1);
+  }
+  if (labels.size > 0) {
+    let best = "";
+    let n = 0;
+    for (const [l, c] of labels) {
+      if (c > n) {
+        best = l;
+        n = c;
+      }
+    }
+    return best;
+  }
   const hosts = new Map<string, number>();
   for (const p of profiles) {
     try {

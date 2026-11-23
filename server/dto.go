@@ -671,6 +671,9 @@ type LLMProfileDTO struct {
 	// Provider preset this profile was created from (opencode-zen, openai, ...);
 	// '' = custom/manual. Groups the LLM page list.
 	Provider string `json:"provider,omitempty"`
+	// ProviderLabel: user-chosen display name for custom APIs (e.g. "IKHDev");
+	// empty = custom groups label by endpoint host.
+	ProviderLabel string `json:"provider_label,omitempty"`
 }
 
 func llmProfileDTO(p *db.LLMProfile) LLMProfileDTO {
@@ -680,6 +683,7 @@ func llmProfileDTO(p *db.LLMProfile) LLMProfileDTO {
 	}
 	return LLMProfileDTO{
 		Provider:         provider,
+		ProviderLabel:    p.ProviderLabel,
 		ID:               i64s(p.ID),
 		Name:             p.Name,
 		Format:           p.Format,

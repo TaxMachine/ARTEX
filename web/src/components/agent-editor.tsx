@@ -1257,7 +1257,9 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
 // customProviderTag labels a custom LLM profile by its endpoint host so agent
 // model pickers read "GLM 5.3 Flash (glm-5.3-flash) · 172.17.0.1:13030"
 // instead of a bare model name with no origin.
-function customProviderTag(p: { base_url?: string | null }): string {
+function customProviderTag(p: { base_url?: string | null; provider_label?: string | null }): string {
+  const named = (p.provider_label ?? "").trim();
+  if (named) return named;
   try {
     const u = new URL(p.base_url ?? "");
     if (u.host) return u.host;

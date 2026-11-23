@@ -84,7 +84,7 @@ export function TaskLLMProfileChain({
       const prov =
         profile.provider && profile.provider !== "custom"
           ? profile.provider
-          : providerTagFromURL(profile.base_url);
+          : providerTagFromURL(profile.base_url, profile.provider_label);
       return `${profile.name} (${profile.model}) · ${prov}`;
     },
     [profilesByID],
@@ -289,7 +289,9 @@ export function TaskLLMProfileChain({
   );
 }
 
-function providerTagFromURL(baseURL?: string | null): string {
+function providerTagFromURL(baseURL?: string | null, providerLabel?: string | null): string {
+  const named = (providerLabel ?? "").trim();
+  if (named) return named;
   try {
     const u = new URL(baseURL ?? "");
     if (u.host) return u.host;

@@ -1171,7 +1171,8 @@ export interface LLMProfile {
   id: string;
   name: string;
   format: "openai" | "anthropic" | "openai-responses" | "ollama";
-  provider?: string; // preset id this profile was created from (opencode-zen, openai, ...); custom/empty = manual
+  provider?: string;
+  provider_label?: string; // preset id this profile was created from (opencode-zen, openai, ...); custom/empty = manual
   base_url?: string;
   proxy?: string;
   model: string;
@@ -1307,7 +1308,7 @@ export interface AgentDetail {
   versions: PromptVersion[];
   visibility: { mcp: number[]; skill: string[] };
   // Bindable LLM profile candidates (for the "default model" dropdown); the current binding is agent.llm_profile_id
-  llm_profiles?: { id: number; name: string; model: string; is_default: boolean; provider?: string; base_url?: string | null }[];
+  llm_profiles?: { id: number; name: string; model: string; is_default: boolean; provider?: string; base_url?: string | null; provider_label?: string | null }[];
   wrapup_prompt?: string; // saved wrap-up prompt (empty = built-in default)
   wrapup_default?: string; // built-in default wrap-up prompt (placeholder / restore default)
   wrapup_max_turns?: number; // saved wrap-up turn count (0 = built-in default)
