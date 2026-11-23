@@ -1140,6 +1140,31 @@ function providerLabel(id: string | undefined): string {
   return pr ? pr.label : (id || "custom");
 }
 
+// customGroupLabel names a custom-provider bucket by its endpoint host: every
+// profile the operator wired to the same gateway groups under one readable
+// header instead of an anonymous "custom" pile.
+function customGroupLabel(profiles: LLMProfile[]): string {
+  const hosts = new Map<string, number>();
+  for (const p of profiles) {
+    try {
+      const u = new URL(p.base_url ?? "");
+      const key = u.host;
+      if (key) hosts.set(key, (hosts.get(key) ?? 0) + 1);
+    } catch {
+      hosts.set("custom", (hosts.get("custom") ?? 0) + 1);
+    }
+  }
+  let best = "custom";
+  let bestN = 0;
+  for (const [h, n] of hosts) {
+    if (n > bestN) {
+      best = h;
+      bestN = n;
+    }
+  }
+  return `Custom · ${best}`;
+}
+
 function GroupedProfiles({
   profiles,
   health,
@@ -1185,7 +1210,9 @@ function GroupedProfiles({
       {groups.map(([prov, list]) => (
         <section key={prov} className="space-y-3">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold tracking-wide uppercase">{providerLabel(prov)}</h2>
+            <h2 className="text-sm font-semibold tracking-wide uppercase">
+              {prov === "custom" || !prov ? customGroupLabel(list) : providerLabel(prov)}
+            </h2>
             <Badge variant="secondary" className="text-[10px]">
               {list.length} profile{list.length > 1 ? "s" : ""}
             </Badge>

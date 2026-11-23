@@ -1307,7 +1307,7 @@ export interface AgentDetail {
   versions: PromptVersion[];
   visibility: { mcp: number[]; skill: string[] };
   // Bindable LLM profile candidates (for the "default model" dropdown); the current binding is agent.llm_profile_id
-  llm_profiles?: { id: number; name: string; model: string; is_default: boolean }[];
+  llm_profiles?: { id: number; name: string; model: string; is_default: boolean; provider?: string; base_url?: string | null }[];
   wrapup_prompt?: string; // saved wrap-up prompt (empty = built-in default)
   wrapup_default?: string; // built-in default wrap-up prompt (placeholder / restore default)
   wrapup_max_turns?: number; // saved wrap-up turn count (0 = built-in default)

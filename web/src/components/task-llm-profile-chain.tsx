@@ -80,7 +80,12 @@ export function TaskLLMProfileChain({
   const profileLabel = React.useCallback(
     (id: string) => {
       const profile = profilesByID.get(id);
-      return profile ? `${profile.name} ${profile.model}` : t("Profile #{id}", { id });
+      if (!profile) return t("Profile #{id}", { id });
+      const prov =
+        profile.provider && profile.provider !== "custom"
+          ? profile.provider
+          : providerTagFromURL(profile.base_url);
+      return `${profile.name} (${profile.model}) · ${prov}`;
     },
     [profilesByID],
   );
@@ -282,4 +287,14 @@ export function TaskLLMProfileChain({
       )}
     </div>
   );
+}
+
+function providerTagFromURL(baseURL?: string | null): string {
+  try {
+    const u = new URL(baseURL ?? "");
+    if (u.host) return u.host;
+  } catch {
+    /* ignore */
+  }
+  return "custom";
 }

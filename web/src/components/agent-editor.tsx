@@ -308,13 +308,15 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__follow__">{t("Follow task / globally active profile")}</SelectItem>
-                        {llmProfiles.map((p) => (
-                          <SelectItem key={p.id} value={String(p.id)}>
-                            {p.is_default
-                              ? t("{name} ({model}) · default", { name: p.name, model: p.model })
-                              : `${p.name} (${p.model})`}
-                          </SelectItem>
-                        ))}
+                        {llmProfiles.map((p) => {
+                          const prov = p.provider && p.provider !== "custom" ? p.provider : customProviderTag(p);
+                          const base = `${p.name} (${p.model}) · ${prov}`;
+                          return (
+                            <SelectItem key={p.id} value={String(p.id)}>
+                              {p.is_default ? t("{name} · default", { name: base }) : base}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                     <span className="text-muted-foreground max-w-md text-xs">
@@ -1250,4 +1252,17 @@ function AgentTriggersTab({ agentKey, agent }: { agentKey: string; agent?: Agent
       </div>
     </div>
   );
+}
+
+// customProviderTag labels a custom LLM profile by its endpoint host so agent
+// model pickers read "GLM 5.3 Flash (glm-5.3-flash) · 172.17.0.1:13030"
+// instead of a bare model name with no origin.
+function customProviderTag(p: { base_url?: string | null }): string {
+  try {
+    const u = new URL(p.base_url ?? "");
+    if (u.host) return u.host;
+  } catch {
+    /* fall through */
+  }
+  return "custom";
 }

@@ -580,12 +580,16 @@ func (s *Server) pgGetAgent(w http.ResponseWriter, r *http.Request) {
 	if sk == nil {
 		sk = []string{}
 	}
-	// Optional list of LLM profiles (id/name/model/whether default) for the frontend's "default model" dropdown; the current binding is in agent.llm_profile_id.
+	// Optional list of LLM profiles (id/name/model/provider/base_url/whether
+	// default) for the frontend's "default model" dropdown; the current binding
+	// is in agent.llm_profile_id. provider+base_url let pickers label custom
+	// profiles by origin ("· 172.17.0.1:13030") like presets are labeled.
 	profs, _ := pg.ListProfiles()
 	llmProfiles := make([]map[string]any, 0, len(profs))
 	for _, p := range profs {
 		llmProfiles = append(llmProfiles, map[string]any{
 			"id": p.ID, "name": p.Name, "model": p.Model, "is_default": p.IsDefault,
+			"provider": p.Provider, "base_url": p.BaseURL,
 		})
 	}
 	writeJSON(w, 200, map[string]any{
