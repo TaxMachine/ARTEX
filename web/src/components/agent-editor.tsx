@@ -309,8 +309,12 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                       <SelectContent>
                         <SelectItem value="__follow__">{t("Follow task / globally active profile")}</SelectItem>
                         {llmProfiles.map((p) => {
-                          const prov = p.provider && p.provider !== "custom" ? p.provider : customProviderTag(p);
-                          const base = `${p.name} (${p.model}) · ${prov}`;
+                          const named = (p.provider_label ?? "").trim();
+                          const isCustom = !p.provider || p.provider === "custom";
+                          // named custom APIs read like presets: "IKHDev · GLM 5.3 Flash"
+                          const base = isCustom && named
+                            ? `${named} · ${p.name} (${p.model})`
+                            : `${p.name} (${p.model})${isCustom ? ` · ${customProviderTag(p)}` : ""}`;
                           return (
                             <SelectItem key={p.id} value={String(p.id)}>
                               {p.is_default ? t("{name} · default", { name: base }) : base}

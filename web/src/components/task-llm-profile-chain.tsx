@@ -81,6 +81,10 @@ export function TaskLLMProfileChain({
     (id: string) => {
       const profile = profilesByID.get(id);
       if (!profile) return t("Profile #{id}", { id });
+      const named = (profile.provider_label ?? "").trim();
+      const isCustom = !profile.provider || profile.provider === "custom";
+      // named custom APIs read like presets: "IKHDev · GLM 5.3 Flash"
+      if (isCustom && named) return `${named} · ${profile.name} (${profile.model})`;
       const prov =
         profile.provider && profile.provider !== "custom"
           ? profile.provider
