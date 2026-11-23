@@ -964,6 +964,12 @@ export default function FindingsPage() {
   // The "current filter" count in the export dialog: both views share the same filters, only the counting source differs.
   // The flat and asset views share the flat list state; the grouped view's figure comes from the group API's finding_total.
   const filteredTotal = view === "grouped" ? total : flat.total;
+  // When the task filter selects an ARCHIVED task, its findings left the live
+  // table at archive time — the empty list needs the archive hint, not silence.
+  const archivedTaskSelected =
+    task !== "all" && task !== UNASSIGNED_TASK
+      ? (stats.tasks ?? []).find((t) => String(t.id) === task && t.archived)
+      : undefined;
   const assetPath = React.useMemo(
     () => (view === "asset" ? assetPathOf(assetTree.nodes, assetScope) : []),
     [assetScope, assetTree.nodes, view],
@@ -1215,7 +1221,9 @@ export default function FindingsPage() {
               <SelectItem value={UNASSIGNED_TASK}>Unlinked / task deleted</SelectItem>
               {(stats.tasks ?? []).map((t) => {
                 const id = String(t.id);
-                const label = t.name || t.description || `Task #${id} (deleted)`;
+                const label = t.archived
+                  ? `${t.name || t.description || `Task #${id}`} (archived) — ${t.count} findings in the archive package`
+                  : t.name || t.description || `Task #${id} (deleted)`;
                 return (
                   <SelectItem key={id} value={id}>
                     <span className="flex w-full items-center gap-2">
@@ -1442,7 +1450,16 @@ export default function FindingsPage() {
             })}
             {groups.length === 0 && (
               <Card>
-                <CardContent className="py-12 text-center text-sm text-muted-foreground">No matching findings.</CardContent>
+                <CardContent className="py-12 text-center text-sm text-muted-foreground">
+                  {archivedTaskSelected ? (
+                    <>
+                      This task is archived — its {archivedTaskSelected.count} finding(s) live in the archive package
+                      (System → task archive). Restore the task from the archives page to browse them here.
+                    </>
+                  ) : (
+                    "No matching findings."
+                  )}
+                </CardContent>
               </Card>
             )}
             <TablePagination

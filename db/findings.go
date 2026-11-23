@@ -695,6 +695,7 @@ type FindingTaskOption struct {
 	Name        string `json:"name"` // optional task name; empty = unnamed
 	Description string `json:"description"`
 	Count       int    `json:"count"`
+	Archived    bool   `json:"archived"` // task archived (live row gone); findings persist and stay filterable
 }
 
 // CategoryCount is one entry of the findings page's per-category stat cards.
@@ -785,7 +786,10 @@ func (d *DB) FindingStats() (*FindingStats, error) {
 	// Task dropdown: tasks that have findings, with description (empty after the
 	// task is deleted; the frontend falls back to the id) and count, the most
 	// recently found first.
-	trows, err := d.Query(`SELECT f.task_id, COALESCE(t.name, ''), COALESCE(t.description, ''), COUNT(*)
+	// LEFT JOIN keeps deleted/archived tasks in the dropdown (their finding
+	// rows persist and stay filterable); the task_archives EXISTS flags them.
+	trows, err := d.Query(`SELECT f.task_id, COALESCE(t.name, ''), COALESCE(t.description, ''), COUNT(*),
+	       EXISTS(SELECT 1 FROM task_archives a WHERE a.task_id = f.task_id AND a.state IN ('ready','restoring'))
 		FROM findings f
 		LEFT JOIN tasks t ON f.task_id = t.id
 		WHERE f.task_id IS NOT NULL
@@ -797,10 +801,35 @@ func (d *DB) FindingStats() (*FindingStats, error) {
 	defer trows.Close()
 	for trows.Next() {
 		var opt FindingTaskOption
-		if err := trows.Scan(&opt.ID, &opt.Name, &opt.Description, &opt.Count); err != nil {
+		if err := trows.Scan(&opt.ID, &opt.Name, &opt.Description, &opt.Count, &opt.Archived); err != nil {
 			return nil, err
 		}
 		st.Tasks = append(st.Tasks, opt)
+	}
+	trows.Close()
+	// Archived tasks: their findings left the live table at archive time, so
+	// the join above cannot see them. Pull their options from the archive
+	// stubs (soft-deleted task rows keep the name; the aggregate keeps the
+	// finding count) so the dropdown covers the whole history. Selecting one
+	// shows the archive hint in the UI (browsing requires restore).
+	arows, err := d.Query(`
+		SELECT a.task_id, COALESCE(t.name, ''), COALESCE(t.description, ''),
+		       COALESCE((a.aggregate_stats->'finding_stats'->>'total')::int, 0)
+		FROM task_archives a
+		JOIN tasks t ON t.id = a.task_id
+		WHERE a.state = 'ready'
+		  AND NOT EXISTS (SELECT 1 FROM findings f WHERE f.task_id = a.task_id)
+		ORDER BY a.task_id DESC`)
+	if err == nil {
+		defer arows.Close()
+		for arows.Next() {
+			var opt FindingTaskOption
+			if err := arows.Scan(&opt.ID, &opt.Name, &opt.Description, &opt.Count); err == nil {
+				opt.Archived = true
+				st.Tasks = append(st.Tasks, opt)
+			}
+		}
+		arows.Close()
 	}
 	if err := trows.Err(); err != nil {
 		return nil, err

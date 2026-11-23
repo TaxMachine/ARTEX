@@ -592,6 +592,7 @@ export interface FindingStats {
 // FindingTaskOption is one entry of the findings page's "by task" filter dropdown: tasks
 // with vulnerabilities (an empty description means the task was deleted; the frontend falls back to showing the id) and their vulnerability counts.
 export interface FindingTaskOption {
+  archived?: boolean;
   id: string | number;
   name?: string; // optional task name; empty/absent = untitled
   description: string;
