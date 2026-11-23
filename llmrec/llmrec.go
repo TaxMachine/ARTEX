@@ -123,7 +123,13 @@ func Wrap(inner llm.Provider, pg *db.DB, model, profName, thinkingType, reasonin
 
 // parseSession extracts task id and worker role from session strings like
 // "exp1-worker-i3" → ("1", "worker") or "exp2-planner" → ("2", "planner").
+// Chat conversations use "conv-<id>" → ("conv-<id>", "chat"), so their usage
+// rows are attributable and the context-fill view works for chats too.
 func parseSession(s string) (taskID, worker string) {
+	// format: conv-<id>
+	if strings.HasPrefix(s, "conv-") {
+		return s, "chat"
+	}
 	// format: exp<N>-<role>[-suffix]
 	if !strings.HasPrefix(s, "exp") {
 		return "", ""

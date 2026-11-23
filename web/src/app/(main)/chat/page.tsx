@@ -285,12 +285,14 @@ function LLMProfileRow({
   onChange,
   disabled,
   rightSlot,
+  convId,
 }: {
   profiles: LLMProfile[];
   selected: number | null;
   onChange: (id: number | null) => void;
   disabled?: boolean;
   rightSlot?: React.ReactNode;
+  convId?: number | null;
 }) {
   const [open, setOpen] = React.useState(false);
   const activeDefault = profiles.find((p) => p.is_default);
@@ -301,12 +303,52 @@ function LLMProfileRow({
       ? t("Default ({name})", { name: activeDefault.name })
       : t("Default");
 
+  // Context fill of the LATEST recorded call for this conversation (from
+  // llm_usage, session conv-<id>): the "how full is my context" signal.
+  const [fill, setFill] = React.useState<{ input_tokens: number } | null>(null);
+  React.useEffect(() => {
+    if (!convId || open) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const r = await api.taskContextFill(`conv-${convId}`);
+        const latest = r.latest?.[0];
+        if (!cancelled) setFill(latest ?? null);
+      } catch {
+        if (!cancelled) setFill(null);
+      }
+    };
+    void load();
+    const iv = setInterval(load, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+    };
+    // disabled flips true→false when a turn ends: refetch right away so the
+    // badge reflects the reply that just completed instead of waiting 30s.
+  }, [convId, open, disabled]);
+  const fillProfile = current ?? activeDefault;
+  const fillPct =
+    fill && fillProfile?.context_window_k
+      ? Math.min(100, Math.round((fill.input_tokens / (fillProfile.context_window_k * 1000)) * 100))
+      : null;
+
   return (
     <div className="flex min-w-0 shrink-0 items-center gap-1 px-1 pt-0.5 pb-1">
       <ZapIcon className="text-muted-foreground/50 size-3 shrink-0" />
       <span className="truncate text-muted-foreground/70 text-xs" title={label}>
         {label}
       </span>
+      {fillPct != null && (
+        <span
+          className={`shrink-0 rounded-full px-1.5 text-[10px] font-semibold leading-4 tabular-nums ${
+            fillPct >= 85 ? "bg-red-500/15 text-red-600 dark:text-red-400" : fillPct >= 60 ? "bg-amber-500/15 text-amber-600 dark:text-amber-400" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+          }`}
+          title={`Context: ${(fill!.input_tokens / 1000).toFixed(1)}K / ${fillProfile!.context_window_k}K tokens (${fillPct}%) — latest message, refreshed every 30s`}
+        >
+          {fillPct}%
+        </span>
+      )}
       <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
         <PopoverTrigger asChild>
           <button
@@ -881,6 +923,7 @@ function ChatView({
         onChange={changeProfile}
         disabled={running || sending}
         rightSlot={<TodoPopover seq={latestTodoSeq} fetchDetail={fetchDetail} />}
+        convId={conv.id}
       />
     </SideQuestionWorkspace>
   );
