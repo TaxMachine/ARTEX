@@ -98,6 +98,7 @@ export const sidebarItems: NavGroup[] = [
       { id: "skills", title: t("Skill"), url: "/system/skills", icon: Sparkles },
       { id: "tools", title: t("Tools"), url: "/system/tools", icon: Wrench },
       { id: "notify", title: t("Notifications"), url: "/system/notify", icon: BellRing },
+      { id: "platform-issues", title: t("Platform Issues"), url: "/system/platform-issues", icon: Wrench },
       { id: "intercept", title: t("Interception Rules"), url: "/system/intercept", icon: ShieldAlert },
       { id: "asset-intercept", title: t("Asset Interception"), url: "/system/intercept/assets", icon: Ban },
       { id: "approvals", title: t("Approval Records"), url: "/system/intercept/approvals", icon: ClipboardList },

@@ -1628,6 +1628,18 @@ export interface KnowledgeNodeDetail {
   edges: KnowledgeEdge[];
 }
 
+export interface PlatformIssue {
+  id: number;
+  title: string;
+  detail: string;
+  source: string;
+  source_ref: string;
+  status: "open" | "resolved" | "wontfix";
+  note: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface MachineCapture {
   id: number;
   machine_id: number;

@@ -11,6 +11,7 @@ import type {
   ActiveFindingRetest,
   KnowledgeEdge,
   KnowledgeNode,
+  PlatformIssue,
   KnowledgeNodeDetail,
   Activity,
   Agent,
@@ -349,6 +350,11 @@ export const api = {
   updateMachine: (id: number, m: MachineInput) => put<Machine>(`/machines/${id}`, m),
   deleteMachine: (id: number) => del<{ ok: boolean }>(`/machines/${id}`),
   machineStatus: (name: string) => get<MachineStatus>(`/machines/${encodeURIComponent(name)}/status`),
+  platformIssues: (status?: string) => get<PlatformIssue[]>(`/platform-issues${status ? `?status=${encodeURIComponent(status)}` : ""}`).then((r) => arr(r)),
+  createPlatformIssue: (body: { title: string; detail?: string; source?: string; source_ref?: string }) =>
+    post<{ id: number; created: boolean }>("/platform-issues", body),
+  updatePlatformIssue: (id: number, body: { status: "resolved" | "wontfix" | "open"; note?: string }) =>
+    http(`/platform-issues/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   machineVerifyCredentials: (body: { host: string; port?: number; username: string; secret_type?: string; private_key?: string; password?: string }) =>
     post<{ ok: boolean; output?: string; error?: string; latency_ms: number }>("/machines/verify", body),
   machineTestConnection: (name: string, username?: string) =>

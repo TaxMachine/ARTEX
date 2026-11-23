@@ -24,8 +24,10 @@ import (
 const selfCritiqueSystem = `You critique ONE completed worker run of an authorized pentest platform immediately after it ended (budget/turns exhausted).
 
 Given the run's final summary and its tool-call trail (names + brief args), output STRICT JSON:
-{"worth_facting": true|false, "critique": "2-4 sentences", "concrete_catches": ["..."]}
-Look for: stated-as-fact claims without recorded evidence; instrument or environment state likely left changed (page_heap, debugger sessions, spawned processes, captures) that taints later runs; wasted budget (repeated near-identical calls, dead-end retried); write-backs that may not have landed before exhaustion. worth_facting=false when the run was unremarkable — most runs are; do not invent issues.`
+{"worth_facting": true|false, "critique": "2-4 sentences", "concrete_catches": ["..."], "platform_issues": [{"title":"...","detail":"..."}]}
+Look for: stated-as-fact claims without recorded evidence; instrument or environment state likely left changed (page_heap, debugger sessions, spawned processes, captures) that taints later runs; wasted budget (repeated near-identical calls, dead-end retried); write-backs that may not have landed before exhaustion.
+platform_issues is for DEFECTS IN THE PLATFORM ITSELF the run hit or worked around (tools failing, wrong tool output, broken integrations) — they go to the operator's fix backlog, not the task. Environment state the WORKER should have cleaned but may not have is a concrete_catch, not a platform issue.
+worth_facting=false when the run was unremarkable — most runs are; do not invent either kind.`
 
 // selfCritiqueCollector captures what the critique needs from the activity
 // stream without keeping the whole trail in memory.
@@ -85,12 +87,21 @@ func (s *Server) maybeSelfCritique(t *Task, intent *db.Node, reason harness.Term
 			return
 		}
 		var res struct {
-			WorthFacting bool     `json:"worth_facting"`
-			Critique     string   `json:"critique"`
-			Catches      []string `json:"concrete_catches"`
+			WorthFacting   bool     `json:"worth_facting"`
+			Critique       string   `json:"critique"`
+			Catches        []string `json:"concrete_catches"`
+			PlatformIssues []struct {
+				Title  string `json:"title"`
+				Detail string `json:"detail"`
+			} `json:"platform_issues"`
 		}
 		if jsonErr := parseStrictJSON(stripFence(strings.TrimSpace(out)), &res); jsonErr != nil {
 			return
+		}
+		for _, iss := range res.PlatformIssues {
+			if title := strings.TrimSpace(iss.Title); title != "" {
+				s.filePlatformIssue("self-critique", fmt.Sprintf("task:%s intent:%d", t.ID, intent.ID), title, strings.TrimSpace(iss.Detail))
+			}
 		}
 		if !res.WorthFacting {
 			return

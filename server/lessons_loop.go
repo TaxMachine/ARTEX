@@ -28,17 +28,21 @@ import (
 //     retester's verdict, the disagreement becomes a negative lesson for the
 //     next retest round (Self-Taught Evaluators pattern, measurement half).
 
-const contrastiveSystem = `You distill exploration lessons for an autonomous pentest platform from ONE completed task's branch contrast.
+const contrastiveSystem = `You distill exploration lessons for an autonomous pentest platform from ONE completed task's branch contrast — and you separate transferable GUIDANCE from PLATFORM DEFECTS.
 
 Input: the task's highest-yield intents (with what they produced) and its zero-yield intents (dead ends), plus the task goal.
 
-For each meaningful contrast, output a lesson:
-- cue: the SITUATION pattern that should trigger the lesson (<=90 chars, e.g. "fuzzing OOXML parsers on Office targets")
-- action: the transferable guidance, stated as WHY one shape beat the other (<=200 chars, cite the concrete evidence, e.g. "structure-aware seed mining of worksheet XML beat blind byte-flip mutation 5:0 — build seeds from real documents first")
+Two output kinds:
+1. LESSONS — transferable exploration guidance (injected into future worker prompts):
+   - cue: the SITUATION pattern that should trigger it (<=90 chars, e.g. "fuzzing OOXML parsers on Office targets")
+   - action: WHY one shape beat the other, evidence-cited (<=200 chars)
+2. ISSUES — defects in the PLATFORM ITSELF that the run worked around or suffered from (broken tools, wrong tool behavior, failed integrations — e.g. "ssh_upload always fails", "captures not attributed"). These go to the operator's fix backlog, NOT into worker prompts:
+   - title: short imperative summary (<=100 chars, e.g. "ssh_upload fails on Windows targets")
+   - detail: what was observed, which intent hit it, what was used as workaround
 
-Rules: only lessons grounded in the given contrast (no generic advice); 0-3 lessons; skip if no clear contrast exists.
+Rules: only items grounded in the given evidence; a workaround implies an issue (the workers shouldn't need workarounds); 0-3 lessons and 0-3 issues; skip kinds with nothing real.
 
-Output STRICT JSON array only: [{"cue":"...","action":"..."}]`
+Output STRICT JSON only: {"lessons":[{"cue":"...","action":"..."}],"issues":[{"title":"...","detail":"..."}]}`
 
 // extractContrastiveLessons mines yield-contrast lessons from a completed task.
 // Best-effort: never fails the caller.
@@ -77,7 +81,7 @@ func (s *Server) extractContrastiveLessons(taskID int64) {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Task goal: %s\n\nHIGH-YIELD intents (winners):\n%s\n\nZERO-YIELD intents (dead ends):\n%s\n",
 		clipStr(goal, 300), clipStr(string(topJSON), 2400), clipStr(string(deadJSON), 1200))
-	out, err := s.oneShotLLM(ctx, contrastiveSystem, b.String(), 4000)
+	out, err := s.oneShotLLM(ctx, contrastiveSystem, b.String(), 8000)
 	if err != nil || strings.TrimSpace(out) == "" {
 		reason := "empty output"
 		if err != nil {
@@ -86,20 +90,31 @@ func (s *Server) extractContrastiveLessons(taskID int64) {
 		log.Printf("[rsi] contrastive lessons LLM unusable for task %d: %s", taskID, reason)
 		return
 	}
-	var lessons []struct {
-		Cue    string `json:"cue"`
-		Action string `json:"action"`
+	var parsed struct {
+		Lessons []struct {
+			Cue    string `json:"cue"`
+			Action string `json:"action"`
+		} `json:"lessons"`
+		Issues []struct {
+			Title  string `json:"title"`
+			Detail string `json:"detail"`
+		} `json:"issues"`
 	}
-	if err := json.Unmarshal([]byte(stripFence(strings.TrimSpace(out))), &lessons); err != nil {
-		log.Printf("[rsi] contrastive lessons unparseable for task %d: %v; head=%.200s", taskID, err, out)
-		return
+	if jerr := json.Unmarshal([]byte(stripFence(strings.TrimSpace(out))), &parsed); jerr != nil {
+		// salvage: reasoning-heavy models occasionally truncate; recover any
+		// complete objects from the cut-off arrays before giving up.
+		if !salvageContrastive(strings.TrimSpace(out), &parsed) {
+			log.Printf("[rsi] contrastive lessons unparseable for task %d: %v; head=%.200s", taskID, jerr, out)
+			return
+		}
+		log.Printf("[rsi] contrastive output was truncated; salvaged %d lesson(s), %d issue(s)", len(parsed.Lessons), len(parsed.Issues))
 	}
-	if len(lessons) == 0 {
+	if len(parsed.Lessons) == 0 && len(parsed.Issues) == 0 {
 		log.Printf("[rsi] contrastive lessons: model returned none for task %d", taskID)
 		return
 	}
 	n := 0
-	for _, l := range lessons {
+	for _, l := range parsed.Lessons {
 		cue, act := strings.TrimSpace(l.Cue), strings.TrimSpace(l.Action)
 		if cue == "" || act == "" {
 			continue
@@ -114,9 +129,14 @@ func (s *Server) extractContrastiveLessons(taskID int64) {
 			log.Printf("[rsi] contrastive lesson insert failed for task %d: %v", taskID, err)
 		}
 	}
-	if n > 0 {
-		log.Printf("[rsi] task %d: %d contrastive lesson(s) extracted", taskID, n)
+	for _, iss := range parsed.Issues {
+		title, detail := strings.TrimSpace(iss.Title), strings.TrimSpace(iss.Detail)
+		if title == "" {
+			continue
+		}
+		s.filePlatformIssue("contrastive", fmt.Sprintf("task:%d", taskID), title, detail)
 	}
+	log.Printf("[rsi] task %d: %d contrastive lesson(s), %d platform issue(s)", taskID, n, len(parsed.Issues))
 }
 
 // updateLessonOutcomes applies the task's result to every lesson it was shown.
@@ -269,4 +289,57 @@ func (s *Server) contrastiveLessonsTrigger(w http.ResponseWriter, r *http.Reques
 	s.extractContrastiveLessons(id)
 	s.updateLessonOutcomes(id)
 	writeJSON(w, 200, map[string]any{"ok": true})
+}
+
+// salvageContrastive recovers complete {"cue","action"} / {"title","detail"}
+// objects from a truncated JSON response by brace-scanning.
+func salvageContrastive(raw string, parsed *struct {
+	Lessons []struct {
+		Cue    string `json:"cue"`
+		Action string `json:"action"`
+	} `json:"lessons"`
+	Issues []struct {
+		Title  string `json:"title"`
+		Detail string `json:"detail"`
+	} `json:"issues"`
+}) bool {
+	found := false
+	depth := 0
+	start := -1
+	for i, r := range raw {
+		switch r {
+		case '{':
+			if depth == 0 {
+				start = i
+			}
+			depth++
+		case '}':
+			if depth > 0 {
+				depth--
+				if depth == 0 && start >= 0 {
+					obj := raw[start : i+1]
+					var probe map[string]any
+					if json.Unmarshal([]byte(obj), &probe) == nil {
+						if cue, ok := probe["cue"].(string); ok {
+							act, _ := probe["action"].(string)
+							parsed.Lessons = append(parsed.Lessons, struct {
+								Cue    string `json:"cue"`
+								Action string `json:"action"`
+							}{cue, act})
+							found = true
+						} else if title, ok := probe["title"].(string); ok {
+							det, _ := probe["detail"].(string)
+							parsed.Issues = append(parsed.Issues, struct {
+								Title  string `json:"title"`
+								Detail string `json:"detail"`
+							}{title, det})
+							found = true
+						}
+					}
+					start = -1
+				}
+			}
+		}
+	}
+	return found
 }
