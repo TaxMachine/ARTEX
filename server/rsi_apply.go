@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -47,7 +48,8 @@ func (s *Server) activePolicyCode(ctx context.Context) string {
 }
 
 // applyRsiPolicy rewrites open-intent priorities for every active task per the
-// adopted policy's ordering rule.
+// adopted policy's ordering rule, and runs the budget gate (stopping semantics)
+// for budget-aware policies.
 func (s *Server) applyRsiPolicy(ctx context.Context) {
 	code := s.activePolicyCode(ctx)
 	if code == "" || code == "seed" {
@@ -59,7 +61,82 @@ func (s *Server) applyRsiPolicy(ctx context.Context) {
 			continue
 		}
 		s.applyToTask(ctx, t, code)
+		s.budgetGate(ctx, t, code)
 	}
+}
+
+// budgetGate implements the adopted policy's STOPPING semantics — the half of
+// rho-greedy that made it win the dream replay (recorded planner V=0.0033 vs
+// 0.3749): budget-aware exploration stops when the marginal-yield curve
+// flattens instead of expanding until exhaustion. Live translation: compare
+// discovery yield (new facts/findings) across the last vs previous window of
+// completed intents; when it flattens, inject ONE planner hint to stop
+// spawning intents and drain the frontier. Advisory by design — the planner
+// LLM keeps judgment; the operator sees the gate's numbers in the hint text.
+func (s *Server) budgetGate(ctx context.Context, t *Task, code string) {
+	if code != "rho-greedy" && !strings.HasPrefix(code, "greedy-") {
+		return // stopping semantics only for budget-aware families
+	}
+	const window = 10 // completed intents per yield window
+	// completed intents, oldest first
+	rows, err := s.m.pg.QueryContext(ctx, `
+		SELECT id, completed_at FROM exploration_nodes
+		WHERE exploration_id = $1 AND kind='intent' AND state IN ('done','exhausted','deleted') AND completed_at IS NOT NULL
+		ORDER BY completed_at`, t.ID)
+	if err != nil {
+		return
+	}
+	type done struct {
+		id int64
+		at time.Time
+	}
+	var list []done
+	for rows.Next() {
+		var d done
+		if rows.Scan(&d.id, &d.at) == nil {
+			list = append(list, d)
+		}
+	}
+	rows.Close()
+	if len(list) < window*2+8 {
+		return // not enough history: never gate early work (28-intent floor)
+	}
+	yieldBetween := func(from, to time.Time) int {
+		var n int
+		_ = s.m.pg.QueryRowContext(ctx, `
+			SELECT count(*) FROM exploration_nodes
+			WHERE exploration_id=$1 AND kind IN ('fact','finding') AND created_at > $2 AND created_at <= $3`,
+			t.ID, from, to).Scan(&n)
+		return n
+	}
+	n := len(list)
+	priorStart := list[n-2*window].at
+	mid := list[n-window].at
+	last := list[n-1].at
+	prior := yieldBetween(priorStart, mid)
+	recent := yieldBetween(mid, last)
+	// flattening: recent window yields <=20% of prior AND under the absolute
+	// floor (3). Both windows have equal intent counts by construction.
+	if prior == 0 || recent > prior/5 || recent >= 3 {
+		return
+	}
+	// dedup: one gate hint per task per policy version
+	var exists bool
+	if err := s.m.pg.QueryRowContext(ctx, `
+		SELECT EXISTS(SELECT 1 FROM exploration_nodes
+		WHERE exploration_id=$1 AND kind='hint' AND origin='rsi-budget-gate')`, t.ID).Scan(&exists); err != nil || exists {
+		return
+	}
+	text := fmt.Sprintf(
+		"[RSI budget gate — policy %s] Marginal discovery yield has flattened: the last %d completed intents produced %d new facts/findings vs %d in the %d before them. "+
+			"Per the adopted exploration policy (replay-measured: the recorded expand-everything behavior cost ~100x more per unit of discovery value on tasks 9/10/11): "+
+			"do NOT create new intents; let the running intents finish, record their write-backs, and wrap the task up. If a genuinely new lead appears, it can justify breaking this guidance — say so explicitly.",
+		code, window, recent, prior, window)
+	if _, err := t.Store.AddNode("hint", map[string]any{"text": text}, 0, "active", "rsi-budget-gate", nil); err != nil {
+		log.Printf("[rsi] task %s budget gate hint failed: %v", t.ID, err)
+		return
+	}
+	log.Printf("[rsi] task %s budget gate FIRED: %d completed intents, yield %d -> %d (windows of %d)", t.ID, n, prior, recent, window)
 }
 
 func (s *Server) applyToTask(ctx context.Context, t *Task, code string) {
