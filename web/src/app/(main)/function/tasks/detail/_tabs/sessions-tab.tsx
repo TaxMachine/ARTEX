@@ -63,6 +63,7 @@ import type {
   InterceptApprovalRow,
   Session,
   SessionStatus,
+  SessionContextFill,
   SessionTokenUsage,
   TaskLLMResolution,
   TaskLLMResolutions,
@@ -782,6 +783,28 @@ export function SessionsTab({ taskId, taskPaused = false }: { taskId: string; ta
     },
     [taskId, store, patchStore],
   );
+
+  // ── per-session context fill (input size of each session's latest request) ────
+  const [contextFills, setContextFills] = React.useState<SessionContextFill[]>([]);
+  React.useEffect(() => {
+    let alive = true;
+    const load = () =>
+      api
+        .taskContextFill(taskId)
+        .then((r) => {
+          if (!alive) return;
+          setContextFills(r.sessions ?? []);
+        })
+        .catch(() => {
+          // Best-effort; the next interval retries automatically.
+        });
+    void load();
+    const stopPolling = setVisibleInterval(load, 5000);
+    return () => {
+      alive = false;
+      stopPolling();
+    };
+  }, [taskId]);
 
   // ── task token total (whole task, all agents) ───────────────────────────────────
   React.useEffect(() => {
@@ -1601,28 +1624,24 @@ export function SessionsTab({ taskId, taskPaused = false }: { taskId: string; ta
   const activeResolution = resolutionForSession(active);
   const activeAssets =
     active.role === "worker" && active.intent_id ? intentAssetsByID.get(active.intent_id) : undefined;
-  // Context fill of the ACTIVE session: the input size of its latest request
-  // vs the resolved model's context window. Source of truth is the polled
-  // last_input_tokens (newest persisted result for this session); while a turn
-  // is in flight the newest usage frame already in the store wins so the badge
-  // moves without waiting for the 5s poll.
+  // Context fill of the ACTIVE session: the input size of its most recent
+  // request, from llm_usage via /llm/context/fill (sessions[]), matched on the
+  // UI session key. A true per-request size — the kind='usage' activity rows
+  // are cumulative run totals and must not be used for this. The denominator
+  // is the resolved model's window; when it is unknown (no profile value and
+  // the gateway publishes none) the badge shows the raw size with no percent
+  // instead of guessing a window.
   const contextFill = React.useMemo(() => {
+    if (isSystem) return null;
+    const raw = contextFills.find((f) => f.session === activeKey);
+    if (!raw || raw.input_tokens <= 0) return null;
     const capK = activeResolution?.context_window_k ?? 0;
-    if (!capK || isSystem) return null;
-    let input = sessionTokens[activeKey]?.last_input_tokens ?? 0;
-    const items = store[activeKey]?.items ?? [];
-    for (let index = items.length - 1; index >= 0; index--) {
-      const item = items[index];
-      if (item.kind === "usage" && (item.input_tokens ?? 0) > 0) {
-        input = Math.max(input, item.input_tokens ?? 0);
-        break;
-      }
-    }
-    if (input <= 0) return null;
+    const source = activeResolution?.context_window_source;
+    if (!capK) return { input: raw.input_tokens, cap: 0, pct: null as number | null, source: source as string | undefined };
     const cap = capK * 1000;
-    const pct = Math.min(100, Math.round((input / cap) * 100));
-    return { input, cap, pct, over: input > cap };
-  }, [activeKey, activeResolution, sessionTokens, store, isSystem]);
+    const pct = Math.min(100, Math.round((raw.input_tokens / cap) * 100));
+    return { input: raw.input_tokens, cap, pct, source: source as string | undefined };
+  }, [contextFills, activeKey, activeResolution, isSystem]);
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -1846,28 +1865,40 @@ export function SessionsTab({ taskId, taskPaused = false }: { taskId: string; ta
                   <TooltipTrigger asChild>
                     <Badge
                       variant="outline"
-                      aria-label={`Context fill ${contextFill.pct}%`}
+                      aria-label={
+                        contextFill.pct != null
+                          ? `Context fill ${contextFill.pct}%`
+                          : `Latest request ${(contextFill.input / 1000).toFixed(1)}K tokens (window unknown)`
+                      }
                       className={cn(
                         "shrink-0 gap-1 font-normal tabular-nums",
-                        contextFill.pct >= 85
-                          ? "border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400"
-                          : contextFill.pct >= 60
-                            ? "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                            : "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                        contextFill.pct == null
+                          ? "border-border"
+                          : contextFill.pct >= 85
+                            ? "border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400"
+                            : contextFill.pct >= 60
+                              ? "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                              : "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
                       )}
                     >
                       <GaugeIcon className="size-3" />
-                      {`Context ${contextFill.pct}%`}
+                      {contextFill.pct != null
+                        ? `Context ${contextFill.pct}%`
+                        : `${(contextFill.input / 1000).toFixed(1)}K ctx`}
                     </Badge>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-xs">
                     <div className="font-medium">
-                      Context window fill · {(contextFill.input / 1000).toFixed(1)}K / {(contextFill.cap / 1000).toFixed(0)}K
+                      {contextFill.pct != null
+                        ? `Context window fill · ${(contextFill.input / 1000).toFixed(1)}K / ${(contextFill.cap / 1000).toFixed(0)}K`
+                        : `Latest request · ${(contextFill.input / 1000).toFixed(1)}K tokens`}
                     </div>
                     <div className="text-muted-foreground">
-                      {contextFill.over
-                        ? "Latest request exceeded the configured window (compaction should trigger)."
-                        : "Input size of this session's latest request. Refreshes every 5s."}
+                      {contextFill.pct == null
+                        ? `Context window unknown (${contextFill.source === "remote" ? "not published by the gateway" : "not set on the profile"}) — set it on the model's LLM profile to get a percentage.`
+                        : contextFill.input > contextFill.cap
+                          ? "Latest request exceeded the window (compaction should trigger)."
+                          : "Input size of this session's latest request. Refreshes every 5s."}
                     </div>
                   </TooltipContent>
                 </Tooltip>

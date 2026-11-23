@@ -216,7 +216,7 @@ func (r *Recorder) Stream(ctx context.Context, req llm.CompletionRequest) iter.S
 				status = "error"
 			}
 			// Lightweight metering row — always written.
-			r.recordUsage(ctx, taskID, expID, worker, usage, int(time.Since(start).Milliseconds()), status)
+			r.recordUsage(ctx, taskID, expID, worker, usage, int(time.Since(start).Milliseconds()), status, session)
 			// Opt-in context size telemetry — independent of recordBodies.
 			if collectContext {
 				r.recordContext(taskID, worker, ctxMetrics, usage, status)
@@ -320,7 +320,7 @@ func (r *Recorder) Complete(ctx context.Context, req llm.CompletionRequest) (llm
 	} else {
 		reportStop(ctx, stopReason)
 	}
-	r.recordUsage(ctx, taskID, expID, worker, usage, int(time.Since(start).Milliseconds()), status)
+	r.recordUsage(ctx, taskID, expID, worker, usage, int(time.Since(start).Milliseconds()), status, session)
 	if collectContext {
 		r.recordContext(taskID, worker, ctxMetrics, usage, status)
 	}
@@ -344,7 +344,7 @@ func thinkingText(msg llm.Message) string {
 // zero-token calls with no model, which carry nothing worth metering. The ctx
 // usage sink (if any) sees these calls even when no PostgreSQL recorder is set
 // (r.pg == nil), so a budget also counts calls that are not persisted.
-func (r *Recorder) recordUsage(ctx context.Context, taskID string, expID int64, worker string, usage llm.Usage, latencyMs int, status string) {
+func (r *Recorder) recordUsage(ctx context.Context, taskID string, expID int64, worker string, usage llm.Usage, latencyMs int, status string, session string) {
 	if r.model == "" && usage.InputTokens == 0 && usage.OutputTokens == 0 &&
 		usage.CacheReadTokens == 0 && usage.CacheWriteTokens == 0 {
 		return
@@ -359,6 +359,7 @@ func (r *Recorder) recordUsage(ctx context.Context, taskID string, expID int64, 
 		TaskID:        taskID,
 		ExplorationID: expID,
 		Worker:        worker,
+		Session:       session,
 		Model:         r.model,
 		ProfileName:   r.prof,
 		LatencyMs:     latencyMs,

@@ -718,7 +718,17 @@ export interface TaskLLMResolution {
   source: "task_chain" | "agent_binding" | "global_profile" | "environment" | "global";
   available: boolean;
   reason?: string;
+  /** Context window in K tokens; 0/absent = unknown (do NOT assume a default). */
   context_window_k?: number;
+  /** "profile" (configured) | "remote" (gateway-published) | "unknown". */
+  context_window_source?: "profile" | "remote" | "unknown";
+}
+
+/** Latest request size for one UI session (main:<seg> | plan | intent:<id>). */
+export interface SessionContextFill {
+  session: string;
+  input_tokens: number;
+  ts: string;
 }
 
 export interface TaskLLMResolutions {
@@ -820,7 +830,6 @@ export interface SessionTokenUsage {
   output_tokens: number;
   cache_read_tokens: number;
   cache_write_tokens: number;
-  last_input_tokens?: number;
 }
 
 export interface BatchControlItem {

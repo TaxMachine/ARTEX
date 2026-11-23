@@ -91,6 +91,7 @@ import type {
   PromptVar,
   PromptVersion,
   SessionTokenUsage,
+  SessionContextFill,
   Settings,
   Severity,
   SkillCall,
@@ -351,9 +352,11 @@ export const api = {
   deleteMachine: (id: number) => del<{ ok: boolean }>(`/machines/${id}`),
   machineStatus: (name: string) => get<MachineStatus>(`/machines/${encodeURIComponent(name)}/status`),
   taskContextFill: (task: string) =>
-    get<{ task: string; latest: { worker: string; input_tokens: number; cache_read: number; ts: string }[] }>(
-      `/llm/context/fill?task=${encodeURIComponent(task)}`,
-    ),
+    get<{
+      task: string;
+      latest: { worker: string; input_tokens: number; cache_read: number; ts: string }[];
+      sessions?: SessionContextFill[];
+    }>(`/llm/context/fill?task=${encodeURIComponent(task)}`),
   rsiWorlds: () => get<{ id: number; task_id: number; name: string; created_at: string }[]>("/rsi/worlds").then((r) => arr(r)),
   rsiWorldDetail: (id: number) =>
     get<{

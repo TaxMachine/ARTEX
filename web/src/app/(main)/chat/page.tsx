@@ -328,10 +328,9 @@ function LLMProfileRow({
     // badge reflects the reply that just completed instead of waiting 30s.
   }, [convId, open, disabled]);
   const fillProfile = current ?? activeDefault;
+  const cap = (fillProfile?.context_window_k ?? 0) * 1000;
   const fillPct =
-    fill && fillProfile?.context_window_k
-      ? Math.min(100, Math.round((fill.input_tokens / (fillProfile.context_window_k * 1000)) * 100))
-      : null;
+    fill && cap > 0 ? Math.min(100, Math.round((fill.input_tokens / cap) * 100)) : null;
 
   return (
     <div className="flex min-w-0 shrink-0 items-center gap-1 px-1 pt-0.5 pb-1">
@@ -339,14 +338,24 @@ function LLMProfileRow({
       <span className="truncate text-muted-foreground/70 text-xs" title={label}>
         {label}
       </span>
-      {fillPct != null && (
+      {fill && (fillPct != null || fill.input_tokens > 0) && (
         <span
           className={`shrink-0 rounded-full px-1.5 text-[10px] font-semibold leading-4 tabular-nums ${
-            fillPct >= 85 ? "bg-red-500/15 text-red-600 dark:text-red-400" : fillPct >= 60 ? "bg-amber-500/15 text-amber-600 dark:text-amber-400" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+            fillPct == null
+              ? "bg-muted text-muted-foreground"
+              : fillPct >= 85
+                ? "bg-red-500/15 text-red-600 dark:text-red-400"
+                : fillPct >= 60
+                  ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                  : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
           }`}
-          title={`Context: ${(fill!.input_tokens / 1000).toFixed(1)}K / ${fillProfile!.context_window_k}K tokens (${fillPct}%) — latest message, refreshed every 30s`}
+          title={
+            fillPct != null
+              ? `Context: ${(fill!.input_tokens / 1000).toFixed(1)}K / ${fillProfile!.context_window_k}K tokens (${fillPct}%) — latest request, refreshed every 30s`
+              : `Latest request: ${(fill!.input_tokens / 1000).toFixed(1)}K tokens — context window unknown (set it on the profile for a percentage)`
+          }
         >
-          {fillPct}%
+          {fillPct != null ? `${fillPct}%` : `${(fill!.input_tokens / 1000).toFixed(1)}K ctx`}
         </span>
       )}
       <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>

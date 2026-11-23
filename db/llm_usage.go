@@ -17,6 +17,7 @@ type LLMUsage struct {
 	TaskID        string `json:"task_id"`        // task registry id (matches llm_records.task_id)
 	ExplorationID int64  `json:"exploration_id"` // exploration id parsed from the session (0 = unknown/non-task)
 	Worker        string `json:"worker"`         // agent lane: worker / planner / mainagent / goals
+	Session       string `json:"session"`        // raw session string (exp<N>-<role>[-i<intent>], conv-<id>) — per-UI-session attribution
 	Model         string `json:"model"`
 	ProfileName   string `json:"profile_name"`
 	LatencyMs     int    `json:"latency_ms"`
@@ -60,9 +61,9 @@ func (d *DB) InsertLLMUsage(u *LLMUsage) error {
 		expID = u.ExplorationID
 	}
 	_, err := d.Exec(`
-INSERT INTO llm_usage(task_id, exploration_id, worker, model, profile_name, latency_ms, input_tokens, output_tokens, cache_read, cache_write, status)
-VALUES (NULLIF($1,''),$2,NULLIF($3,''),NULLIF($4,''),NULLIF($5,''),$6,$7,$8,$9,$10,$11)`,
-		u.TaskID, expID, u.Worker, u.Model, u.ProfileName,
+INSERT INTO llm_usage(task_id, exploration_id, worker, session, model, profile_name, latency_ms, input_tokens, output_tokens, cache_read, cache_write, status)
+VALUES (NULLIF($1,''),$2,NULLIF($3,''),NULLIF($4,''),NULLIF($5,''),NULLIF($6,''),$7,$8,$9,$10,$11,$12)`,
+		u.TaskID, expID, u.Worker, u.Session, u.Model, u.ProfileName,
 		u.LatencyMs, u.InputTokens, u.OutputTokens, u.CacheRead, u.CacheWrite, u.Status)
 	return err
 }

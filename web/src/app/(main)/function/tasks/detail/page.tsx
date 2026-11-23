@@ -38,7 +38,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { t } from "@/i18n";
 import { api } from "@/lib/api";
-import type { LLMProfile, Task } from "@/lib/types";
+import type { LLMProfile, Task, TaskLLMResolutions } from "@/lib/types";
 
 import { AssetsTab } from "./_tabs/assets-tab";
 import { BroadcastTab } from "./_tabs/broadcast-tab";
@@ -83,6 +83,7 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
   );
   const [saving, setSaving] = React.useState(false);
   const [fill, setFill] = React.useState<{ worker: string; input_tokens: number; cache_read: number; ts: string }[]>([]);
+  const [resolutions, setResolutions] = React.useState<TaskLLMResolutions | null>(null);
   const popoverContentRef = React.useRef<HTMLDivElement>(null);
 
   // Live context fill: latest actual request sizes for this task, per worker.
@@ -99,6 +100,17 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
     const iv = setInterval(() => void loadFill(), 30_000);
     return () => clearInterval(iv);
   }, [loadFill]);
+  React.useEffect(() => {
+    let alive = true;
+    const load = () =>
+      api.taskLLMResolution(task.id).then((r) => {
+        if (alive) setResolutions(r);
+      });
+    void load().catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [task.id]);
 
   const chain = taskProfileIDs(task);
   const exhausted = task.llm_failover_state === "chain_exhausted";
@@ -198,39 +210,49 @@ function TaskLLMControl({ task, profiles, onUpdated }: { task: Task; profiles: L
 
         {/* Context window fill: the active profile's capacity vs the latest
             actual request sizes for this task (per worker role, 30s refresh). */}
-        {activeProfile && fill.length > 0 && (
+        {fill.length > 0 && (() => {
+          // Window per role from the resolution endpoint (profile-configured or
+          // gateway-published). Unknown → raw size only, never a guessed denominator.
+          const capFor = (worker: string) => {
+            const res = worker === "planner" ? resolutions?.planner : worker === "mainagent" ? resolutions?.mainagent : resolutions?.worker;
+            return { cap: res?.context_window_k ? res.context_window_k * 1000 : 0, source: res?.context_window_source };
+          };
+          return (
           <div className="rounded-md border p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{t("Context window")}</span>
               <span className="text-muted-foreground font-mono text-xs">
-                {activeProfile.model} · {(activeProfile.context_window_k ?? 200)}K
+                {activeProfile?.model}
+                {resolutions?.worker.context_window_k ? ` · ${resolutions.worker.context_window_k}K` : ""}
               </span>
             </div>
             <div className="space-y-2">
               {fill.map((f) => {
-                const cap = Math.max(1, (activeProfile.context_window_k ?? 200) * 1000);
-                const pct = Math.min(100, Math.round((f.input_tokens / cap) * 100));
-                const hot = pct >= 85 ? "bg-red-500" : pct >= 60 ? "bg-amber-500" : "bg-emerald-500";
+                const { cap, source } = capFor(f.worker);
+                const pct = cap > 0 ? Math.min(100, Math.round((f.input_tokens / cap) * 100)) : null;
+                const hot = pct == null ? "bg-muted-foreground/40" : pct >= 85 ? "bg-red-500" : pct >= 60 ? "bg-amber-500" : "bg-emerald-500";
                 return (
                   <div key={f.worker} className="space-y-1">
                     <div className="flex items-center justify-between gap-2 text-xs">
                       <span className="font-medium">{f.worker}</span>
                       <span className="text-muted-foreground font-mono tabular-nums">
-                        {(f.input_tokens / 1000).toFixed(1)}K / {activeProfile.context_window_k ?? 200}K · {pct}%
+                        {(f.input_tokens / 1000).toFixed(1)}K
+                        {pct != null ? ` / ${cap / 1000}K · ${pct}%` : ` · window ${source === "remote" ? "not published" : "unknown"}`}
                       </span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                      <div className={`h-full rounded-full transition-all ${hot}`} style={{ width: `${pct}%` }} />
+                      <div className={`h-full rounded-full transition-all ${hot}`} style={{ width: pct == null ? "100%" : `${pct}%` }} />
                     </div>
                   </div>
                 );
               })}
             </div>
             <p className="mt-2 text-muted-foreground text-[11px]">
-              {t("Latest request size per role (cache reads included in the size). Bars turn amber at 60%, red at 85%.")}
+              {t("Latest request size per role. Bars turn amber at 60%, red at 85%. A window the profile does not set and the gateway does not publish shows the size only.")}
             </p>
           </div>
-        )}
+          );
+        })()}
 
         {exhausted && (
           <Alert variant="destructive">

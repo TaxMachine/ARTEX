@@ -155,10 +155,6 @@ type SessionTokenUsage struct {
 	OutputTokens     int    `json:"output_tokens"`
 	CacheReadTokens  int    `json:"cache_read_tokens"`
 	CacheWriteTokens int    `json:"cache_write_tokens"`
-	// LastInputTokens is the input size of the session's most recent request —
-	// the live "how full is the context window" signal, distinct from the sums
-	// above which accumulate across the whole session.
-	LastInputTokens int `json:"last_input_tokens"`
 }
 
 // DailyTokenBucket is one day's global token aggregate across all tasks.
@@ -1705,42 +1701,22 @@ func (s *ExplorationStore) TokenStatsByWorker() ([]TokenUsage, error) {
 // activity-history pagination. Main/planner use fixed keys; Worker executions use
 // their intent node id, even when a different work#N process handled a retry.
 func (s *ExplorationStore) TokenStatsBySession() ([]SessionTokenUsage, error) {
-	// results: one row per kind='result' activity attributed to a UI session
-	// (main:<seg> | plan | intent:<id>), tagged with its raw token columns.
-	// sums: lifetime totals per session. latest: the most recent request that
-	// carried input tokens — the live context-fill signal for that session.
-	rows, err := s.db.Query(`
-WITH results AS (
-	SELECT
+	rows, err := s.db.Query(`SELECT
 		CASE
 			WHEN COALESCE(a.worker,'')='mainagent' THEN 'main:' || COALESCE(a.main_seg,0)::text
 			WHEN COALESCE(a.worker,'')='planner' THEN 'plan'
 			WHEN n.id IS NOT NULL THEN 'intent:' || n.id::text
 			ELSE ''
 		END AS session_key,
-		a.input_tokens, a.output_tokens, a.cache_read_tokens, a.cache_write_tokens, a.id
+		COALESCE(SUM(a.input_tokens),0), COALESCE(SUM(a.output_tokens),0),
+		COALESCE(SUM(a.cache_read_tokens),0), COALESCE(SUM(a.cache_write_tokens),0)
 	FROM activity a
 	LEFT JOIN exploration_nodes n
 	  ON n.id=a.node_id AND n.exploration_id=a.exploration_id AND n.kind='intent'
 	WHERE a.exploration_id=$1 AND a.kind='result'
 	  AND (COALESCE(a.worker,'') IN ('mainagent','planner') OR n.id IS NOT NULL)
-),
-sums AS (
-	SELECT session_key,
-		COALESCE(SUM(input_tokens),0) AS in_t,
-		COALESCE(SUM(output_tokens),0) AS out_t,
-		COALESCE(SUM(cache_read_tokens),0) AS cr_t,
-		COALESCE(SUM(cache_write_tokens),0) AS cw_t
-	FROM results GROUP BY session_key
-),
-latest AS (
-	SELECT DISTINCT ON (session_key) session_key, COALESCE(input_tokens,0) AS last_in
-	FROM results WHERE input_tokens > 0
-	ORDER BY session_key, id DESC
-)
-SELECT s.session_key, s.in_t, s.out_t, s.cr_t, s.cw_t, COALESCE(l.last_in, 0)
-FROM sums s LEFT JOIN latest l ON l.session_key = s.session_key
-ORDER BY s.session_key`, s.expID)
+	GROUP BY session_key
+	ORDER BY session_key`, s.expID)
 	if err != nil {
 		return nil, err
 	}
@@ -1748,12 +1724,54 @@ ORDER BY s.session_key`, s.expID)
 	out := []SessionTokenUsage{}
 	for rows.Next() {
 		var u SessionTokenUsage
-		if err := rows.Scan(&u.Session, &u.InputTokens, &u.OutputTokens, &u.CacheReadTokens, &u.CacheWriteTokens, &u.LastInputTokens); err != nil {
+		if err := rows.Scan(&u.Session, &u.InputTokens, &u.OutputTokens, &u.CacheReadTokens, &u.CacheWriteTokens); err != nil {
 			return nil, err
 		}
 		out = append(out, u)
 	}
 	return out, rows.Err()
+}
+
+// SessionContextFill returns, per UI session key (main:<seg> | plan |
+// intent:<id>), the input size of the most recent request from llm_usage — the
+// live "how full is the context window" signal. Unlike the kind='usage'
+// activity rows (cumulative run totals), these are true per-request sizes the
+// recorder attributes by raw session string.
+func (s *ExplorationStore) SessionContextFill() ([]SessionFill, error) {
+	rows, err := s.db.Query(`
+SELECT DISTINCT ON (k) k, input_tokens, ts
+FROM (
+	SELECT CASE
+			WHEN session ~ 'worker-i[0-9]+$' THEN 'intent:' || regexp_replace(session, '.*worker-i', '')
+			WHEN session ~ '-main-s[0-9]+$' THEN 'main:' || regexp_replace(session, '.*-main-s', '')
+			WHEN session ~ '-main$' THEN 'main:0'
+			WHEN session ~ '-planner$' THEN 'plan'
+			ELSE session
+		END AS k, id, input_tokens, ts
+	FROM llm_usage
+	WHERE exploration_id = $1 AND input_tokens > 0 AND session <> ''
+) x
+ORDER BY k, id DESC`, s.expID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []SessionFill{}
+	for rows.Next() {
+		var f SessionFill
+		if err := rows.Scan(&f.Session, &f.InputTokens, &f.Ts); err != nil {
+			return nil, err
+		}
+		out = append(out, f)
+	}
+	return out, rows.Err()
+}
+
+// SessionFill is one session's latest request size (context-fill signal).
+type SessionFill struct {
+	Session     string `json:"session"`
+	InputTokens int64  `json:"input_tokens"`
+	Ts          string `json:"ts"`
 }
 
 // ActivityList returns steps after sinceID (exclusive), optionally filtered by node.

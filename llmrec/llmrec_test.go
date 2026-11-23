@@ -88,7 +88,7 @@ func TestUsageSinkSeesMeteredCalls(t *testing.T) {
 	// A call that gets no llm_usage row (no model, zero usage) is not seen either.
 	got = nil
 	empty := Wrap(completeProvider{}, nil, "", "", "", "", nil)
-	empty.recordUsage(ctx, "", 0, "", llm.Usage{}, 0, "ok")
+	empty.recordUsage(ctx, "", 0, "", llm.Usage{}, 0, "ok", "")
 	if len(got) != 0 {
 		t.Fatalf("sink saw an unmetered call: %+v", got)
 	}

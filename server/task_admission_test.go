@@ -562,7 +562,7 @@ func TestTaskLLMResolutionRejectsInvalidExplicitProfile(t *testing.T) {
 	}()
 
 	s := &Server{m: m, provByProfile: map[int64]*provEntry{}}
-	got, err := s.resolveTaskRoleLLM(task, "worker")
+	got, err := s.resolveTaskRoleLLM(context.Background(), task, "worker")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -612,7 +612,7 @@ func TestTaskLLMResolutionPrefersAgentBindingOverTaskChain(t *testing.T) {
 	}()
 
 	s := &Server{m: m, provByProfile: map[int64]*provEntry{}}
-	got, err := s.resolveTaskRoleLLM(task, "worker")
+	got, err := s.resolveTaskRoleLLM(context.Background(), task, "worker")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -623,7 +623,7 @@ func TestTaskLLMResolutionPrefersAgentBindingOverTaskChain(t *testing.T) {
 	if err := m.pg.SetAgentLLMProfile("worker", &boundID); err != nil {
 		t.Fatal(err)
 	}
-	got, err = s.resolveTaskRoleLLM(task, "worker")
+	got, err = s.resolveTaskRoleLLM(context.Background(), task, "worker")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -631,7 +631,7 @@ func TestTaskLLMResolutionPrefersAgentBindingOverTaskChain(t *testing.T) {
 		t.Fatalf("resolution=%+v, want the agent binding to outrank the task chain", got)
 	}
 
-	got, err = s.resolveTaskRoleLLM(task, "planner")
+	got, err = s.resolveTaskRoleLLM(context.Background(), task, "planner")
 	if err != nil {
 		t.Fatal(err)
 	}
