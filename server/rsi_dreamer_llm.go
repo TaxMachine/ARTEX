@@ -95,12 +95,19 @@ func (s *Server) dreamerProfile() (*db.LLMProfile, error) {
 	return fallback, nil
 }
 
-// dreamWithLLM runs one dreaming step with the LLM policy-development agent.
-// Falls back to enumeration when no profile is available.
+// dreamWithLLM runs one dreaming step with the LLM policy-development agent,
+// over all replay worlds. Falls back to enumeration when no profile is available.
 func (s *Server) dreamWithLLM(ctx context.Context, incumbent int, lambda float64) (map[string]any, error) {
+	return s.dreamWithLLMWorlds(ctx, incumbent, lambda, nil)
+}
+
+// dreamWithLLMWorlds is dreamWithLLM scoped to specific replay worlds
+// (nil/empty = all). The incumbent is re-evaluated on the same scope so the
+// keep-vs-replace comparison is like-for-like.
+func (s *Server) dreamWithLLMWorlds(ctx context.Context, incumbent int, lambda float64, worldIDs []int64) (map[string]any, error) {
 	st := s.rsiStore()
-	log.Printf("[rsi-dream] propose start (incumbent=%d)", incumbent)
-	best, bestV, results, err := st.Propose(ctx, incumbent, lambda)
+	log.Printf("[rsi-dream] propose start (incumbent=%d worlds=%v)", incumbent, worldIDs)
+	best, bestV, results, err := st.ProposeWorlds(ctx, incumbent, lambda, worldIDs)
 	log.Printf("[rsi-dream] propose done: best=%s V=%.4f err=%v", best.Code, bestV, err)
 	if err != nil {
 		return nil, err
@@ -110,6 +117,7 @@ func (s *Server) dreamWithLLM(ctx context.Context, incumbent int, lambda float64
 		return map[string]any{
 			"best":       map[string]any{"code": best.Code, "note": best.Note, "avg_score": bestV},
 			"candidates": results,
+			"world_ids":  worldIDs,
 			"dreamer":    "enumeration (no LLM profile resolved)",
 		}, nil
 	}
@@ -128,7 +136,14 @@ func (s *Server) dreamWithLLM(ctx context.Context, incumbent int, lambda float64
 	var b strings.Builder
 	fmt.Fprintf(&b, "Incumbent policy: %s (%s)\n\n", incCode, incNote)
 	worlds, _ := st.ListWorlds(ctx)
+	worlds, ferr := rsi.FilterWorlds(worlds, worldIDs)
+	if ferr != nil {
+		return nil, ferr
+	}
 	fmt.Fprintf(&b, "Replay evaluations across %d worlds (rho sweep 0/0.25/0.5/0.75/1):\n", len(worlds))
+	for _, wm := range worlds {
+		fmt.Fprintf(&b, "  world %v = task %v (%s)\n", wm["id"], wm["task_id"], wm["name"])
+	}
 	for _, c := range results {
 		fmt.Fprintf(&b, "  %-12s V=%.4f\n", fmt.Sprint(c["policy"]), c["avg_score"])
 	}
@@ -153,6 +168,7 @@ func (s *Server) dreamWithLLM(ctx context.Context, incumbent int, lambda float64
 		return map[string]any{
 			"best":       map[string]any{"code": best.Code, "note": best.Note, "avg_score": bestV},
 			"candidates": results,
+			"world_ids":  worldIDs,
 			"dreamer":    "enumeration (LLM dreamer failed: " + err.Error() + ")",
 		}, nil
 	}
@@ -167,8 +183,9 @@ func (s *Server) dreamWithLLM(ctx context.Context, incumbent int, lambda float64
 		return map[string]any{
 			"best":       map[string]any{"code": best.Code, "note": best.Note, "avg_score": bestV},
 			"candidates": results,
+			"world_ids":  worldIDs,
 			"dreamer":    "enumeration (LLM output unparseable)",
-			"llm_raw":    clipStr(text, 400),
+			"llm_raw":    clipStr(text, 1500),
 		}, nil
 	}
 	if decision.Keep {
@@ -179,6 +196,7 @@ func (s *Server) dreamWithLLM(ctx context.Context, incumbent int, lambda float64
 		return map[string]any{
 			"best":       map[string]any{"code": best.Code, "note": best.Note, "avg_score": bestV},
 			"candidates": results,
+			"world_ids":  worldIDs,
 			"dreamer":    "enumeration (LLM proposed invalid policy " + decision.Code + ")",
 		}, nil
 	}
@@ -188,6 +206,7 @@ func (s *Server) dreamWithLLM(ctx context.Context, incumbent int, lambda float64
 			"avg_score": scoreFor(results, decision.Code, bestV),
 		},
 		"candidates": results,
+		"world_ids":  worldIDs,
 		"dreamer":    cfg.Model + " (effort high)",
 	}, nil
 }

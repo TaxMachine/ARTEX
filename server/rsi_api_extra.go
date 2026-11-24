@@ -67,6 +67,7 @@ func (s *Server) rsiRedream(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Incumbent int     `json:"incumbent"`
 		Lambda    float64 `json:"lambda"`
+		WorldIDs  []int64 `json:"world_ids"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
 	if body.Incumbent <= 0 {
@@ -78,7 +79,7 @@ func (s *Server) rsiRedream(w http.ResponseWriter, r *http.Request) {
 	if body.Lambda <= 0 {
 		body.Lambda = 0.1
 	}
-	out, err := s.dreamWithLLM(r.Context(), body.Incumbent, body.Lambda)
+	out, err := s.dreamWithLLMWorlds(r.Context(), body.Incumbent, body.Lambda, body.WorldIDs)
 	if err != nil {
 		writeErr(w, 500, err.Error())
 		return

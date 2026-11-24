@@ -25,6 +25,13 @@ type Candidate struct {
 // Propose runs one dreaming step: evaluate the candidate set over all worlds
 // and return the best. If none beats the incumbent, the incumbent is kept.
 func (s *Store) Propose(ctx context.Context, incumbent int, lambda float64) (best Candidate, bestV float64, results []map[string]any, err error) {
+	return s.ProposeWorlds(ctx, incumbent, lambda, nil)
+}
+
+// ProposeWorlds is Propose scoped to specific worlds (nil/empty = all). The
+// incumbent's evaluation is scoped the same way, so keep-vs-replace compares
+// like with like.
+func (s *Store) ProposeWorlds(ctx context.Context, incumbent int, lambda float64, worldIDs []int64) (best Candidate, bestV float64, results []map[string]any, err error) {
 	code, _, _, err := s.GetPolicy(ctx, incumbent)
 	if err != nil {
 		return Candidate{}, 0, nil, fmt.Errorf("incumbent policy v%d: %w", incumbent, err)
@@ -33,7 +40,7 @@ func (s *Store) Propose(ctx context.Context, incumbent int, lambda float64) (bes
 	if err != nil {
 		return Candidate{}, 0, nil, err
 	}
-	bestV, err = s.EvaluatePolicy(ctx, incumbent, incumbentPolicy, lambda)
+	bestV, err = s.EvaluatePolicyWorlds(ctx, incumbent, incumbentPolicy, lambda, worldIDs)
 	if err != nil {
 		return Candidate{}, 0, nil, err
 	}
@@ -58,7 +65,7 @@ func (s *Store) Propose(ctx context.Context, incumbent int, lambda float64) (bes
 			continue
 		}
 		// evaluate as a scratch version (negative = not persisted as a policy row)
-		v, eerr := s.EvaluatePolicy(ctx, -1, p, lambda)
+		v, eerr := s.EvaluatePolicyWorlds(ctx, -1, p, lambda, worldIDs)
 		if eerr != nil {
 			continue
 		}
@@ -73,19 +80,29 @@ func (s *Store) Propose(ctx context.Context, incumbent int, lambda float64) (bes
 
 // Adopt persists the chosen candidate as the next policy version and returns it.
 func (s *Store) Adopt(ctx context.Context, c Candidate, version int, avg float64) error {
+	return s.AdoptWorlds(ctx, c, version, avg, nil)
+}
+
+// AdoptWorlds is Adopt recording the replay scope (nil/empty = all worlds).
+func (s *Store) AdoptWorlds(ctx context.Context, c Candidate, version int, avg float64, worldIDs []int64) error {
 	origin := "dreamed"
 	if strings.Contains(c.Note, "incumbent") {
 		origin = "seed"
 	}
-	return s.SavePolicy(ctx, version, c.Code, c.Note, origin, avg)
+	return s.SavePolicyWorlds(ctx, version, c.Code, c.Note, origin, avg, worldIDs)
 }
 
 // TrajectoryReport renders the replay trajectories for the operator (the
-// "what did dreaming see" view).
+// "what did dreaming see" view). Scoped to the worlds the version was
+// evaluated on (its recorded world_ids; all worlds when unscoped).
 func (s *Store) TrajectoryReport(ctx context.Context, version int) ([]map[string]any, error) {
 	rows, err := s.pg.QueryContext(ctx, `
-		SELECT world_id, rho, calls, rounds, best_score, score FROM rsi_evaluations
-		WHERE policy_version = $1 ORDER BY world_id, rho`, version)
+		SELECT e.world_id, e.rho, e.calls, e.rounds, e.best_score, e.score
+		FROM rsi_evaluations e
+		LEFT JOIN rsi_policies p ON p.version = e.policy_version
+		WHERE e.policy_version = $1
+		  AND (p.version IS NULL OR cardinality(p.world_ids) = 0 OR e.world_id = ANY(p.world_ids))
+		ORDER BY e.world_id, e.rho`, version)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +121,7 @@ func (s *Store) TrajectoryReport(ctx context.Context, version int) ([]map[string
 
 // Ranking lists policy versions by average score.
 func (s *Store) Ranking(ctx context.Context) ([]map[string]any, error) {
-	rows, err := s.pg.QueryContext(ctx, `SELECT version, code, note, origin, COALESCE(avg_score,0) FROM rsi_policies ORDER BY version`)
+	rows, err := s.pg.QueryContext(ctx, `SELECT version, code, note, origin, COALESCE(avg_score,0), COALESCE(world_ids::text,'') FROM rsi_policies ORDER BY version`)
 	if err != nil {
 		return nil, err
 	}
@@ -114,9 +131,12 @@ func (s *Store) Ranking(ctx context.Context) ([]map[string]any, error) {
 		var v int
 		var code, note, origin string
 		var avg float64
-		if rows.Scan(&v, &code, &note, &origin, &avg) == nil {
-			out = append(out, map[string]any{"version": v, "code": code, "note": note, "origin": origin, "avg_score": avg})
+		var worldIDsRaw string
+		if err := rows.Scan(&v, &code, &note, &origin, &avg, &worldIDsRaw); err != nil {
+			return nil, err
 		}
+		worldIDs := parseInt64Array(worldIDsRaw)
+		out = append(out, map[string]any{"version": v, "code": code, "note": note, "origin": origin, "avg_score": avg, "world_ids": worldIDs})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i]["version"].(int) < out[j]["version"].(int) })
 	return out, rows.Err()

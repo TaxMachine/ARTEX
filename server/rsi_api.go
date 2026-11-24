@@ -54,6 +54,7 @@ func (s *Server) rsiDream(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Incumbent int     `json:"incumbent"`
 		Lambda    float64 `json:"lambda"`
+		WorldIDs  []int64 `json:"world_ids"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
 	if body.Incumbent <= 0 {
@@ -62,7 +63,7 @@ func (s *Server) rsiDream(w http.ResponseWriter, r *http.Request) {
 	if body.Lambda <= 0 {
 		body.Lambda = 0.1
 	}
-	out, err := s.dreamWithLLM(r.Context(), body.Incumbent, body.Lambda)
+	out, err := s.dreamWithLLMWorlds(r.Context(), body.Incumbent, body.Lambda, body.WorldIDs)
 	if err != nil {
 		writeErr(w, 500, err.Error())
 		return
@@ -76,6 +77,7 @@ func (s *Server) rsiAdopt(w http.ResponseWriter, r *http.Request) {
 		Code     string  `json:"code"`
 		Note     string  `json:"note"`
 		AvgScore float64 `json:"avg_score"`
+		WorldIDs []int64 `json:"world_ids"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Code == "" {
 		writeErr(w, 400, "code is required")
@@ -88,13 +90,13 @@ func (s *Server) rsiAdopt(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	st := s.rsiStore()
-	if err := st.Adopt(r.Context(), rsi.Candidate{Code: body.Code, Note: body.Note}, next, body.AvgScore); err != nil {
+	if err := st.AdoptWorlds(r.Context(), rsi.Candidate{Code: body.Code, Note: body.Note}, next, body.AvgScore, body.WorldIDs); err != nil {
 		writeErr(w, 500, err.Error())
 		return
 	}
 	// deploy: the active policy is stored as the latest version; the planner
 	// reads it at next planning round (activePolicyCode).
-	writeJSON(w, 200, map[string]any{"version": next, "code": body.Code, "deployed": true})
+	writeJSON(w, 200, map[string]any{"version": next, "code": body.Code, "deployed": true, "world_ids": body.WorldIDs})
 }
 
 func (s *Server) rsiTrajectory(w http.ResponseWriter, r *http.Request) {

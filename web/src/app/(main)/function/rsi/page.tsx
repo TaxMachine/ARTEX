@@ -18,6 +18,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api, ApiError } from "@/lib/api";
 
@@ -27,11 +28,13 @@ type WorldRow = { id: number; task_id: number; name: string; created_at: string 
 type WorldNode = { id: number; kind: string; parent: number; score: number; cost: number };
 type WorldLink = { source: number; target: number };
 type WorldDetail = { id: number; task_id: number; name: string; root: number; B: number; S: number; nodes: WorldNode[]; links: WorldLink[] };
-type Policy = { version: number; code: string; note: string; origin: string; avg_score: number };
+// world_ids = the replay worlds a version was evaluated on; empty/absent = all.
+type Policy = { version: number; code: string; note: string; origin: string; avg_score: number; world_ids?: number[] };
 type DreamResult = {
   dreamer: string;
   best: { code: string; note: string; avg_score: number };
   candidates: { policy: string; avg_score: number }[];
+  world_ids?: number[] | null;
   note?: string;
 };
 
@@ -58,6 +61,11 @@ export default function RsiPage() {
   const [deployed, setDeployed] = React.useState(0);
   const [dreaming, setDreaming] = React.useState(false);
   const [dreamResult, setDreamResult] = React.useState<DreamResult | null>(null);
+  // Worlds included in a dream cycle (multi-select). Seeded once with every
+  // world — the historical all-worlds behavior — so a deliberate "None" or
+  // partial selection survives refreshes of the list.
+  const [picked, setPicked] = React.useState<Set<number>>(new Set());
+  const pickedSeeded = React.useRef(false);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -66,6 +74,10 @@ export default function RsiPage() {
       setWorlds(ws);
       setPolicies(pol.policies ?? []);
       setDeployed(pol.deployed_version ?? 0);
+      if (!pickedSeeded.current && ws.length > 0) {
+        pickedSeeded.current = true;
+        setPicked(new Set(ws.map((w) => w.id)));
+      }
       if (!selected && ws.length > 0) setSelected(ws[0].id);
     } catch (e) {
       toast.error(errText(e));
@@ -92,7 +104,7 @@ export default function RsiPage() {
     setDreaming(true);
     setDreamResult(null);
     try {
-      setDreamResult(await api.rsiRedream({}));
+      setDreamResult(await api.rsiRedream({ world_ids: [...picked] }));
     } catch (e) {
       toast.error(errText(e));
     } finally {
@@ -102,7 +114,12 @@ export default function RsiPage() {
 
   async function adopt(res: DreamResult) {
     try {
-      await api.rsiAdopt({ code: res.best.code, note: res.best.note, avg_score: res.best.avg_score });
+      await api.rsiAdopt({
+        code: res.best.code,
+        note: res.best.note,
+        avg_score: res.best.avg_score,
+        world_ids: res.world_ids ?? undefined,
+      });
       toast.success(`policy v${deployed + 1} adopted: ${res.best.code}`);
       setDreamResult(null);
       await load();
@@ -149,24 +166,74 @@ export default function RsiPage() {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <NetworkIcon className="size-4" /> Worlds ({worlds.length})
+              <span className="ml-auto text-xs font-normal text-muted-foreground">
+                {picked.size} in cycle
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                disabled={worlds.length === 0}
+                onClick={() => setPicked(new Set(worlds.map((w) => w.id)))}
+              >
+                All
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                disabled={worlds.length === 0}
+                onClick={() => setPicked(new Set())}
+              >
+                None
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
-            {worlds.map((w) => (
-              <button
-                key={w.id}
-                type="button"
-                onClick={() => setSelected(w.id)}
-                className={`w-full cursor-pointer rounded-md px-2 py-1.5 text-left text-sm ${
-                  selected === w.id ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                }`}
-              >
-                <span className="font-medium">{w.name}</span>
-                <span className={`ml-2 text-xs ${selected === w.id ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                  task {w.task_id}
-                </span>
-              </button>
-            ))}
+            {worlds.length === 0 && (
+              <p className="text-sm text-muted-foreground">no worlds yet — archive a task to replay it</p>
+            )}
+            {worlds.map((w) => {
+              const inCycle = picked.has(w.id);
+              const viewing = selected === w.id;
+              return (
+                <div
+                  key={w.id}
+                  className={`flex items-center gap-1 rounded-md pr-2 text-sm ${viewing ? "bg-primary text-primary-foreground" : "hover:bg-muted"} ${
+                    inCycle ? "" : "opacity-60"
+                  }`}
+                >
+                  <label
+                    className="flex shrink-0 cursor-pointer items-center gap-1 py-1 pl-1"
+                    title={inCycle ? "Included in the dream cycle — uncheck to exclude" : "Excluded from the dream cycle"}
+                  >
+                    <Checkbox
+                      checked={inCycle}
+                      onCheckedChange={(v) =>
+                        setPicked((prev) => {
+                          const next = new Set(prev);
+                          if (v) next.add(w.id);
+                          else next.delete(w.id);
+                          return next;
+                        })
+                      }
+                      aria-label={`${inCycle ? "Exclude" : "Include"} ${w.name} in the dream cycle`}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setSelected(w.id)}
+                    className="min-w-0 flex-1 cursor-pointer py-1.5 text-left"
+                    title="Click to view this world's graph"
+                  >
+                    <span className="font-medium">{w.name}</span>
+                    <span className={`ml-2 text-xs ${viewing ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                      task {w.task_id}
+                    </span>
+                  </button>
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
 
@@ -241,6 +308,11 @@ export default function RsiPage() {
                 <div className="min-w-0">
                   <span className="font-mono text-xs text-muted-foreground">v{p.version}</span>{" "}
                   <span className="font-medium">{p.code}</span>
+                  <Badge variant="outline" className="ml-1.5 h-4 px-1.5 font-normal text-[10px]">
+                    {p.world_ids && p.world_ids.length > 0
+                      ? `${p.world_ids.length} ${p.world_ids.length === 1 ? "world" : "worlds"}`
+                      : "all worlds"}
+                  </Badge>
                   <div className="truncate text-xs text-muted-foreground" title={p.note}>
                     {p.note}
                   </div>
@@ -260,16 +332,26 @@ export default function RsiPage() {
             <CardTitle className="flex items-center gap-2 text-base">
               <MoonIcon className="size-4" /> Dreaming
             </CardTitle>
-            <Button size="sm" onClick={() => void dream()} disabled={dreaming || worlds.length === 0}>
+            <Button size="sm" onClick={() => void dream()} disabled={dreaming || picked.size === 0}>
               {dreaming ? <Loader2Icon className="size-4 animate-spin" /> : <PlayIcon className="size-4" />} Run cycle
             </Button>
           </CardHeader>
           <CardContent>
             {!dreamResult ? (
-              <p className="text-sm text-muted-foreground">
-                One cycle evaluates every candidate policy across all {worlds.length} worlds (replay is free) and the
-                GLM dreamer picks with rationale. Dry run — adoption is a separate click.
-              </p>
+              <>
+                <p className="text-sm text-muted-foreground">
+                  One cycle evaluates every candidate policy across the {picked.size} selected{" "}
+                  {picked.size === 1 ? "world" : "worlds"}
+                  {picked.size !== worlds.length ? ` (of ${worlds.length})` : ""} (replay is free) and the dreamer picks
+                  with rationale. Dry run — adoption is a separate click. Tick worlds in the list to scope the policy to
+                  specific tasks.
+                </p>
+                {picked.size === 0 && (
+                  <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                    No worlds selected — tick at least one.
+                  </p>
+                )}
+              </>
             ) : (
               <div className="space-y-3">
                 <div>
@@ -280,6 +362,12 @@ export default function RsiPage() {
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{dreamResult.best.note}</p>
                   <p className="mt-1 text-xs text-muted-foreground">dreamer: {dreamResult.dreamer}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    scope:{" "}
+                    {dreamResult.world_ids && dreamResult.world_ids.length > 0
+                      ? `${dreamResult.world_ids.length} ${dreamResult.world_ids.length === 1 ? "world" : "worlds"}`
+                      : `all ${worlds.length} worlds`}
+                  </p>
                 </div>
                 <div className="space-y-0.5">
                   {dreamResult.candidates

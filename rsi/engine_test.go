@@ -111,3 +111,28 @@ func TestEvaluatorBounds(t *testing.T) {
 		t.Fatalf("false positive should score low, got %v", q2)
 	}
 }
+
+func TestFilterWorldsScopesAndNeverSilentlyWidens(t *testing.T) {
+	ws := []map[string]any{
+		{"id": int64(1)}, {"id": int64(2)}, {"id": int64(3)},
+	}
+	// no filter = all
+	got, err := FilterWorlds(ws, nil)
+	if err != nil || len(got) != 3 {
+		t.Fatalf("nil filter: got %d worlds, err=%v", len(got), err)
+	}
+	// subset
+	got, err = FilterWorlds(ws, []int64{1, 3})
+	if err != nil || len(got) != 2 || got[0]["id"] != int64(1) || got[1]["id"] != int64(3) {
+		t.Fatalf("subset filter: got %v, err=%v", got, err)
+	}
+	// unknown ids mixed with known ones: keep the known, ignore the stale
+	got, err = FilterWorlds(ws, []int64{3, 99})
+	if err != nil || len(got) != 1 || got[0]["id"] != int64(3) {
+		t.Fatalf("stale-id filter: got %v, err=%v", got, err)
+	}
+	// all-unknown: error, never a silent all-worlds run
+	if _, err := FilterWorlds(ws, []int64{42}); err == nil {
+		t.Fatal("all-unknown filter must error, not silently evaluate all worlds")
+	}
+}
