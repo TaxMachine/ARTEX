@@ -33,6 +33,14 @@ services:
       # ARTEX_COMPACTION_K: "72"
       # ARTEX_TOOL_RAG: "1"
       # ARTEX_WORKER_GLOBAL_TOOLS: kn_search,record_fact,report_finding,ssh_exec,ps_script
+      # History diet: shrink REPLAYED history on every call (wire-only; transcripts
+      # untouched). Old tool results are elided to a head + pointer; prior-turn
+      # thinking is dropped (verified: the GLM gateway accepts requests without
+      # reasoning replay — leave DROP_THINKING off for DeepSeek-style APIs).
+      ARTEX_HISTORY_DIET: "1"
+      ARTEX_HISTORY_DIET_DROP_THINKING: "1"
+      ARTEX_HISTORY_DIET_KEEP: "8"
+      ARTEX_HISTORY_DIET_HEAD: "300"
       # Self-improvement loop (Tier-A): lessons inject + episodic planner memory.
       # shadow = log what would be shown without changing prompts.
       ARTEX_RSI_LESSONS: inject
