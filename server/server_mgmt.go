@@ -590,6 +590,7 @@ func (s *Server) pgGetAgent(w http.ResponseWriter, r *http.Request) {
 		llmProfiles = append(llmProfiles, map[string]any{
 			"id": p.ID, "name": p.Name, "model": p.Model, "is_default": p.IsDefault,
 			"provider": p.Provider, "base_url": p.BaseURL, "provider_label": p.ProviderLabel,
+			"is_decision": isDecisionProfile(p),
 		})
 	}
 	writeJSON(w, 200, map[string]any{
@@ -2949,4 +2950,17 @@ func (f *flexibleID) UnmarshalJSON(b []byte) error {
 	}
 	*f = flexibleID(v)
 	return nil
+}
+
+// isDecisionProfile reports whether a profile looks like a dedicated decision
+// model. Gateways publish no capability flag, so the signal is the profile or
+// model name carrying "decision" (e.g. gpt-6-luna-decisions, "Laya Decision").
+// The decision agent's model picker offers only these, so the lane is not
+// accidentally bound to a general reasoning model.
+func isDecisionProfile(p *db.LLMProfile) bool {
+	if p == nil {
+		return false
+	}
+	return strings.Contains(strings.ToLower(p.Name), "decision") ||
+		strings.Contains(strings.ToLower(p.Model), "decision")
 }

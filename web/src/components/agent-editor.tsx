@@ -279,6 +279,22 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
   const showInteractiveShell = agentKey !== "goals";
   // Every agent (including goals/mainagent) runs on some LLM, so the "default model" binding is open to all agents.
   const showLLM = true;
+  // The decision agent answers fixed-choice questions on a dedicated decision
+  // model: its picker offers only decision profiles (is_decision — the profile
+  // or model name carries "decision"; gateways publish no capability flag).
+  // The currently bound profile always stays listed so a stale binding is
+  // visible and removable rather than silently disappearing. When nothing
+  // matches at all the full list is offered, otherwise the agent could never
+  // be configured.
+  const isDecisionAgent = agentKey === "decision";
+  const decisionProfiles = llmProfiles.filter((p) => p.is_decision);
+  const pickerProfiles = !isDecisionAgent
+    ? llmProfiles
+    : decisionProfiles.length > 0
+      ? decisionProfiles.concat(
+          llmProfiles.filter((p) => !p.is_decision && String(p.id) === llmProfileId),
+        )
+      : llmProfiles;
   // triggers (P3) only attach to custom agents.
   const isCustom = !!detail && !detail.agent?.builtin;
 
@@ -308,7 +324,7 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__follow__">{t("Follow task / globally active profile")}</SelectItem>
-                        {llmProfiles.map((p) => {
+                        {pickerProfiles.map((p) => {
                           const named = (p.provider_label ?? "").trim();
                           const isCustom = !p.provider || p.provider === "custom";
                           // named custom APIs read like presets: "IKHDev · GLM 5.3 Flash"
@@ -324,9 +340,13 @@ export function AgentEditor({ agentKey, onSaved }: { agentKey: string; onSaved?:
                       </SelectContent>
                     </Select>
                     <span className="text-muted-foreground max-w-md text-xs">
-                      {t(
-                        'Bind a fixed LLM profile to this Agent (click "Save config" to apply). Priority: Agent binding > task/session override > global active.',
-                      )}
+                      {isDecisionAgent
+                        ? decisionProfiles.length > 0
+                          ? t("Only decision models are offered here (profile or model name containing \"decision\"). This agent answers fixed-choice adjudications; a general reasoning model works but costs far more per call.")
+                          : t("No decision model profile exists yet — create an LLM profile whose name or model contains \"decision\" and it will be offered here first.")
+                        : t(
+                            'Bind a fixed LLM profile to this Agent (click "Save config" to apply). Priority: Agent binding > task/session override > global active.',
+                          )}
                     </span>
                   </div>
                 </div>
