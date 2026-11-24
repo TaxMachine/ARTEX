@@ -33,17 +33,13 @@ services:
       # ARTEX_COMPACTION_K: "72"
       # ARTEX_TOOL_RAG: "1"
       # ARTEX_WORKER_GLOBAL_TOOLS: kn_search,record_fact,report_finding,ssh_exec,ps_script
-      # History diet (sticky): shrink REPLAYED history (wire-only; transcripts
-      # untouched). Old tool results are elided to a head + pointer and prior-turn
-      # thinking is dropped (verified: the GLM gateway accepts requests without
-      # reasoning replay — leave DROP_THINKING off for DeepSeek-style APIs).
-      # Sticky = append-only between freezes so the provider prefix cache keeps
-      # hitting: a freeze runs only when >2*KEEP results are live and then keeps
-      # the newest KEEP verbatim; each freeze is one cache break.
-      ARTEX_HISTORY_DIET: "1"
-      ARTEX_HISTORY_DIET_DROP_THINKING: "1"
-      ARTEX_HISTORY_DIET_KEEP: "8"
-      ARTEX_HISTORY_DIET_HEAD: "300"
+      # History diet: shrink REPLAYED history (wire-only; transcripts untouched).
+      # Measured A/B on glm-5.3-flash (task 11, same-model sessions): OFF halves
+      # fresh-token cost — undieted history is append-only, so the provider's
+      # prefix cache hits 95-99% forever, while every diet freeze re-breaks it.
+      # Only enable for models with weak/no prompt caching or when rate limits
+      # bind (sticky elision: freezes on >2*KEEP live results, newest kept).
+      ARTEX_HISTORY_DIET: "0"
       # Self-improvement loop (Tier-A): lessons inject + episodic planner memory.
       # shadow = log what would be shown without changing prompts.
       ARTEX_RSI_LESSONS: inject
