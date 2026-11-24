@@ -221,6 +221,7 @@ func New(ctx context.Context, m *Manager, skillDir string, dataDir string, keyDi
 	// close + outcome feedback for shown lessons.
 	m.SetSelfImproveHooks(s.onTaskClosedSelfImprove)
 	s.seedDreamerAgent()
+	s.seedDecisionAgent()
 	s.wireTriageCritique()
 	// post-run worker self-critique on exhausted intents
 	s.engine.SetSelfCritique(s.maybeSelfCritique)
@@ -909,6 +910,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/machines/{name}/test-connection", s.machineTestConnection)
 	mux.HandleFunc("POST /api/machines/verify", s.machineVerifyCredentials)
 	mux.HandleFunc("GET /api/machines/{name}/lab-state", s.machineLabState)
+	mux.HandleFunc("GET /api/decision/stats", s.decisionStatsHandler)
 	mux.HandleFunc("POST /api/rsi/export", s.rsiExportTask)
 	mux.HandleFunc("GET /api/rsi/worlds", s.rsiListWorlds)
 	mux.HandleFunc("GET /api/rsi/ranking", s.rsiRanking)

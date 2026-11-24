@@ -465,6 +465,13 @@ VALUES($1,'finding',$2,9,'confirmed',$3) RETURNING id`, in.ExplorationID, string
 VALUES(NULLIF($1,0),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`, in.TaskID, out.NodeID, in.VulnClass, in.Name, in.Severity, in.Summary, in.Evidence, in.Worker, string(raw), in.Counterevidence, in.ConfidenceRationale, category, string(primitives), string(chain)).Scan(&out.FindingID); err != nil {
 		return nil, err
 	}
+	// The finding inherits its task's project (the per-software scope that
+	// project digests and duplicate detection key on). Without this the row is
+	// project-less and invisible to both.
+	if _, err := tx.Exec(`UPDATE findings SET project_id = (SELECT t.project_id FROM tasks t WHERE t.id = $2)
+		 WHERE id = $1 AND project_id IS NULL`, out.FindingID, in.TaskID); err != nil {
+		return nil, err
+	}
 	// Register a push event in the **same transaction**: committing guarantees
 	// "finding persisted" and "push task exists" are atomic — there is no window
 	// where the commit succeeded but the event was never enqueued and the

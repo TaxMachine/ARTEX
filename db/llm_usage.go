@@ -62,7 +62,7 @@ func (d *DB) InsertLLMUsage(u *LLMUsage) error {
 	}
 	_, err := d.Exec(`
 INSERT INTO llm_usage(task_id, exploration_id, worker, session, model, profile_name, latency_ms, input_tokens, output_tokens, cache_read, cache_write, status)
-VALUES (NULLIF($1,''),$2,NULLIF($3,''),NULLIF($4,''),NULLIF($5,''),NULLIF($6,''),$7,$8,$9,$10,$11,$12)`,
+VALUES (NULLIF($1,''),$2,NULLIF($3,''),$4,NULLIF($5,''),NULLIF($6,''),$7,$8,$9,$10,$11,$12)`,
 		u.TaskID, expID, u.Worker, u.Session, u.Model, u.ProfileName,
 		u.LatencyMs, u.InputTokens, u.OutputTokens, u.CacheRead, u.CacheWrite, u.Status)
 	return err

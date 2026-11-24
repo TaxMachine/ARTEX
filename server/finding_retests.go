@@ -181,8 +181,14 @@ func (s *Server) findingRetestTools() []actool.CoreTool {
 				if err := json.Unmarshal(in, &a); err != nil {
 					return actool.Errorf(err.Error()), nil
 				}
-				if err := s.m.pg.RecordFindingRetestResult(ctx, intercept.ConvIDFromContext(ctx), a.Verdict, a.Summary, a.Evidence); err != nil {
+				convID := intercept.ConvIDFromContext(ctx)
+				if err := s.m.pg.RecordFindingRetestResult(ctx, convID, a.Verdict, a.Summary, a.Evidence); err != nil {
 					return actool.Errorf(err.Error()), nil
+				}
+				if convID > 0 {
+					s.goAdjudicate(DecisionScopeRetest, convID, func(ctx context.Context) {
+						s.adjudicateRetest(ctx, convID)
+					})
 				}
 				return jsonResult(map[string]any{"saved": true, "verdict": a.Verdict})
 			}),
