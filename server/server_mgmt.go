@@ -471,8 +471,8 @@ func (s *Server) pgSaveAgentConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if id != nil { // bind: validate the target profile
-			if _, ok := s.loadProfileConfig(*id); !ok {
-				writeErr(w, 400, "the specified LLM profile does not exist or is invalid")
+			if msg, ok := s.profileBindableToAgent(*id, a.Key); !ok {
+				writeErr(w, 400, msg)
 				return
 			}
 		}
@@ -2291,6 +2291,12 @@ func (s *Server) pgActivateProfile(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, 400, err.Error())
 		return
 	}
+	// A decisions profile has no chat endpoint; it can never be the active
+	// (default) profile every chat-facing role falls back to.
+	if p, err := pg.ProfileByID(body.ID); err == nil && p != nil && p.Format == "openai-decisions" {
+		writeErr(w, 400, "a decision model (openai-decisions) cannot be the active profile — bind it to the Decision agent instead")
+		return
+	}
 	if err := pg.SetActiveProfile(body.ID); err != nil {
 		writeErr(w, 500, err.Error())
 		return
@@ -2627,6 +2633,18 @@ func (s *Server) pgListModels(w http.ResponseWriter, r *http.Request) {
 
 	var candidates []candidate
 	switch provider {
+	case "openai-decisions":
+		// The decisions API shares the gateway's OpenAI model list at /v1/models
+		// (Bearer auth); tolerate base URLs with or without /v1.
+		if baseURL == "" {
+			writeJSON(w, 200, map[string]any{"ok": false, "error": "base URL is required for an openai-decisions profile"})
+			return
+		}
+		b := strings.TrimSuffix(strings.TrimSuffix(strings.TrimSpace(baseURL), "/decisions"), "/")
+		if !strings.HasSuffix(b, "/v1") {
+			b += "/v1"
+		}
+		candidates = append(candidates, candidate{b + "/models", bearerHdr()})
 	case "openai", "openai-responses":
 		// Responses API shares the OpenAI model list at /v1/models; tolerate a full
 		// endpoint URL of either format.
@@ -2961,6 +2979,31 @@ func isDecisionProfile(p *db.LLMProfile) bool {
 	if p == nil {
 		return false
 	}
-	return strings.Contains(strings.ToLower(p.Name), "decision") ||
+	return p.Format == "openai-decisions" ||
+		strings.Contains(strings.ToLower(p.Name), "decision") ||
 		strings.Contains(strings.ToLower(p.Model), "decision")
+}
+
+// profileBindableToAgent reports whether an LLM profile may be bound to an
+// agent. openai-decisions profiles speak only the decisions question API, so
+// they are bindable to the Decision agent alone; every other profile goes
+// through the normal chat-config validation.
+func (s *Server) profileBindableToAgent(profileID int64, agentKey string) (string, bool) {
+	p, err := s.m.pg.ProfileByID(profileID)
+	if err != nil || p == nil {
+		return "the specified LLM profile does not exist or is invalid", false
+	}
+	if p.Format == "openai-decisions" {
+		if agentKey != DecisionAgentKey {
+			return "this is a decision model (openai-decisions): it has no chat endpoint and can only be bound to the Decision agent", false
+		}
+		if strings.TrimSpace(p.Model) == "" {
+			return "the decision profile has no model set", false
+		}
+		return "", true
+	}
+	if _, ok := s.loadProfileConfig(profileID); !ok {
+		return "the specified LLM profile does not exist or is invalid", false
+	}
+	return "", true
 }

@@ -307,6 +307,8 @@ function TaskDetailInner() {
   React.useEffect(() => {
     api
       .llmProfiles()
+      // Decision models (openai-decisions) have no chat endpoint: never offer them as a task/chat profile.
+      .then((ps) => ps.filter((p) => p.format !== "openai-decisions"))
       .then(setProfiles)
       .catch(() => setProfiles([]));
   }, []);

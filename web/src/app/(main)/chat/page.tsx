@@ -1203,6 +1203,8 @@ export default function ChatPage() {
       });
     api
       .llmProfiles()
+      // Decision models (openai-decisions) have no chat endpoint: never offer them as a task/chat profile.
+      .then((ps) => ps.filter((p) => p.format !== "openai-decisions"))
       .then(setProfiles)
       .catch(() => {
         /* The conversation remains usable without profile labels. */

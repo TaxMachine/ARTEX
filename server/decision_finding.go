@@ -89,7 +89,16 @@ func (s *Server) adjudicateFinding(ctx context.Context, findingID int64, in db.R
 		fmt.Fprintf(&b, "Declared proof-of-exploitation level: L%d\n", f.PoELevel)
 	}
 	options := []string{"critical", "high", "medium", "low"}
-	decision, conf, reason, pid, err := s.oneShotDecision(ctx, b.String(), options, 12000)
+	v, err := s.oneShotDecision(ctx, DecisionAsk{
+		Input: b.String(), Options: options, MaxChars: 12000,
+		// Predicates turn the over-claim signal into numbers the operator can
+		// read at a glance ("impact demonstrated 0.11, data returned 0.02").
+		Predicates: []Predicate{
+			{Name: "impact_demonstrated", Statement: "The evidence demonstrates the claimed security impact, not merely a crash or anomaly."},
+			{Name: "data_returned", Statement: "Attacker-controlled data is read back or exfiltrated."},
+			{Name: "control_demonstrated", Statement: "Control over a pointer, instruction pointer, or offset is demonstrated."},
+		},
+	})
 	if err != nil {
 		log.Printf("[decision:finding] f%d skipped: %v", findingID, err)
 		return
@@ -98,10 +107,10 @@ func (s *Server) adjudicateFinding(ctx context.Context, findingID int64, in db.R
 	if f.TaskID != nil {
 		taskID = fmt.Sprint(*f.TaskID)
 	}
-	agree := strings.EqualFold(decision, f.Severity)
-	s.recordDecision(DecisionScopeFinding, findingID, taskID, b.String(), f.Severity, decision, reason, conf, pid, agree)
+	agree := strings.EqualFold(v.Decision, f.Severity)
+	s.recordDecision(DecisionScopeFinding, findingID, taskID, b.String(), f.Severity, v.Decision, v.Reason, v.Confidence, v.ProfileID, agree)
 	if !agree {
-		s.emitDecisionActivity(taskID, fmt.Sprintf("decision model flags finding %d: severity claimed %s, adjudicated %s (%s)", findingID, f.Severity, decision, clipStr(reason, 160)))
+		s.emitDecisionActivity(taskID, fmt.Sprintf("decision model flags finding %d: severity claimed %s, adjudicated %s (%s)", findingID, f.Severity, v.Decision, clipStr(v.Reason, 160)))
 	}
 }
 
@@ -130,7 +139,13 @@ func (s *Server) adjudicateDedupe(ctx context.Context, findingID int64) {
 		options = append(options, fmt.Sprintf("duplicate-%d", c.ID))
 	}
 	b.WriteString("Answer \"distinct\" when none describes the same underlying weakness, or \"duplicate-<finding id>\" naming the finding it repeats.\n")
-	decision, conf, reason, pid, err := s.oneShotDecision(ctx, b.String(), options, 12000)
+	v, err := s.oneShotDecision(ctx, DecisionAsk{
+		Input: b.String(), Options: options, MaxChars: 12000,
+		Predicates: []Predicate{
+			{Name: "same_root_cause", Statement: "The new finding and an existing finding share the same underlying root cause."},
+			{Name: "same_location", Statement: "The weakness sits at the same code location or attack surface as an existing finding."},
+		},
+	})
 	if err != nil {
 		log.Printf("[decision:dedupe] f%d skipped: %v", findingID, err)
 		return
@@ -139,12 +154,12 @@ func (s *Server) adjudicateDedupe(ctx context.Context, findingID int64) {
 	if f.TaskID != nil {
 		taskID = fmt.Sprint(*f.TaskID)
 	}
-	isDup := decision != "distinct"
-	label := decision
+	isDup := v.Decision != "distinct"
+	label := v.Decision
 	var dupOf int64
 	if isDup {
 		var n int64
-		if _, err := fmt.Sscanf(decision, "duplicate-%d", &n); err == nil {
+		if _, err := fmt.Sscanf(v.Decision, "duplicate-%d", &n); err == nil {
 			for _, c := range cands {
 				if c.ID == n {
 					dupOf = n
@@ -162,9 +177,9 @@ func (s *Server) adjudicateDedupe(ctx context.Context, findingID int64) {
 		}
 	}
 	// "agree" here means "the agent's implicit uniqueness claim holds".
-	s.recordDecision(DecisionScopeDedupe, findingID, taskID, b.String(), "unique", label, reason, conf, pid, !isDup)
+	s.recordDecision(DecisionScopeDedupe, findingID, taskID, b.String(), "unique", label, v.Reason, v.Confidence, v.ProfileID, !isDup)
 	if isDup {
-		s.emitDecisionActivity(taskID, fmt.Sprintf("decision model suspects finding %d duplicates finding #%d (%s) — review before merging", findingID, dupOf, clipStr(reason, 160)))
+		s.emitDecisionActivity(taskID, fmt.Sprintf("decision model suspects finding %d duplicates finding #%d (p=%.2f; %s) — review before merging", findingID, dupOf, v.Confidence, clipStr(v.Reason, 160)))
 	}
 }
 

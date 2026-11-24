@@ -32,7 +32,14 @@ func (s *Server) adjudicateRetest(ctx context.Context, conversationID int64) {
 	fmt.Fprintf(&b, "Retest summary: %s\n", clipStr(r.Summary, 2500))
 	fmt.Fprintf(&b, "Retest evidence: %s\n", clipStr(r.Evidence, 6000))
 	options := []string{"reproduced", "fixed", "inconclusive"}
-	decision, conf, reason, pid, err := s.oneShotDecision(ctx, b.String(), options, 11000)
+	v, err := s.oneShotDecision(ctx, DecisionAsk{
+		Input: b.String(), Options: options, MaxChars: 11000,
+		Predicates: []Predicate{
+			{Name: "key_behavior_observed", Statement: "This retest run observed the vulnerability's key behavior directly."},
+			{Name: "environment_blocked", Statement: "The retest was blocked by the environment (unreachable target, missing login, missing tooling) rather than by the vulnerability being absent."},
+			{Name: "fix_verified", Statement: "A fix or patch demonstrably removed the weakness in this run."},
+		},
+	})
 	if err != nil {
 		log.Printf("[decision:retest] conv %d skipped: %v", conversationID, err)
 		return
@@ -41,9 +48,9 @@ func (s *Server) adjudicateRetest(ctx context.Context, conversationID int64) {
 	if f.TaskID != nil {
 		taskID = fmt.Sprint(*f.TaskID)
 	}
-	agree := strings.EqualFold(decision, r.Verdict)
-	s.recordDecision(DecisionScopeRetest, conversationID, taskID, b.String(), r.Verdict, decision, reason, conf, pid, agree)
+	agree := strings.EqualFold(v.Decision, r.Verdict)
+	s.recordDecision(DecisionScopeRetest, conversationID, taskID, b.String(), r.Verdict, v.Decision, v.Reason, v.Confidence, v.ProfileID, agree)
 	if !agree {
-		s.emitDecisionActivity(taskID, fmt.Sprintf("decision model disagrees with retest verdict on finding %d: agent said %s, adjudicated %s (%s)", f.ID, r.Verdict, decision, clipStr(reason, 160)))
+		s.emitDecisionActivity(taskID, fmt.Sprintf("decision model disagrees with retest verdict on finding %d: agent said %s, adjudicated %s (%s)", f.ID, r.Verdict, v.Decision, clipStr(v.Reason, 160)))
 	}
 }

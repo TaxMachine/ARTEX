@@ -1182,7 +1182,7 @@ export interface NotificationDelivery {
 export interface LLMProfile {
   id: string;
   name: string;
-  format: "openai" | "anthropic" | "openai-responses" | "ollama";
+  format: "openai" | "anthropic" | "openai-responses" | "ollama" | "openai-decisions";
   provider?: string;
   provider_label?: string; // preset id this profile was created from (opencode-zen, openai, ...); custom/empty = manual
   base_url?: string;

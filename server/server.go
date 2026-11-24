@@ -27,6 +27,7 @@ import (
 	"github.com/TaxMachine/ARTEX/agent"
 	"github.com/TaxMachine/ARTEX/archivestore"
 	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/decisionclient"
 	"github.com/TaxMachine/ARTEX/egress"
 	"github.com/TaxMachine/ARTEX/intercept"
 	"github.com/TaxMachine/ARTEX/llmpool"
@@ -625,6 +626,12 @@ func (s *Server) applyLLM(cfg agent.Config) error {
 func (s *Server) loadProfileConfig(id int64) (agent.Config, bool) {
 	p, err := s.m.pg.ProfileByID(id)
 	if err != nil || p == nil {
+		return agent.Config{}, false
+	}
+	// openai-decisions profiles speak only the /v1/decisions question API:
+	// they have no chat endpoint and must never be built into a chat provider
+	// (planner/worker/main agent/chat). The decision lane has a typed client.
+	if p.Format == "openai-decisions" {
 		return agent.Config{}, false
 	}
 	cfg := agent.ConfigFrom(p.Format, p.Model, p.BaseURL, p.APIKey, p.Proxy)
@@ -1746,6 +1753,10 @@ func (s *Server) testLLM(w http.ResponseWriter, r *http.Request) {
 			req.ReasoningEffort = stored.ReasoningEffort
 		}
 	}
+	if strings.TrimSpace(req.Provider) == "openai-decisions" {
+		s.testDecisionConnection(w, r, req.Provider, req.Model, req.BaseURL, req.Proxy, req.APIKey, req.UserAgent, stored)
+		return
+	}
 	cfg := agent.ConfigFrom(req.Provider, req.Model, req.BaseURL, req.APIKey, req.Proxy)
 	// mirror production: send the SAME thinking params so a provider that rejects the
 	// reasoning_effort/thinking field fails the test too (no false "test ok, run 400").
@@ -1829,6 +1840,56 @@ func (s *Server) testLLM(w http.ResponseWriter, r *http.Request) {
 	// Return the model's actual reply so a "passed" test has evidence: you can see it really spoke, not just an HTTP 200.
 	writeJSON(w, 200, map[string]any{
 		"ok": true, "latency_ms": lat.Milliseconds(), "model": cfg.Model, "reply": truncateReply(reply),
+	})
+}
+
+// testDecisionConnection verifies an openai-decisions profile against its real
+// endpoint: one trivially-true predicate question, so a pass proves auth,
+// routing AND the model's answer format. The saved key is only sent to the
+// endpoint it was saved for (same rule as the chat test).
+func (s *Server) testDecisionConnection(w http.ResponseWriter, r *http.Request, provider, model, baseURL, proxy, apiKey, userAgent string, stored *db.LLMProfile) {
+	apiKey = strings.TrimSpace(apiKey)
+	withheld := false
+	if apiKey == "" && stored != nil {
+		if sameLLMEndpoint(provider, baseURL, stored.Format, stored.BaseURL) {
+			apiKey = strings.TrimSpace(stored.APIKey)
+		} else {
+			withheld = stored.APIKey != ""
+		}
+	}
+	if apiKey == "" {
+		msg := "no API key provided"
+		if withheld {
+			msg = "no API key provided: the saved key is only sent to the endpoint it was saved for; enter the key to test a different base URL"
+		}
+		writeJSON(w, 200, map[string]any{"ok": false, "error": msg})
+		return
+	}
+	ua, err := agent.ValidateUserAgent(strings.TrimSpace(userAgent))
+	if err != nil {
+		writeErr(w, 400, err.Error())
+		return
+	}
+	if ua == "" && stored != nil {
+		ua = strings.TrimSpace(stored.UserAgent)
+	}
+	client := &decisionclient.Client{
+		BaseURL: baseURL, APIKey: apiKey, Model: model,
+		HTTP: sHTTPClientForProfile(&db.LLMProfile{Proxy: proxy, UserAgent: ua}),
+	}
+	start := time.Now()
+	res, err := client.Decide(r.Context(), "Connectivity check.", []decisionclient.Question{{
+		Type: "predicate", Name: "reachable",
+		Instructions: "The number 7 is greater than the number 3.",
+	}})
+	if err != nil {
+		writeJSON(w, 200, map[string]any{"ok": false, "error": err.Error()})
+		return
+	}
+	ans, _ := res.ByName("reachable")
+	writeJSON(w, 200, map[string]any{
+		"ok": true, "latency_ms": time.Since(start).Milliseconds(), "model": model,
+		"reply": fmt.Sprintf("predicate p=%.2f · %d input tokens · decisions API", ans.Probability, res.Usage.InputTokens),
 	})
 }
 
@@ -1995,6 +2056,9 @@ func (s *Server) validateTaskProfileIDs(ids []int64) error {
 			return fmt.Errorf("invalid or duplicate LLM profile id")
 		}
 		seen[id] = true
+		if p, err := s.m.pg.ProfileByID(id); err == nil && p != nil && p.Format == "openai-decisions" {
+			return fmt.Errorf("LLM profile #%d is a decision model (no chat endpoint); it can only be bound to the Decision agent", id)
+		}
 		if _, ok := s.loadProfileConfig(id); !ok {
 			return fmt.Errorf("LLM profile #%d not found or not usable (no API key for the key-requiring formats)", id)
 		}

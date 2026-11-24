@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/TaxMachine/ARTEX/db"
+	"github.com/TaxMachine/ARTEX/decisionclient"
 	"github.com/TaxMachine/ARTEX/llmrec"
 )
 
@@ -68,18 +69,169 @@ func (s *Server) decisionProfile() (*db.LLMProfile, error) {
 	return s.m.pg.ActiveProfile()
 }
 
-// oneShotDecision runs one enum decision. options is the closed set; the
-// caller supplies the question text (already compact). Returns the parsed
-// decision; on any failure the error is the caller's to log and skip — a
-// decision-lane failure must never block the record it reviews.
-func (s *Server) oneShotDecision(ctx context.Context, question string, options []string, maxChars int) (decision string, confidence float64, reason string, profileID int64, err error) {
+// DecisionVerdict is the outcome of one adjudication, format-agnostic.
+type DecisionVerdict struct {
+	Decision   string
+	Confidence float64
+	Reason     string
+	ProfileID  int64
+	// Distribution is the full option probabilities when the model returned
+	// one (native decisions API); nil for chat-model answers.
+	Distribution map[string]float64
+	// Predicates are P(statement) for each requested yes/no statement
+	// (native decisions API); nil when none were asked or answered.
+	Predicates map[string]float64
+}
+
+// Predicate is a yes/no statement asked alongside the main choice.
+type Predicate struct {
+	Name      string
+	Statement string
+}
+
+// DecisionAsk is one adjudication request: the input text, the closed option
+// set for the main decision, and optional predicate statements.
+type DecisionAsk struct {
+	Input      string
+	Options    []string
+	MaxChars   int
+	Predicates []Predicate
+}
+
+// oneShotDecision dispatches to the bound profile's native format:
+// openai-decisions profiles answer through the typed question API
+// (one input, several questions, probability distributions); every other
+// profile is prompted for strict JSON.
+func (s *Server) oneShotDecision(ctx context.Context, ask DecisionAsk) (DecisionVerdict, error) {
 	prof, err := s.decisionProfile()
 	if err != nil || prof == nil {
-		return "", 0, "", 0, fmt.Errorf("no decision model profile: %w", err)
+		return DecisionVerdict{}, fmt.Errorf("no decision model profile: %w", err)
 	}
+	if prof.Format == "openai-decisions" {
+		return s.nativeDecision(ctx, prof, ask)
+	}
+	return s.oneShotDecisionText(ctx, prof, ask)
+}
+
+// nativeDecision asks the main choice plus any predicates in ONE decisions
+// call and meters it in the decision lane.
+func (s *Server) nativeDecision(ctx context.Context, prof *db.LLMProfile, ask DecisionAsk) (DecisionVerdict, error) {
+	if len(ask.Options) < 2 {
+		return DecisionVerdict{}, fmt.Errorf("a native choice needs at least two options")
+	}
+	maxChars := ask.MaxChars
+	if maxChars <= 0 || maxChars > 400000 {
+		maxChars = 12000
+	}
+	input := ask.Input
+	if len(input) > maxChars {
+		input = input[:maxChars]
+	}
+	qs := make([]decisionclient.Question, 0, 1+len(ask.Predicates))
+	choice := decisionclient.Question{
+		Type: "choice", Name: "decision",
+		Instructions: "Answer the request stated in the input. Pick exactly one of the offered choices.",
+		Choices:      make([]decisionclient.Choice, 0, len(ask.Options)),
+	}
+	for _, o := range ask.Options {
+		choice.Choices = append(choice.Choices, decisionclient.Choice{Value: o})
+	}
+	qs = append(qs, choice)
+	for _, p := range ask.Predicates {
+		qs = append(qs, decisionclient.Question{Type: "predicate", Name: p.Name, Instructions: p.Statement})
+	}
+	// The control-request client carries an 8s cap (fine for /models probes);
+	// a decisions call with several questions can legitimately take much
+	// longer, so it gets its own transport with only the ctx bound.
+	hc := sHTTPClientForProfile(prof)
+	hc.Timeout = 0 // the context is the only deadline
+	client := &decisionclient.Client{BaseURL: prof.BaseURL, APIKey: prof.APIKey, Model: prof.Model, HTTP: hc}
+	qctx, cancel := context.WithTimeout(ctx, 90*time.Second)
+	defer cancel()
+	start := time.Now()
+	res, err := client.Decide(qctx, input, qs)
+	s.meterDecisionCall(prof, res, start, err)
+	if err != nil {
+		return DecisionVerdict{}, err
+	}
+	a := res.Answers[0]
+	valid := false
+	for _, o := range ask.Options {
+		if a.Choice == o {
+			valid = true
+			break
+		}
+	}
+	if !valid {
+		return DecisionVerdict{}, fmt.Errorf("decision %q not in option set %v", a.Choice, ask.Options)
+	}
+	dist := map[string]float64{}
+	parts := make([]string, 0, len(a.Probabilities))
+	for _, op := range a.Probabilities {
+		dist[op.Value] = op.Probability
+		parts = append(parts, fmt.Sprintf("%s=%.2f", op.Value, op.Probability))
+	}
+	// Native answers carry no prose: the distribution and predicates ARE the
+	// rationale, so they become the stored reason.
+	reason := "distribution: " + strings.Join(parts, " ")
+	preds := map[string]float64{}
+	for _, ans := range res.Answers[1:] {
+		if ans.Type != "predicate" || ans.Name == "" {
+			continue
+		}
+		preds[ans.Name] = ans.Probability
+		reason += fmt.Sprintf("; %s=%.2f", ans.Name, ans.Probability)
+	}
+	conf := a.Confidence
+	if conf <= 0 {
+		conf = a.Probability
+	}
+	return DecisionVerdict{Decision: a.Choice, Confidence: conf, Reason: reason, ProfileID: prof.ID, Distribution: dist, Predicates: preds}, nil
+}
+
+// meterDecisionCall records a native decisions call in llm_usage under the
+// decision lane (same table every other LLM call meters into).
+func (s *Server) meterDecisionCall(prof *db.LLMProfile, res *decisionclient.Result, start time.Time, callErr error) {
+	if s.m.pg == nil {
+		return
+	}
+	status := "ok"
+	var in, out int
+	if res != nil {
+		in, out = res.Usage.InputTokens, res.Usage.OutputTokens
+		if res.LatencyMs == 0 {
+			res.LatencyMs = int(time.Since(start).Milliseconds())
+		}
+	}
+	if callErr != nil {
+		status = "error"
+	}
+	lat := int(time.Since(start).Milliseconds())
+	if res != nil && res.LatencyMs > 0 {
+		lat = res.LatencyMs
+	}
+	if err := s.m.pg.InsertLLMUsage(&db.LLMUsage{
+		Worker: decisionWorkerLane, Model: prof.Model, ProfileName: prof.Name,
+		LatencyMs: lat, InputTokens: in, OutputTokens: out, Status: status,
+	}); err != nil {
+		log.Printf("[decision] usage meter failed: %v", err)
+	}
+}
+
+// oneShotDecisionText runs one enum decision on a chat model. options is the
+// closed set; the caller supplies the question text (already compact). Returns
+// the parsed decision; on any failure the error is the caller's to log and
+// skip — a decision-lane failure must never block the record it reviews.
+func (s *Server) oneShotDecisionText(ctx context.Context, prof *db.LLMProfile, ask DecisionAsk) (DecisionVerdict, error) {
+	question, options, maxChars := ask.Input, ask.Options, ask.MaxChars
+	decision, confidence, reason, profileID, err := s.oneShotDecisionTextJSON(ctx, prof, question, options, maxChars, ask.Predicates)
+	return DecisionVerdict{Decision: decision, Confidence: confidence, Reason: reason, ProfileID: profileID}, err
+}
+
+func (s *Server) oneShotDecisionTextJSON(ctx context.Context, prof *db.LLMProfile, question string, options []string, maxChars int, predicates []Predicate) (decision string, confidence float64, reason string, profileID int64, err error) {
 	prov, _, ok := s.providerForProfile(prof.ID)
 	if !ok {
-		return "", 0, "", 0, fmt.Errorf("decision model profile %d unavailable", prof.ID)
+		return "", 0, "", prof.ID, fmt.Errorf("decision model profile %d unavailable", prof.ID)
 	}
 	sys := DecisionDefaultPrompt
 	if edited := s.decisionPrompt(); edited != "" {
@@ -87,6 +239,14 @@ func (s *Server) oneShotDecision(ctx context.Context, question string, options [
 	}
 	if maxChars <= 0 || maxChars > 40000 {
 		maxChars = 12000
+	}
+	if len(predicates) > 0 {
+		// Chat fallback for the native predicate questions: same statements,
+		// answered as booleans inside the strict-JSON reply.
+		question += "\nAlso judge these yes/no statements and include them as \"predicates\": {\"<name>\": true|false} in your JSON:\n"
+		for _, p := range predicates {
+			question += "- " + p.Name + ": " + p.Statement + "\n"
+		}
 	}
 	if len(question) > maxChars {
 		question = question[:maxChars]

@@ -61,7 +61,7 @@ const MAX_TOKENS_FIELD_HINTS: Record<string, string> = {
 };
 // LLM profile formats. The default in the create form is "anthropic"; "ollama" is the
 // keyless local-server format (base URL defaults to http://127.0.0.1:11434/v1).
-type ProfileFormat = "anthropic" | "openai" | "openai-responses" | "ollama";
+type ProfileFormat = "anthropic" | "openai" | "openai-responses" | "ollama" | "openai-decisions";
 const OLLAMA_DEFAULT_BASE_URL = "http://127.0.0.1:11434/v1";
 const EFFORT_LEVELS: { value: string; label: string }[] = [
   { value: NONE, label: "Not sent (default)" },
@@ -355,7 +355,10 @@ function ProfileSheet({
     if (!open) return;
     setName(profile?.name ?? "");
     setFormat(
-      profile?.format === "openai" || profile?.format === "openai-responses" || profile?.format === "ollama"
+      profile?.format === "openai" ||
+        profile?.format === "openai-responses" ||
+        profile?.format === "ollama" ||
+        profile?.format === "openai-decisions"
         ? profile.format
         : "anthropic",
     );
@@ -551,8 +554,16 @@ function ProfileSheet({
                   <SelectItem value="openai">OpenAI (Chat Completions)</SelectItem>
                   <SelectItem value="openai-responses">OpenAI (Responses API)</SelectItem>
                   <SelectItem value="ollama">Ollama (local, no key needed)</SelectItem>
+                  <SelectItem value="openai-decisions">OpenAI-compatible (Decisions API)</SelectItem>
                 </SelectContent>
               </Select>
+              {format === "openai-decisions" && (
+                <p className="text-muted-foreground text-xs">
+                  Decision models answer typed questions on POST /v1/decisions (choice + predicate, probability
+                  distributions; no chat endpoint). Bindable to the Decision agent only; it can never be the active
+                  chat profile.
+                </p>
+              )}
             </div>
           </div>
 
@@ -562,7 +573,13 @@ function ProfileSheet({
               <Input
                 id="p-model"
                 className="font-mono"
-                placeholder={format === "ollama" ? "llama3.2" : "claude-opus-4-8"}
+                placeholder={
+                  format === "ollama"
+                    ? "llama3.2"
+                    : format === "openai-decisions"
+                      ? "gpt-6-luna-decisions"
+                      : "claude-opus-4-8"
+                }
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
               />
