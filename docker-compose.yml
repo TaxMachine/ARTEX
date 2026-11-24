@@ -33,10 +33,13 @@ services:
       # ARTEX_COMPACTION_K: "72"
       # ARTEX_TOOL_RAG: "1"
       # ARTEX_WORKER_GLOBAL_TOOLS: kn_search,record_fact,report_finding,ssh_exec,ps_script
-      # History diet: shrink REPLAYED history on every call (wire-only; transcripts
-      # untouched). Old tool results are elided to a head + pointer; prior-turn
+      # History diet (sticky): shrink REPLAYED history (wire-only; transcripts
+      # untouched). Old tool results are elided to a head + pointer and prior-turn
       # thinking is dropped (verified: the GLM gateway accepts requests without
       # reasoning replay — leave DROP_THINKING off for DeepSeek-style APIs).
+      # Sticky = append-only between freezes so the provider prefix cache keeps
+      # hitting: a freeze runs only when >2*KEEP results are live and then keeps
+      # the newest KEEP verbatim; each freeze is one cache break.
       ARTEX_HISTORY_DIET: "1"
       ARTEX_HISTORY_DIET_DROP_THINKING: "1"
       ARTEX_HISTORY_DIET_KEEP: "8"

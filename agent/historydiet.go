@@ -20,33 +20,46 @@ import (
 // replayed history reached 385K characters, 51% of it old tool results and 25%
 // the model's own past thinking — content already consumed (the worker's
 // durable record lives in facts/findings) but paid for again on every later
-// call. The caching layer absorbs ~86% of the dollar cost but not the token
-// volume, the rate limits, or the request latency.
+// call.
 //
-// The diet changes only the wire copy:
-//   - tool results older than the most recent keepN are replaced by a short
-//     head plus a pointer note, so the model knows what the call returned and
-//     can re-run it when it needs the detail;
-//   - with DROP_THINKING, thinking blocks from PRIOR turns are dropped (the
-//     gateway verified to accept requests without reasoning replay; leave off
-//     for DeepSeek-style APIs that hard-require it).
+// STICKY (generation-based) elision. The first version elided everything older
+// than the most recent KEEP results; that boundary slides by one result every
+// turn, so each request changed an old message and the provider's prefix cache
+// re-broke at that point every call (measured: cache hit fell 74%→47%). This
+// version is append-stable between freezes:
 //
-// Structural invariants are preserved: every tool_use keeps its tool_result
-// pair (only the result text shrinks), and the LAST message is never touched.
+//   - the history is split at a FROZEN boundary. Below it, every oversized
+//     tool result is elided (head + pointer note) and prior-turn thinking is
+//     dropped. The frozen form is deterministic, so it is byte-identical on
+//     every call — the cache prefix survives.
+//   - above the boundary (the live zone) everything is verbatim and the
+//     request grows append-only: each new call is the previous request plus a
+//     tail, which a prefix cache serves at full hit rate.
+//   - only when the live zone grows past REWRITE_CHARS (and holds more than
+//     KEEP results) does one freeze run: results older than the newest KEEP
+//     are elided once, the boundary advances, and the cache breaks exactly
+//     once at that point.
 //
-// Env knobs (all default OFF — existing deployments unchanged):
+// Structural invariants: every tool_use keeps its tool_result pair (only the
+// result text shrinks — an orphaned tool_call is a gateway 400), the final
+// message is never touched, and the newest assistant turn's thinking is kept
+// while it is in the live zone.
 //
-//	ARTEX_HISTORY_DIET=1                 enable
-//	ARTEX_HISTORY_DIET_KEEP=8            most recent tool results kept verbatim
-//	ARTEX_HISTORY_DIET_HEAD=300          chars kept from an elided result
-//	ARTEX_HISTORY_DIET_DROP_THINKING=1   also drop prior-turn thinking
+// Env knobs (default OFF — existing deployments unchanged):
+//
+//	ARTEX_HISTORY_DIET=1                  enable
+//	ARTEX_HISTORY_DIET_KEEP=8             newest tool results kept verbatim
+//	ARTEX_HISTORY_DIET_HEAD=300           chars kept from an elided result
+//	ARTEX_HISTORY_DIET_DROP_THINKING=1    drop prior-turn thinking when freezing
+//	A freeze runs when the live zone exceeds 2*KEEP results; between freezes
+//	requests grow append-only (prefix-cache stable), paying one break each.
 
 // HistoryDietConfig is the resolved diet configuration.
 type HistoryDietConfig struct {
 	Enabled      bool
 	DropThinking bool
-	Keep         int
-	Head         int
+	Keep         int // newest tool results kept verbatim in the live zone
+	Head         int // chars kept from an elided result
 }
 
 // HistoryDietStats accumulates how much the diet removed, per session key.
@@ -56,6 +69,18 @@ type HistoryDietStats struct {
 	DietedChars     int64 `json:"dieted_chars"`
 	ElidedResults   int64 `json:"elided_results"`
 	DroppedThinking int64 `json:"dropped_thinking"`
+	Rewrites        int64 `json:"rewrites"`
+}
+
+// DietFreezeState is a session's frozen boundary. Below FrozenLen the wire
+// copy applies the frozen rule (elide + drop thinking) deterministically; the
+// counts are best-effort compaction detection — compaction rewrites history
+// in place, and a reset just re-freezes on the next trigger.
+type DietFreezeState struct {
+	FrozenLen     int
+	FrozenResults int
+	FrozenUser    int
+	FrozenAsst    int
 }
 
 func dietEnvInt(name string, dflt int) int {
@@ -78,69 +103,103 @@ func dietEnvOn(name string) bool {
 // LoadHistoryDiet resolves the diet configuration (read per call so an env
 // change takes effect on the next request).
 func LoadHistoryDiet() HistoryDietConfig {
-	return HistoryDietConfig{
+	cfg := HistoryDietConfig{
 		Enabled:      dietEnvOn("ARTEX_HISTORY_DIET"),
 		DropThinking: dietEnvOn("ARTEX_HISTORY_DIET_DROP_THINKING"),
 		Keep:         dietEnvInt("ARTEX_HISTORY_DIET_KEEP", 8),
 		Head:         dietEnvInt("ARTEX_HISTORY_DIET_HEAD", 300),
 	}
+	if cfg.Keep < 1 {
+		cfg.Keep = 1
+	}
+	if cfg.Head < 1 {
+		cfg.Head = 1
+	}
+	return cfg
 }
 
-// DietMessages returns the wire copy of msgs under cfg. It never mutates the
-// input: untouched messages are shared, shrunken ones are new values. Returns
-// the dieted messages and how much was removed.
-func DietMessages(msgs []llm.Message, cfg HistoryDietConfig) ([]llm.Message, HistoryDietStats) {
-	var st HistoryDietStats
+// DietSticky computes the wire copy of msgs under the freeze state st and cfg,
+// advancing the freeze when the live zone crosses the rewrite threshold. It
+// never mutates msgs: untouched messages are shared, shrunken ones are new
+// values (copy-on-write on the slice).
+func DietSticky(msgs []llm.Message, st DietFreezeState, cfg HistoryDietConfig) ([]llm.Message, DietFreezeState, HistoryDietStats) {
+	var stats HistoryDietStats
 	if !cfg.Enabled || len(msgs) < 2 {
-		return msgs, st
+		// Disabled: a pure passthrough — no freeze bookkeeping either, so a
+		// later enablement starts from a clean boundary.
+		return msgs, DietFreezeState{}, stats
 	}
-	// Positions of every tool_result, in order; the last keepN stay verbatim.
-	type slot struct{ mi, bi int }
-	var results []slot
+	// Compaction / shrink guards: a history that no longer matches the frozen
+	// prefix resets the boundary (the transform stays valid either way — the
+	// frozen rule is stateless — but a stale boundary would mis-place the
+	// freeze and break the cache for nothing).
+	if st.FrozenLen > len(msgs) || st.FrozenLen < 0 || st.FrozenResults < 0 {
+		st = DietFreezeState{}
+	} else if st.FrozenLen > 0 {
+		if countDietResults(msgs[:st.FrozenLen]) != st.FrozenResults ||
+			countDietRoles(msgs[:st.FrozenLen]) != [2]int{st.FrozenUser, st.FrozenAsst} {
+			st = DietFreezeState{}
+		}
+	}
+
+	// Freeze trigger: the live zone has grown past the rewrite budget and
+	// holds more than KEEP results.
+	type pos struct{ mi, bi int }
+	var all []pos
 	for i := range msgs {
 		for j := range msgs[i].Content {
 			if msgs[i].Content[j].Type == llm.BlockToolResult {
-				results = append(results, slot{i, j})
+				all = append(all, pos{i, j})
 			}
 		}
 	}
-	elide := map[slot]bool{}
-	if len(results) > cfg.Keep {
-		for _, s := range results[:len(results)-cfg.Keep] {
-			elide[s] = true
+	liveResults := len(all) - st.FrozenResults
+	liveChars := 0
+	for i := st.FrozenLen; i < len(msgs); i++ {
+		liveChars += dietMessageChars(msgs[i])
+	}
+	// Freeze trigger — count-based hysteresis. A freeze runs when the live
+	// zone holds more than 2*KEEP results; after it, exactly the newest KEEP
+	// results (plus their turns) stay live. Between freezes at least KEEP new
+	// results accumulate append-only, so the prefix cache survives the whole
+	// stretch and pays exactly one break per freeze. (A char-based trigger
+	// measured the RAW live zone while the wire live zone after a freeze is
+	// smaller — the mismatch re-triggered a freeze every turn.)
+	if liveResults > 2*cfg.Keep && len(all) >= cfg.Keep {
+		boundary := all[len(all)-cfg.Keep].mi
+		// The boundary never lands on the final message (the current turn and
+		// the newest KEEP results stay verbatim).
+		if boundary >= len(msgs)-1 {
+			boundary = len(msgs) - 1
+		}
+		if boundary > st.FrozenLen {
+			st.FrozenLen = boundary
+			st.FrozenResults = countDietResults(msgs[:boundary])
+			st.FrozenUser, st.FrozenAsst = countDietRoles(msgs[:boundary])[0], countDietRoles(msgs[:boundary])[1]
+			stats.Rewrites++
 		}
 	}
-	// The final message is the current turn — never touched. Thinking in the
-	// most recent assistant turn is also kept: Anthropic-style APIs require it
-	// back during a tool-use loop, and it is the reasoning behind the pending
-	// tool calls, so it is the one block of past thinking still load-bearing.
-	last := len(msgs) - 1
-	lastAssistant := -1
-	for i := last; i >= 0; i-- {
-		if msgs[i].Role == llm.RoleAssistant {
-			lastAssistant = i
-			break
-		}
-	}
+
+	// Wire copy: the frozen rule below the boundary, verbatim above it.
 	out := msgs
 	cloned := false
-	for i := 0; i < last; i++ {
+	for i := 0; i < st.FrozenLen; i++ {
 		var changed bool
 		content := make([]llm.ContentBlock, 0, len(msgs[i].Content))
 		for j := range msgs[i].Content {
 			b := msgs[i].Content[j]
 			switch {
-			case b.Type == llm.BlockThinking && cfg.DropThinking && i != lastAssistant:
-				st.DroppedThinking++
+			case b.Type == llm.BlockThinking && cfg.DropThinking:
+				stats.DroppedThinking++
 				changed = true
 				continue // dropped from the wire copy
-			case b.Type == llm.BlockToolResult && elide[slot{i, j}]:
+			case b.Type == llm.BlockToolResult:
 				text := flattenToolResultText(b)
 				if len(text) > cfg.Head {
-					note := "\n…[history diet: " + strconv.Itoa(len(text)-cfg.Head) + " chars elided from this old tool result; re-run the tool if you need the full output]"
+					note := "\n…[history diet: " + strconv.Itoa(len(text)-cfg.Head) + " chars elided; re-run the tool if you need the full output]"
 					nb := b
 					nb.Content = []llm.ContentBlock{llm.TextBlock(text[:cfg.Head] + note)}
-					st.ElidedResults++
+					stats.ElidedResults++
 					content = append(content, nb)
 					changed = true
 					continue
@@ -150,17 +209,40 @@ func DietMessages(msgs []llm.Message, cfg HistoryDietConfig) ([]llm.Message, His
 		}
 		if changed {
 			if !cloned {
-				// Copy-on-write: the caller's slice (and the transcript it
-				// may alias) is never mutated.
 				out = append([]llm.Message(nil), msgs...)
 				cloned = true
 			}
-			st.OriginalChars += int64(dietMessageChars(msgs[i]))
+			stats.OriginalChars += int64(dietMessageChars(msgs[i]))
 			out[i] = llm.Message{Role: msgs[i].Role, Content: content}
-			st.DietedChars += int64(dietMessageChars(out[i]))
+			stats.DietedChars += int64(dietMessageChars(out[i]))
 		}
 	}
-	return out, st
+	return out, st, stats
+}
+
+func countDietResults(msgs []llm.Message) int {
+	n := 0
+	for _, m := range msgs {
+		for _, b := range m.Content {
+			if b.Type == llm.BlockToolResult {
+				n++
+			}
+		}
+	}
+	return n
+}
+
+func countDietRoles(msgs []llm.Message) [2]int {
+	var r [2]int
+	for _, m := range msgs {
+		switch m.Role {
+		case llm.RoleUser:
+			r[0]++
+		case llm.RoleAssistant:
+			r[1]++
+		}
+	}
+	return r
 }
 
 func flattenToolResultText(b llm.ContentBlock) string {
@@ -205,9 +287,9 @@ func dietMessageChars(m llm.Message) int {
 // ---- provider decorator ----
 
 var (
-	historyDietMu    sync.Mutex
-	historyDietAgg   = map[string]*HistoryDietStats{}
-	historyDietForce func() HistoryDietConfig
+	historyDietMu  sync.Mutex
+	historyDietAgg = map[string]*HistoryDietStats{}
+	dietFreezes    sync.Map // session key -> *DietFreezeState
 )
 
 // dietingProvider wraps a provider, dieting req.Messages before each call.
@@ -230,11 +312,20 @@ func (d *dietingProvider) diet(ctx context.Context, req llm.CompletionRequest) l
 	if !cfg.Enabled || len(req.Messages) < 2 {
 		return req
 	}
-	out, st := DietMessages(req.Messages, cfg)
-	if st.ElidedResults == 0 && st.DroppedThinking == 0 {
+	key := transcript.SessionIDFrom(ctx)
+	var st DietFreezeState
+	if v, ok := dietFreezes.Load(key); ok {
+		if s, ok2 := v.(*DietFreezeState); ok2 {
+			st = *s
+		}
+	}
+	out, nst, stats := DietSticky(req.Messages, st, cfg)
+	if nst != st {
+		dietFreezes.Store(key, &nst)
+	}
+	if stats.ElidedResults == 0 && stats.DroppedThinking == 0 {
 		return req
 	}
-	key := transcript.SessionIDFrom(ctx)
 	historyDietMu.Lock()
 	c := historyDietAgg[key]
 	if c == nil {
@@ -242,10 +333,11 @@ func (d *dietingProvider) diet(ctx context.Context, req llm.CompletionRequest) l
 		historyDietAgg[key] = c
 	}
 	c.Calls++
-	c.OriginalChars += st.OriginalChars
-	c.DietedChars += st.DietedChars
-	c.ElidedResults += st.ElidedResults
-	c.DroppedThinking += st.DroppedThinking
+	c.OriginalChars += stats.OriginalChars
+	c.DietedChars += stats.DietedChars
+	c.ElidedResults += stats.ElidedResults
+	c.DroppedThinking += stats.DroppedThinking
+	c.Rewrites += stats.Rewrites
 	historyDietMu.Unlock()
 	req.Messages = out
 	return req
